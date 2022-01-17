@@ -350,4 +350,4 @@ MigrationBackup/
 .ionide/
 **/launchSettings.json 
 /Azure.EntityServices.Blob/*
-/Azure.EntityServices.Tests/*
+/Azure.EntityServices.Tests/Blob*
