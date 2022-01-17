@@ -1,15 +1,13 @@
 # Azure.EntityServices
-Services to manage pure and generic entities in Azure blobs and tables
+This project provide services abstraction on top of Azure blobs and tables storage sdk
 
-
-## Azure.EntityServices is a set of services for azure storage services
+## Those services help you to manage your entities in azure storage
 Initial project (experimental) was localted here: [EntityStorageServices](https://github.com/Evodim/EntityStorageServices)
 
-This new version was partiallly rewritted and based on the new official [Azure.Data.Tables library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
+This new version was partiallly rewritted and based on the new official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
 
 Azure.EntityServices help you to store, update and search pure and generic entities in Azure table storage
 Pure entities could be any classes without dependencies on any framework or azure storage implementation
-
 
 
 This project is focused on entities abstraction and performance
@@ -35,6 +33,7 @@ Upcoming:
 * Publish EntityBlobClient  
 * More description of the internal implementation of this library
 * Entity migration services, usefull for data or structural migration
+
 
 ### EntityTableClient configuration example
 
@@ -65,7 +64,6 @@ Upcoming:
 ### Output of sample console projet based on a table with 3 billions of entities (standard storageV2)
 
 ```
-====================================
 Generate faked 2000 entities...Ok
 Insert 4000 entities...in 12,6176517 seconds
 Querying entities 1 times...
@@ -77,4 +75,3 @@ Querying entities 1 times...
 5. Get by LastName start with 'arm' (indexed tag) 0,776 seconds```
 
 *You should use a real azure table storage connection with more than 100K entities to highlight performance improvment with indexed tags*
-
