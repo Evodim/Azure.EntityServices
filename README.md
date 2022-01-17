@@ -29,7 +29,7 @@ EntityTableClient bind any classes (entities) to Entity table storage
 This binding allows to have more control when entity was stored of readed from the table storage
 Internally, it use Azure storage ETG feature (entity transaction group) to keep indexed tag synchronized with the main entity.
 
-Upcomming:
+Upcoming:
 * Expand test coverage
 * Add validation rules according to [azure storage limitations](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-table-storage-limits)
 * Publish EntityBlobClient  
