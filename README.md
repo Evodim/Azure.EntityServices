@@ -1,25 +1,39 @@
+# Azure.EntityServices
+This project provide services abstraction on top of Azure blobs and tables storage sdk
 
-## Azure.EntityServices is a set of extensions for azure storage services.
-Initial project (experimental) was called: EntityTableService.
-This new version was partiallly rewritted and based on the new Azure.Data.Tables library
+## Those services help you to manage your entities in azure storage
+Initial project (experimental) was localted here: [EntityStorageServices](https://github.com/Evodim/EntityStorageServices)
 
-Azure.EntityServices help you to store, update and search pure entities in Azure table storage.
-Pure entities are any classes without dependencies on some framework or azure storage implementation
+This new version was partiallly rewritted and based on the new official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
+
+Azure.EntityServices help you to store, update and search pure and generic entities in Azure table storage
+Pure entities could be any classes without dependencies on any framework or azure storage implementation
 
 
-
-This project is focused on entities abstraction and performance.
+This project is focused on entities abstraction and performance
  
 Features:
 
-* You can use any pure and generic entities without azure sdk dependencies: no need to inehrits from ITableEntity or TableEntity neither.
-* You can extend entity properties with dynamic props  
-* You can tag any entity or dynamic props to be indexed for fast search in large amount of data
+* You can use any pure and generic entities without azure sdk dependencies: no need to inehrits from ITableEntity or TableEntity neither
+* You can extend entity properties with dynamic properties (and could be tagged)
+* You can tag any entity or dynamic properties to be indexed for faster search in large amount of items
+* Handle more primitive types that are not supported by default in azure table storage 
 * Lightweight and extensible query expression builder (used to build query filter expressions)
-* Entity table observers, subscribe and apply side effects when any entity changed
+* Entity table observers, subscribe and apply side effects when any entity changed (experimental)
+ 
+### How it works?
 
-Upcomming:
-* Entity migration services: bulk update or delete to rehydrate or update entities massively
+EntityTableClient bind any classes (entities) to Entity table storage
+This binding allows to have more control when entity was stored of readed from the table storage
+Internally, it use Azure storage ETG feature (entity transaction group) to keep indexed tag synchronized with the main entity.
+
+Upcoming:
+* Expand test coverage
+* Add validation rules according to [azure storage limitations](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-table-storage-limits)
+* Publish EntityBlobClient  
+* More description of the internal implementation of this library
+* Entity migration services, usefull for data or structural migration
+
 
 ### EntityTableClient configuration example
 
@@ -50,7 +64,6 @@ Upcomming:
 ### Output of sample console projet based on a table with 3 billions of entities (standard storageV2)
 
 ```
-====================================
 Generate faked 2000 entities...Ok
 Insert 4000 entities...in 12,6176517 seconds
 Querying entities 1 times...
@@ -62,5 +75,3 @@ Querying entities 1 times...
 5. Get by LastName start with 'arm' (indexed tag) 0,776 seconds```
 
 *You should use a real azure table storage connection with more than 100K entities to highlight performance improvment with indexed tags*
-
-
