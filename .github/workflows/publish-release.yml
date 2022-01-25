@@ -1,0 +1,79 @@
+name: Push a NuGet package to Azure Artifacts or GitHub Package Registry
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:    
+    tags:
+     - v[0-9]+.[0-9]+.[0-9]+ 
+
+env:
+  AZURE_ARTIFACTS_FEED_URL: https://pkgs.dev.azure.com/evodim/_packaging/evodim-feed/nuget/v3/index.json    
+  BUILD_CONFIGURATION: 'Release'    # set this to the appropriate build configuration
+  DOTNET_VERSION: '6.x' 
+  TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repo
+      - uses: actions/checkout@v2
+        with:
+            fetch-depth: 0
+     # Retrieve minVer version
+      - name: Set APP_VERSION based on repo w/MinVer
+        run: |
+          dotnet tool install -g minver-cli -v q
+          APP_VERSION=`minver`
+          echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
+
+      # Setup .NET Core SDK
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Run dotnet build and package
+      - name: dotnet build and test
+        run: |
+          dotnet restore
+          dotnet build --configuration '${{ env.BUILD_CONFIGURATION }}'
+          dotnet test --configuration '${{ env.BUILD_CONFIGURATION }}'
+
+  az-artifacts-build-and-deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repo
+      - uses: actions/checkout@v2
+        with:
+            fetch-depth: 0
+     # Retrieve minVer version
+      - name: Set APP_VERSION based on repo w/MinVer
+        run: |
+          dotnet tool install -g minver-cli -v q
+          APP_VERSION=`minver`
+          echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
+
+      # Setup .NET Core SDK
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          source-url: ${{ env.AZURE_ARTIFACTS_FEED_URL }}
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.AZURE_ARTIFACTS_PAT }} 
+
+      # Run dotnet build and package
+      - name: dotnet build and publish
+        run: |
+          dotnet restore
+          dotnet build --configuration '${{ env.BUILD_CONFIGURATION }}'
+          dotnet pack -c '${{ env.BUILD_CONFIGURATION }}' --version-suffix '${{ env.APP_VERSION }}'
+
+      # Publish the package to Azure Artifacts
+      - name: 'dotnet publish'        
+        run: dotnet nuget push --api-key AzureArtifacts **/bin/Release/*.nupkg
