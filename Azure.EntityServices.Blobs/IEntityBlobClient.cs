@@ -27,7 +27,7 @@ namespace Azure.EntityServices.Blobs
 
         Task DeleteAsync(string entityRef);
 
-        Task DeleteAllAsync();
+        Task DropContainerAsync();
 
     }
 }

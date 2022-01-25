@@ -16,11 +16,11 @@ namespace Azure.EntityServices.Tables
 
     public interface IEntityTableClient<T> : IEntityTableClientRuntimeConfig<T>
     {
-        Task InsertOrReplaceAsync(T entity, CancellationToken cancellationToken = default);
+        Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default);
 
-        Task InsertOrMergeAsync(T entity, CancellationToken cancellationToken = default);
+        Task AddOrMergeAsync(T entity, CancellationToken cancellationToken = default);
 
-        Task InsertManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+        Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
         Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
 

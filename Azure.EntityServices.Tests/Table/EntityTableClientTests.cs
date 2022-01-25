@@ -38,11 +38,11 @@ namespace Azure.EntityServices.Tests.Table
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryProp(p => p.PersonId)
+                .SetPrimaryKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            await entityTable.InsertOrReplaceAsync(persons.First());
+            await entityTable.AddOrReplaceAsync(persons.First());
 
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
@@ -57,13 +57,13 @@ namespace Azure.EntityServices.Tests.Table
              {
                  c.
                  SetPartitionKey(p => p.TenantId)
-                 .SetPrimaryProp(p => p.PersonId)
+                 .SetPrimaryKeyProp(p => p.PersonId)
                  .AddTag(p => p.LastName)
                  .AddTag(p => p.Created);
              });
             try
             {
-                await entityTable.InsertManyAsync(persons);
+                await entityTable.AddManyAsync(persons);
 
                 var person = persons.First();
                 //get all entities both primary and projected
@@ -85,11 +85,11 @@ namespace Azure.EntityServices.Tests.Table
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryProp(p => p.PersonId);
+                c.SetPrimaryKeyProp(p => p.PersonId);
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
                 created.Should().BeEquivalentTo(person);
             }
@@ -106,12 +106,12 @@ namespace Azure.EntityServices.Tests.Table
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryProp(p => p.PersonId);
+                c.SetPrimaryKeyProp(p => p.PersonId);
                 c.AddTag(p => p.LastName);
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, p => p.LastName, person.LastName))
                 {
                     resultPage.Count().Should().Be(1);
@@ -133,12 +133,12 @@ namespace Azure.EntityServices.Tests.Table
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryProp(p => p.PersonId);
+                c.SetPrimaryKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
                 First3Char(created.LastName).Should().Be(First3Char(person.LastName));
             }
@@ -156,13 +156,13 @@ namespace Azure.EntityServices.Tests.Table
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryProp(p => p.PersonId);
+                c.SetPrimaryKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
                 c.AddTag("_FirstLastName3Chars");
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, "_FirstLastName3Chars", First3Char(person.LastName)))
                 {
                     First3Char(resultPage.FirstOrDefault()?.LastName ?? "").Should().Be(First3Char(person.LastName));
@@ -184,14 +184,14 @@ namespace Azure.EntityServices.Tests.Table
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryProp(p => p.PersonId);
+                c.SetPrimaryKeyProp(p => p.PersonId);
                 c.AddTag("_FirstLastName3Chars");
                 c.AddTag(p => p.LastName);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
                 await tableEntity.DeleteAsync(created);
 
@@ -228,13 +228,13 @@ namespace Azure.EntityServices.Tests.Table
             var tableEntity = new EntityTableClient<PersonEntity>(options, c =>
             {
                 c.SetPartitionKey(p => p.TenantId)
-                .SetPrimaryProp(p => p.PersonId)
+                .SetPrimaryKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddObserver(nameof(DummyObserver), observer);
             });
             try
             {
-                await tableEntity.InsertManyAsync(persons);
+                await tableEntity.AddManyAsync(persons);
 
                 await tableEntity.DeleteAsync(persons.Skip(1).First());
 
@@ -268,13 +268,13 @@ namespace Azure.EntityServices.Tests.Table
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryProp(p => p.PersonId)
+                .SetPrimaryKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
             try
             {
-                await tableEntity.InsertManyAsync(persons);
+                await tableEntity.AddManyAsync(persons);
 
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(persons.First().TenantId))

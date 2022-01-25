@@ -12,6 +12,6 @@ namespace Azure.EntityServices.Tables
         public List<string> ComputedTags { get; } = new List<string>();
         public Dictionary<string, PropertyInfo> Tags { get; } = new Dictionary<string, PropertyInfo>();
         public ConcurrentDictionary<string, IEntityObserver<T>> Observers { get; } = new ConcurrentDictionary<string, IEntityObserver<T>>();
-        public PropertyInfo PrimaryProp { get; set; }
+        public PropertyInfo PrimaryKeyProp { get; set; }
     }
 }

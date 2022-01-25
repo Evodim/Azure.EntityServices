@@ -12,10 +12,10 @@ namespace Azure.EntityServices.Tables
             return config;
         }
 
-        public static EntityTableClientConfig<T> SetPrimaryProp<T, P>(this EntityTableClientConfig<T> config, Expression<Func<T, P>> selector)
+        public static EntityTableClientConfig<T> SetPrimaryKeyProp<T, P>(this EntityTableClientConfig<T> config, Expression<Func<T, P>> selector)
         {
             var property = selector.GetPropertyInfo();
-            config.PrimaryProp = property;
+            config.PrimaryKeyProp = property;
             return config;
         }
 
