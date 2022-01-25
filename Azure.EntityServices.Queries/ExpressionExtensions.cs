@@ -8,7 +8,7 @@ namespace Azure.EntityServices.Queries
     {
         internal static PropertyInfo GetPropertyInfo<T, U>(this Expression<Func<T, U>> expression)
         {
-            if (!(expression.Body is MemberExpression member))
+            if (expression.Body is not MemberExpression member)
             {
                 // The property access might be getting converted to object to match the func
                 // If so, get the operand and see if that's a member expression

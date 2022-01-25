@@ -2,7 +2,7 @@
 using System;
 using System.Linq.Expressions;
 
-namespace Azure.EntityServices.Queries 
+namespace Azure.EntityServices.Queries
 {
     public static class QueryExpressionExtensions
     {

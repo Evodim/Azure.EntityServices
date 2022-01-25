@@ -61,7 +61,7 @@ namespace Azure.EntityServices.Queries
             subQuery.Invoke(childExpression);
 
             childExpression.GroupOperator = expressionOperator;
-            Group.Add(childExpression as IFilterExpression<T>);
+            Group.Add(childExpression);
 
             return this;
         }
@@ -73,7 +73,7 @@ namespace Azure.EntityServices.Queries
 
         public IQueryFilter<T, P> AddQuery<P>(Expression<Func<T, P>> property)
         {
-            return AddOperator<P>(null, property);
+            return AddOperator(null, property);
         }
     }
 }
