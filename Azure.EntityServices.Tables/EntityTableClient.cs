@@ -46,7 +46,7 @@ namespace Azure.EntityServices.Tables
             };
             configurator?.Invoke(_config);
             //PrimaryKey required
-            _ = _config.PrimaryProp ?? throw new InvalidOperationException($"Primary property was required and must be setted");
+            _ = _config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
 
             _retryPolicy = Policy
                             .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
@@ -58,7 +58,7 @@ namespace Azure.EntityServices.Tables
             _options = options;
             _client = new TableClient(options.ConnectionString, options.TableName);
 
-            _ = config.PrimaryProp ?? throw new InvalidOperationException($"Primary property was required and must be setted");
+            _ = config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
 
             //Default partitionKeyResolver
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
@@ -227,7 +227,7 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return ComputePrimaryKey(_config.PrimaryProp.GetValue(entity));
+            return ComputePrimaryKey(_config.PrimaryKeyProp.GetValue(entity));
         }
 
         public void AddObserver(string name, IEntityObserver<T> observer)
@@ -332,7 +332,7 @@ namespace Azure.EntityServices.Tables
             return $"{ComputeKeyConvention(propertyName, strValue)}";
         }
 
-        private string ComputePrimaryKey(object value) => $"${ComputeKeyConvention(_config.PrimaryProp.Name, value)}";
+        private string ComputePrimaryKey(object value) => $"${ComputeKeyConvention(_config.PrimaryKeyProp.Name, value)}";
 
         private string CreateRowKey(PropertyInfo property, T entity) => $"{ComputeKeyConvention(property.Name, property.GetValue(entity).ToInvariantString())}{ResolvePrimaryKey(entity)}";
 

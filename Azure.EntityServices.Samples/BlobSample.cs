@@ -21,9 +21,9 @@ namespace Azure.EntityServices.Samples
             //Configure entity binding in the table storage
             var client = new EntityBlobClient<DocumentEntity>(options, config =>
              config
-                .SetContentProp(p => p.Content)
-                .SetEntityPath(p => $"{p.Created:yyyy/MM/dd}")
-                .SetEntityName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
+                .SetBlobContentProp(p => p.Content)
+                .SetBlobPath(p => $"{p.Created:yyyy/MM/dd}")
+                .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                 .AddTag(p => p.Reference)
                 .AddTag(p => p.Name));
                 

@@ -8,7 +8,7 @@ namespace Azure.EntityServices.Blobs
     public static partial class EntityBlobClientConfigExtensions
     {
         
-        public static EntityBlobClientConfig<T> SetContentProp<T>(this EntityBlobClientConfig<T> config, Expression<Func<T, object>> selector) 
+        public static EntityBlobClientConfig<T> SetBlobContentProp<T>(this EntityBlobClientConfig<T> config, Expression<Func<T, object>> selector) 
         {
             var property = selector.GetPropertyInfo();
             config.ContentProp = property;
@@ -16,12 +16,12 @@ namespace Azure.EntityServices.Blobs
             return config;
         }
 
-        public static EntityBlobClientConfig<T> SetEntityName<T>(this EntityBlobClientConfig<T> config, Func<T, string> blobNameResolver)
+        public static EntityBlobClientConfig<T> SetBlobName<T>(this EntityBlobClientConfig<T> config, Func<T, string> blobNameResolver)
         {
             return config?.AddComputedProp("_EntityName", blobNameResolver);
 
         }
-        public static EntityBlobClientConfig<T> SetEntityPath<T>(this EntityBlobClientConfig<T> config, Func<T, string> blobNameResolver)
+        public static EntityBlobClientConfig<T> SetBlobPath<T>(this EntityBlobClientConfig<T> config, Func<T, string> blobNameResolver)
         {
             return config?.AddComputedProp("_EntityPath", blobNameResolver);
 

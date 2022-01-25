@@ -28,7 +28,7 @@ namespace Azure.EntityServices.Samples
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryProp(p => p.PersonId)
+                .SetPrimaryKeyProp(p => p.PersonId)
                 .AddTag(p => p.Created)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Distance)
