@@ -1,20 +1,19 @@
 # Azure.EntityServices
-This project provide services abstraction on top of Azure blobs and tables storage sdk
+This project provide libraries as an abstraction layer of Azure blobs and tables storage SDK
 
-## Those services help you to manage your entities in azure storage
-Initial project (experimental) was localted here: [EntityStorageServices](https://github.com/Evodim/EntityStorageServices)
+## Purpose
 
+Azure.EntityServices help you to store, update and search generic entities in Azure table storage
+Entities could be any classes without dependencies on any framework or azure storage implementation
+
+Initial project (experimental) was located here: [EntityStorageServices](https://github.com/Evodim/EntityStorageServices)
 This new version was partiallly rewritted and based on the new official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
-
-Azure.EntityServices help you to store, update and search pure and generic entities in Azure table storage
-Pure entities could be any classes without dependencies on any framework or azure storage implementation
-
 
 This project is focused on entities abstraction and performance
  
 Features:
 
-* You can use any pure and generic entities without azure sdk dependencies: no need to inehrits from ITableEntity or TableEntity neither
+* You can use any generic entities without azure sdk dependencies: no need to inehrits from ITableEntity or TableEntity neither
 * You can extend entity properties with dynamic properties (and could be tagged)
 * You can tag any entity or dynamic properties to be indexed for faster search in large amount of items
 * Handle more primitive types that are not supported by default in azure table storage 
@@ -30,7 +29,7 @@ Internally, it use Azure storage ETG feature (entity transaction group) to keep 
 Upcoming:
 * Expand test coverage
 * Add validation rules according to [azure storage limitations](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-table-storage-limits)
-* Publish EntityBlobClient  
+* Gradually improvement of EntityBlobClient  
 * More description of the internal implementation of this library
 * Entity migration services, usefull for data or structural migration
 
