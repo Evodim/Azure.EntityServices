@@ -1,4 +1,4 @@
-﻿using Azure.EntityServices.Table;
+﻿using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tests.Common.Models;
 using System;
 using System.Collections.Concurrent;
