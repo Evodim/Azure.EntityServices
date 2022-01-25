@@ -54,7 +54,7 @@ namespace Azure.EntityServices.Queries.Core
 
         protected virtual string ExpressionFilterConverter(IFilterExpression<T> expression)
         {
-            return $"{expression.PropertyName} {InstructionsProvider.Get(expression.Comparator)} '{expression.PropertyValue}'";
+            return $"{expression.PropertyName} {InstructionsProvider.Get(expression.Comparator)} '{expression.PropertyValue?.ToInvariantString()}'";
         }
     }
 }

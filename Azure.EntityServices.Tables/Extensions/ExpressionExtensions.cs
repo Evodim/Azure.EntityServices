@@ -6,7 +6,7 @@ namespace Azure.EntityServices.Tables.Extensions
 {
     internal static class ExpressionExtensions
     {
-        public static PropertyInfo GetPropertyInfo<T, U>(this Expression<Func<T, U>> expression)
+        internal static PropertyInfo GetPropertyInfo<T, U>(this Expression<Func<T, U>> expression)
         {
             if (expression.Body is not MemberExpression member)
             {

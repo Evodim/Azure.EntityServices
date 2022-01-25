@@ -6,7 +6,7 @@ using System.Reflection;
 namespace Azure.EntityServices.Tables
 {
     public class EntityTableClientConfig<T>
-    {
+    { 
         public Func<T, string> PartitionKeyResolver { get; set; }
         public Dictionary<string, Func<T, object>> DynamicProps { get; } = new Dictionary<string, Func<T, object>>();
         public List<string> ComputedTags { get; } = new List<string>();
