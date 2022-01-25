@@ -42,7 +42,7 @@ namespace Azure.EntityServices.Tests.Table
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            await entityTable.InsertOrReplaceAsync(persons.First());
+            await entityTable.AddOrReplaceAsync(persons.First());
 
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
@@ -63,7 +63,7 @@ namespace Azure.EntityServices.Tests.Table
              });
             try
             {
-                await entityTable.InsertManyAsync(persons);
+                await entityTable.AddManyAsync(persons);
 
                 var person = persons.First();
                 //get all entities both primary and projected
@@ -89,7 +89,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
                 created.Should().BeEquivalentTo(person);
             }
@@ -111,7 +111,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, p => p.LastName, person.LastName))
                 {
                     resultPage.Count().Should().Be(1);
@@ -138,7 +138,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
                 First3Char(created.LastName).Should().Be(First3Char(person.LastName));
             }
@@ -162,7 +162,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, "_FirstLastName3Chars", First3Char(person.LastName)))
                 {
                     First3Char(resultPage.FirstOrDefault()?.LastName ?? "").Should().Be(First3Char(person.LastName));
@@ -191,7 +191,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertOrReplaceAsync(person);
+                await tableEntity.AddOrReplaceAsync(person);
                 var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
                 await tableEntity.DeleteAsync(created);
 
@@ -234,7 +234,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertManyAsync(persons);
+                await tableEntity.AddManyAsync(persons);
 
                 await tableEntity.DeleteAsync(persons.Skip(1).First());
 
@@ -274,7 +274,7 @@ namespace Azure.EntityServices.Tests.Table
             });
             try
             {
-                await tableEntity.InsertManyAsync(persons);
+                await tableEntity.AddManyAsync(persons);
 
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(persons.First().TenantId))

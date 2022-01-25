@@ -159,7 +159,7 @@ namespace Azure.EntityServices.Blobs
             return BindEntityFromProperties(props);
         }
 
-        public Task DeleteAllAsync()
+        public Task DropContainerAsync()
         {
             return _blobStorageService.DeleteContainerAsync();
         } 

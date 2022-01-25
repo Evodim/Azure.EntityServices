@@ -139,17 +139,17 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public Task InsertOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
+        public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
         {
             return UpdateEntity(entity, EntityOperation.Replace, cancellationToken);
         }
 
-        public Task InsertOrMergeAsync(T entity, CancellationToken cancellationToken = default)
+        public Task AddOrMergeAsync(T entity, CancellationToken cancellationToken = default)
         {
             return UpdateEntity(entity, EntityOperation.Merge, cancellationToken);
         }
 
-        public async Task InsertManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        public async Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             var batchedClient = CreateTableBatchClient();
             var cleaner = CreateTableBatchClient();

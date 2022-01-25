@@ -52,7 +52,7 @@ namespace Azure.EntityServices.Samples
             Console.Write($"Insert {ENTITY_COUNT} entities...");
             using (var mesure = counters.Mesure($"{ENTITY_COUNT} insertions"))
             {
-                await entityClient.InsertManyAsync(entities);
+                await entityClient.AddManyAsync(entities);
             }
 
             Console.WriteLine($"in {counters.Get()[$"{ENTITY_COUNT} insertions"].TotalDuration.TotalSeconds} seconds");
