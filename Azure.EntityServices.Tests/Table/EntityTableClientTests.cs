@@ -2,15 +2,16 @@
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tests.Common;
 using Azure.EntityServices.Tests.Common.Fakes;
-using Azure.EntityServices.Tests.Common.Helpers;
 using Azure.EntityServices.Tests.Common.Models;
 using FluentAssertions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tests.Table
 {
+    [TestClass]
     public class EntityTableClientTests
     {
         private readonly Func<EntityTableClientOptions> _commonOptions;
@@ -27,13 +28,13 @@ namespace Azure.EntityServices.Tests.Table
             };
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_InsertOrReplace_Entity()
         {
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            IEntityTableClient<PersonEntity> entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
@@ -47,7 +48,7 @@ namespace Azure.EntityServices.Tests.Table
             created.Should().BeEquivalentTo(person);
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Get_By_Indexed_Prop_With_Filter()
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
@@ -77,7 +78,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Set_Primary_Key_On_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
@@ -98,7 +99,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Get_Indexed_Prop_On_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
@@ -123,7 +124,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Set_Dynamic_Prop_On_InsertOrUpdate()
         {
             static string First3Char(string s) => s.ToLower()[..3];
@@ -147,7 +148,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Set_Computed_Index_On_InsertOrUpdate()
         {
             static string First3Char(string s) => s.ToLower()[..3];
@@ -164,7 +165,7 @@ namespace Azure.EntityServices.Tests.Table
                 await tableEntity.InsertOrReplaceAsync(person);
                 await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, "_FirstLastName3Chars", First3Char(person.LastName)))
                 {
-                    First3Char(resultPage.FirstOrDefault()?.LastName).Should().Be(First3Char(person.LastName));
+                    First3Char(resultPage.FirstOrDefault()?.LastName ?? "").Should().Be(First3Char(person.LastName));
                 }
             }
             finally
@@ -173,7 +174,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Remove_Indexes_OnDelete()
         {
             static string First3Char(string s) => s.ToLower()[..3];
@@ -211,7 +212,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Observe_Entity_Table_Updates()
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
@@ -247,7 +248,7 @@ namespace Azure.EntityServices.Tests.Table
             }
         }
 
-        [PrettyFact]
+        [TestMethod]
         public async Task Should_Insert_Many_Indexed_Entities()
         {
             var persons = Fakers.CreateFakePerson().Generate(130);

@@ -1,36 +1,21 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-
+    <TargetFramework>net6.0</TargetFramework> 
     <IsPackable>false</IsPackable>
-
-    <UserSecretsId>90a6485b-c104-441d-b50f-ef0f01331ece</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Blob\**" />
-    <EmbeddedResource Remove="Blob\**" />
-    <None Remove="Blob\**" />
+    <PackageReference Include="Bogus" Version="34.0.1" />
+    <PackageReference Include="FluentAssertions" Version="6.4.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="2.2.7" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.2.7" />
+    <PackageReference Include="coverlet.collector" Version="3.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bogus" Version="33.1.1" />
-    <PackageReference Include="FluentAssertions" Version="6.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="coverlet.collector" Version="3.1.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
     <ProjectReference Include="..\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj" />
   </ItemGroup>
 

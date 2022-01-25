@@ -1,16 +1,17 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core;
-using Azure.EntityServices.Tests.Common.Helpers;
 using Azure.EntityServices.Tests.Common.Models;
 using FluentAssertions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Reflection;
 
 namespace Azure.EntityServices.Tests.Table
 {
+    [TestClass]
     public class QueryExpressionTests
     {
-        [PrettyFact]
+        [TestMethod]
         public void Should_Build_Query_Expression_With_Default_Instructions()
         {
             var builder = new MockedExpressionBuilder<PersonEntity>();
@@ -26,7 +27,7 @@ namespace Azure.EntityServices.Tests.Table
             result.Should().NotBeNullOrEmpty();
         }
 
-        [PrettyFact]
+        [TestMethod]
         public void Should_Throw_Exception_Where_Filter_Argument_WasNot_Only_A_Property_Selector()
         {
             var builder = new MockedExpressionBuilder<PersonEntity>();
@@ -42,7 +43,7 @@ namespace Azure.EntityServices.Tests.Table
             .WithMessage("Given Expression should be a valid property selector");
         }
 
-        [PrettyFact]
+        [TestMethod]
         public void Should_Build_Mixed_Query_Selector_Expression_With_Default_Instructions()
         {
             var builder = new MockedExpressionBuilder<PersonEntity>();
@@ -60,10 +61,10 @@ namespace Azure.EntityServices.Tests.Table
             .And(p => p.Enabled).NotEqual(true);
             var result = builder.Build();
 
-            result.Should().Be("Rowkey Equal '$Id-%+c5JcwURUajaem4NtAapw' And City NotEqual 'Paris' And Created GreaterThan '21/04/2012 18:25:43 +00:00' And Created GreaterThan '21/04/2012 18:25:43 +00:00' And _MoreThanOneAddress GreaterThan '21/04/2012 18:25:43 +00:00' And Enabled NotEqual 'True'");
+            result.Should().Be("Rowkey Equal '$Id-%+c5JcwURUajaem4NtAapw' And City NotEqual 'Paris' And Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' And Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' And _MoreThanOneAddress GreaterThan '2012-04-21T18:25:43.0000000+00:00' And Enabled NotEqual 'True'");
         }
 
-        [PrettyFact]
+        [TestMethod]
         public void Should_BuildGroup_Query_Expression_With_DefaultInstructions()
         {
             var builder = new MockedExpressionBuilder<PersonEntity>();
@@ -82,10 +83,10 @@ namespace Azure.EntityServices.Tests.Table
 
             queryStr.Trim()
                 .Should()
-                .Be("TenantId Equal '10' And (Created GreaterThan '21/04/2012 18:25:43 +00:00' And LastName Equal 'test' Or Created LessThan '21/04/2012 18:25:43 +00:00') Not Enabled Equal 'True' And (Created GreaterThan '21/04/2012 18:25:43 +00:00' Or Created LessThan '21/04/2012 18:25:43 +00:00')");
+                .Be("TenantId Equal '10' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' And LastName Equal 'test' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00') Not Enabled Equal 'True' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00')");
         }
 
-        [PrettyFact]
+        [TestMethod]
         public void Should_Build_TableStorage_Query_Expression()
         {
             var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
@@ -105,7 +106,7 @@ namespace Azure.EntityServices.Tests.Table
                 .Be("PartitionKey eq 'Tenant-1' and TenantId eq '10' and (Created gt datetime'2012-04-21T18:25:43.0000000Z' or Created lt datetime'2012-04-21T18:25:43.0000000Z') not Enabled eq true");
         }
 
-        [PrettyFact]
+        [TestMethod]
         public void Should_Build_Table_Storage_Advanced_Query_Expression()
         {
             var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
