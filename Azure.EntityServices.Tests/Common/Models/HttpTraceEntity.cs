@@ -2,6 +2,7 @@
 
 namespace Azure.EntityServices.Tests.Common.Models
 {
+     
     public class HttpTraceEntity
     {
         public OperationType OperationType { get; set; }

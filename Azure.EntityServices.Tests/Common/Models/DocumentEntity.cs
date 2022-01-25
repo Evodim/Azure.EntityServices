@@ -11,7 +11,8 @@ namespace Azure.EntityServices.Tests.Common.Models
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
         public DocumentType DocumentType { get; set; }
-        public string MimeType { get; set; }
+        public string MimeType { get; set; } 
+        public string Extension { get; set; }
         public long Size { get; set; }
         public decimal Price { get; set; }
         public byte[] Certificate { get; set; }

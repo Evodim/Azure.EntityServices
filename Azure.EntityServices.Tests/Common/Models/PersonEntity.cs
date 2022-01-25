@@ -38,7 +38,7 @@ namespace Azure.EntityServices.Tests.Common.Models
 
     public enum DocumentType
     {
-        Contact,
+        Contract,
         Avenant,
         Termination
     }
