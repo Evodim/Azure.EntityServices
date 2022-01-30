@@ -22,18 +22,21 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>
     where T : class, new()
     {
-        protected const string DELETED = "DELETED_";
-        protected const string TAG = "TAG_";
-        protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{TAG}";
+        protected const string Deleted_suffix = "_deleted_";
+        protected const string Tag_suffix = "_tag_";
+        protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{Tag_suffix}";
 
         private readonly EntityTableClientConfig<T> _config;
         private readonly EntityTableClientOptions _options;
         private readonly TableClient _client;
         private readonly TableServiceClient _tableService;
         private readonly AsyncRetryPolicy _retryPolicy;
+       
+
 
         public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator = null)
         {
+             
             _options = options;
             _client = new TableClient(options.ConnectionString, options.TableName);
             _tableService = new TableServiceClient(options.ConnectionString)
@@ -162,7 +165,7 @@ namespace Azure.EntityServices.Tables
                 var entityBinder = CreateEntityBinderFromEntity(entity);
 
                 //internal metadata required to be not filtered
-                entityBinder.Metadata.Add(DELETED, false);
+                entityBinder.Metadata.Add(Deleted_suffix, false);
                 BindDynamicProps(entityBinder);
                 BindTags(batchedClient, cleaner, entityBinder);
                 tableEntities.Add(entityBinder);
@@ -183,7 +186,7 @@ namespace Azure.EntityServices.Tables
 
                 //mark indexed tag soft deleted
                 batchedClient.Delete(entityBinder.Bind());
-                foreach (var tag in metadatas.Where(m => m.Key.EndsWith(TAG)))
+                foreach (var tag in metadatas.Where(m => m.Key.EndsWith(Tag_suffix)))
                 {
                     var entityTagBinder = CreateEntityBinderFromEntity(entity, tag.Value.ToString());
                     batchedClient.Delete(entityTagBinder.Bind());
@@ -196,14 +199,14 @@ namespace Azure.EntityServices.Tables
                 throw new EntityTableClientException($"An error occured during the request, partition:{entityBinder?.PartitionKey} rowkey:{entityBinder?.RowKey}", ex);
             }
         }
-
+       
         public async Task<IDictionary<string, object>> GetEntityMetadatasAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default)
         {
-            var metadataKeys = _config.Tags.Keys.Select(k => TagName(k)).ToList();
-            metadataKeys.AddRange(_config.ComputedTags.Select(k => TagName(k)).ToList());
+            var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => TagName(k));
+
             try
             {
-                var response = await _retryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys.ToArray(), cancellationToken));
+                var response = await _retryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
                 var entityBinder = CreateEntityBinderFromTableEntity(response.Value);
                 entityBinder.UnBind();
                 return entityBinder?.Metadata ?? new Dictionary<string, object>();
@@ -279,7 +282,7 @@ namespace Azure.EntityServices.Tables
             try
             {
                 //system metada required to handle logical filtering
-                entityBinder.Metadata.Add(DELETED, false);
+                entityBinder.Metadata.Add(Deleted_suffix, false);
                 BindDynamicProps(entityBinder);
                 var existingMetadatas = await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken);
 
@@ -312,7 +315,7 @@ namespace Azure.EntityServices.Tables
                  .Where("PartitionKey").Equal(partition)
                  .And("RowKey").GreaterThanOrEqual(tagName)
                  .And("RowKey").LessThan($"{tagName}~")
-                 .And(DELETED).Equal(false);
+                 .And(Deleted_suffix).Equal(false);
             if (query != null) baseQuery.And(query);
 
             var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
@@ -350,7 +353,6 @@ namespace Azure.EntityServices.Tables
                 tableEntity.Metadata.Add(prop.Key, prop.Value.Invoke(tableEntity.Entity));
             }
         }
-
         private void BindTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
         {
             var tags = new Dictionary<string, object>();
@@ -373,12 +375,12 @@ namespace Azure.EntityServices.Tables
             if (existingMetadatas != null)
             {
                 //cleanup old indexed tags
-                foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(TAG)))
+                foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(Tag_suffix)))
                 {
                     var tagValue = metadata.Value.ToString();
                     var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
-                    //logical delete, remove it when transaction commited
-                    entityBinder.Metadata.Add(DELETED, true);
+                    //mark tag deleted
+                    entityBinder.Metadata.Add(Deleted_suffix, true);
                     client.InsertOrReplace(entityBinder.Bind());
                     cleaner.Delete(entityBinder.Bind());
                 }
@@ -388,7 +390,7 @@ namespace Azure.EntityServices.Tables
             foreach (var tag in tags)
                 tableEntity.Metadata.Add(tag);
         }
-
+    
         private IEntityBinder<T> CreateEntityBinderFromEntity(T entity, string customRowKey = null)
           => new EntityTableBinder<T>(entity, ResolvePartitionKey(entity), customRowKey ?? ResolvePrimaryKey(entity));
 
