@@ -72,7 +72,9 @@ namespace Azure.EntityServices.Tables
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(string partition, Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var queryExpr = new FilterExpression<T>();
-            var primaryKeyName = ComputePrimaryKey("");
+            //build primaryKey prefix
+            var primaryKeyName = ResolvePrimaryKey("");
+            //apply implicit filter in the query to exclude duplicated tag entities
             var query = queryExpr
               .Where("PartitionKey").Equal(partition)
               .And("RowKey").GreaterThanOrEqual(primaryKeyName)
@@ -92,7 +94,7 @@ namespace Azure.EntityServices.Tables
 
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
         {
-            var rowKey = ComputePrimaryKey(id);
+            var rowKey = ResolvePrimaryKey(id);
             try
             {
                 var response = await _client.GetEntityAsync<TableEntity>(partition, rowKey, select: new string[] { }, cancellationToken);
@@ -122,7 +124,7 @@ namespace Azure.EntityServices.Tables
 
             var propertyKey = BuildTag(tagProperty.GetPropertyInfo(), tagValue);
 
-            await foreach (var page in GetByPropAsync(partition, propertyKey, filter, cancellationToken))
+            await foreach (var page in RunQueryWithIndexedTagAsync(partition, propertyKey, filter, cancellationToken))
             {
                 yield return page;
             }
@@ -136,7 +138,7 @@ namespace Azure.EntityServices.Tables
             }
 
             var tag = BuildTag(tagProperty, tagValue);
-            await foreach (var page in GetByPropAsync(partition, tag, filter, cancellationToken))
+            await foreach (var page in RunQueryWithIndexedTagAsync(partition, tag, filter, cancellationToken))
             {
                 yield return page;
             }
@@ -171,7 +173,7 @@ namespace Azure.EntityServices.Tables
                 tableEntities.Add(entityBinder);
                 batchedClient.Insert(entityBinder.Bind());
                 await batchedClient.AddToTransactionAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken);
-                NotifyChange(entityBinder, EntityOperation.Replace);
+                NotifyChange(entityBinder, EntityOperation.Create);
             }
             await batchedClient.CommitTransactionAsync();
         }
@@ -230,7 +232,7 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return ComputePrimaryKey(_config.PrimaryKeyProp.GetValue(entity));
+            return ResolvePrimaryKey(_config.PrimaryKeyProp.GetValue(entity));
         }
 
         public void AddObserver(string name, IEntityObserver<T> observer)
@@ -307,10 +309,10 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        private async IAsyncEnumerable<IEnumerable<T>> GetByPropAsync(string partition, string tagName, Action<IQueryCompose<T>> query = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        private async IAsyncEnumerable<IEnumerable<T>> RunQueryWithIndexedTagAsync(string partition, string tagName, Action<IQueryCompose<T>> query = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var queryExpr = new FilterExpression<T>();
-
+            //scope query to given tagName
             var baseQuery = queryExpr
                  .Where("PartitionKey").Equal(partition)
                  .And("RowKey").GreaterThanOrEqual(tagName)
@@ -335,7 +337,7 @@ namespace Azure.EntityServices.Tables
             return $"{ComputeKeyConvention(propertyName, strValue)}";
         }
 
-        private string ComputePrimaryKey(object value) => $"${ComputeKeyConvention(_config.PrimaryKeyProp.Name, value)}";
+        private string ResolvePrimaryKey(object value) => $"${ComputeKeyConvention(_config.PrimaryKeyProp.Name, value)}";
 
         private string CreateRowKey(PropertyInfo property, T entity) => $"{ComputeKeyConvention(property.Name, property.GetValue(entity).ToInvariantString())}{ResolvePrimaryKey(entity)}";
 
