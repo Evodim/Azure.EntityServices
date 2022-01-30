@@ -31,12 +31,9 @@ namespace Azure.EntityServices.Tables
         private readonly TableClient _client;
         private readonly TableServiceClient _tableService;
         private readonly AsyncRetryPolicy _retryPolicy;
-       
-
 
         public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator = null)
         {
-             
             _options = options;
             _client = new TableClient(options.ConnectionString, options.TableName);
             _tableService = new TableServiceClient(options.ConnectionString)
@@ -146,10 +143,25 @@ namespace Azure.EntityServices.Tables
 
         public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
         {
-            return UpdateEntity(entity, EntityOperation.Replace, cancellationToken);
+            return UpdateEntity(entity, EntityOperation.AddOrReplace, cancellationToken);
         }
 
         public Task AddOrMergeAsync(T entity, CancellationToken cancellationToken = default)
+        {
+            return UpdateEntity(entity, EntityOperation.AddOrMerge, cancellationToken);
+        }
+
+        public Task AddAsync(T entity, CancellationToken cancellationToken = default)
+        {
+            return UpdateEntity(entity, EntityOperation.Add, cancellationToken);
+        }
+
+        public Task ReplaceAsync(T entity, CancellationToken cancellationToken = default)
+        {
+            return UpdateEntity(entity, EntityOperation.Replace, cancellationToken);
+        }
+
+        public Task MergeAsync(T entity, CancellationToken cancellationToken = default)
         {
             return UpdateEntity(entity, EntityOperation.Merge, cancellationToken);
         }
@@ -166,14 +178,14 @@ namespace Azure.EntityServices.Tables
 
                 var entityBinder = CreateEntityBinderFromEntity(entity);
 
-                //internal metadata required to be not filtered
+                 //system metada required to handle implicit tag updates
                 entityBinder.Metadata.Add(Deleted_suffix, false);
                 BindDynamicProps(entityBinder);
                 BindTags(batchedClient, cleaner, entityBinder);
                 tableEntities.Add(entityBinder);
                 batchedClient.Insert(entityBinder.Bind());
                 await batchedClient.AddToTransactionAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken);
-                NotifyChange(entityBinder, EntityOperation.Create);
+                NotifyChange(entityBinder, EntityOperation.Add);
             }
             await batchedClient.CommitTransactionAsync();
         }
@@ -201,7 +213,7 @@ namespace Azure.EntityServices.Tables
                 throw new EntityTableClientException($"An error occured during the request, partition:{entityBinder?.PartitionKey} rowkey:{entityBinder?.RowKey}", ex);
             }
         }
-       
+
         public async Task<IDictionary<string, object>> GetEntityMetadatasAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default)
         {
             var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => TagName(k));
@@ -283,21 +295,38 @@ namespace Azure.EntityServices.Tables
             var entityBinder = CreateEntityBinderFromEntity(entity);
             try
             {
-                //system metada required to handle logical filtering
+                //system metada required to handle implicit tag updates
                 entityBinder.Metadata.Add(Deleted_suffix, false);
                 BindDynamicProps(entityBinder);
                 var existingMetadatas = await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken);
 
                 BindTags(client, cleaner, entityBinder, existingMetadatas);
+                switch (operation)
+                {
+                    case EntityOperation.Add:
+                        client.Insert(entityBinder.Bind());
+                        break;
+                    case EntityOperation.AddOrMerge:
+                        client.InsertOrMerge(entityBinder.Bind());
+                        break;
+                    case EntityOperation.AddOrReplace:
+                        client.InsertOrReplace(entityBinder.Bind());
+                        break;
+                    case EntityOperation.Replace:
+                        client.Replace(entityBinder.Bind());
+                        break;
+                    case EntityOperation.Merge:
+                        client.Merge(entityBinder.Bind());
+                        break;
 
-                if (operation == EntityOperation.Replace)
-                {
-                    client.InsertOrReplace(entityBinder.Bind());
+                    case EntityOperation.Delete:
+                        client.Delete(entityBinder.Bind());
+                        break; 
+                    default:
+                        throw new NotImplementedException($"{operation} operation not supported");
+
                 }
-                else if (operation == EntityOperation.Merge)
-                {
-                    client.InsertOrMerge(entityBinder.Bind());
-                }
+             
 
                 await client.ExecuteAsync(cancellationToken);
                 NotifyChange(entityBinder, operation);
@@ -355,6 +384,7 @@ namespace Azure.EntityServices.Tables
                 tableEntity.Metadata.Add(prop.Key, prop.Value.Invoke(tableEntity.Entity));
             }
         }
+
         private void BindTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
         {
             var tags = new Dictionary<string, object>();
@@ -392,7 +422,7 @@ namespace Azure.EntityServices.Tables
             foreach (var tag in tags)
                 tableEntity.Metadata.Add(tag);
         }
-    
+
         private IEntityBinder<T> CreateEntityBinderFromEntity(T entity, string customRowKey = null)
           => new EntityTableBinder<T>(entity, ResolvePartitionKey(entity), customRowKey ?? ResolvePrimaryKey(entity));
 
@@ -414,20 +444,17 @@ namespace Azure.EntityServices.Tables
 
         private static bool HandleStorageException(string tableName, TableServiceClient tableService, bool createTableIfNotExists, RequestFailedException requestFailedException)
         {
-            if (createTableIfNotExists && (requestFailedException?.ErrorCode == "TableNotFound" ||
-             requestFailedException?.ErrorCode == "TableBeingDeleted"))
+            if (createTableIfNotExists && (requestFailedException?.ErrorCode == "TableNotFound"))
             {
                 tableService.CreateTableIfNotExists(tableName);
                 return true;
             }
-            if (requestFailedException?.ErrorCode == "OperationTimedOut")
-            {
+        
+            if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
+            { 
                 return true;
             }
-            if (requestFailedException != null)
-            {
-                throw requestFailedException;
-            }
+           
             return false;
         }
 

@@ -2,10 +2,11 @@
 {
     public enum EntityOperation
     {
-        Create,
-        Update,
+        Add, 
         Merge,
         Replace,
+        AddOrMerge,
+        AddOrReplace,
         Delete
     }
 }

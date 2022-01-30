@@ -9,13 +9,13 @@
         public EntityTableClientOptions(string connectionString,
             string tableName,
             int maxParallelTasks = 10,
-            int maxItemsPerInsertion = 2000,
+            int maxItemsPerBatch = 2000,
             bool createTableIfNotExists = false)
         {
             ConnectionString = connectionString;
             TableName = tableName;
             MaxParallelTasks = maxParallelTasks;
-            MaxItemsPerInsertion = maxItemsPerInsertion;
+            MaxItemsPerInsertion = maxItemsPerBatch;
             CreateTableIfNotExists = createTableIfNotExists;
         }
 
