@@ -28,16 +28,26 @@ namespace Azure.EntityServices.Tests.Table
 
         public void OnNext(IEntityOperationContext<PersonEntity> operation)
         {
-            if (operation.TableOperation == EntityOperation.Replace)
+            switch(operation.TableOperation)
+
             {
-                Persons.TryAdd(operation.Partition + operation.Entity.PersonId, operation.Entity);
-                Interlocked.Increment(ref _created);
+                case EntityOperation.Delete:
+                    Persons.Remove(operation.Partition + operation.Entity.PersonId, out var _);
+                    Interlocked.Increment(ref _deleted);
+                    break;
+                case EntityOperation.Add:
+                case EntityOperation.AddOrMerge:
+                case EntityOperation.AddOrReplace:
+                    Persons.TryAdd(operation.Partition + operation.Entity.PersonId, operation.Entity);
+                    Interlocked.Increment(ref _created);
+                    break;
+                case EntityOperation.Merge:
+                case EntityOperation.Replace:
+                    
+                default:break;
+
             }
-            if (operation.TableOperation == EntityOperation.Delete)
-            {
-                Persons.Remove(operation.Partition + operation.Entity.PersonId, out var _);
-                Interlocked.Increment(ref _deleted);
-            }
+       
         }
     }
 }

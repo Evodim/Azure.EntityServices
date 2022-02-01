@@ -227,10 +227,10 @@ namespace Azure.EntityServices.Tables
             }
             catch (RequestFailedException ex)
             {
-                //ignore resource not found exceptions
+                //return null reference when existing entity was not found
                 if (ex.ErrorCode == "ResourceNotFound")
                 {
-                    return new Dictionary<string, object>();
+                    return default;
                 }
                 throw new EntityTableClientException($"An error occured during the request, partition:{partitionKey} rowkey:{rowKey}", ex);
             }
@@ -297,8 +297,13 @@ namespace Azure.EntityServices.Tables
             {
                 //system metada required to handle implicit tag updates
                 entityBinder.Metadata.Add(Deleted_suffix, false);
-                BindDynamicProps(entityBinder);
-                var existingMetadatas = await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken);
+                BindDynamicProps(entityBinder); 
+                
+                //we don't need to retrieve existing entity metadata for add operation 
+                    var existingMetadatas = (operation != EntityOperation.Add)?
+                            await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
+                            : null;
+                
 
                 BindTags(client, cleaner, entityBinder, existingMetadatas);
                 switch (operation)
@@ -326,8 +331,6 @@ namespace Azure.EntityServices.Tables
                         throw new NotImplementedException($"{operation} operation not supported");
 
                 }
-             
-
                 await client.ExecuteAsync(cancellationToken);
                 NotifyChange(entityBinder, operation);
                 await cleaner.ExecuteAsync(cancellationToken);
