@@ -76,4 +76,4 @@ jobs:
 
       # Publish the package to Azure Artifacts
       - name: 'dotnet publish'        
-        run: dotnet nuget push --api-key AzureArtifacts **/bin/Release/*.nupkg
+        run: dotnet nuget push --api-key AzureArtifacts src/Azure.EntityServices.*/bin/Release/*.nupkg
