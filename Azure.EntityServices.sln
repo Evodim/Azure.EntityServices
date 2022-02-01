@@ -9,15 +9,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Tests", "Azure.EntityServices.Tests\Azure.EntityServices.Tests.csproj", "{F529F568-9D6F-401E-9F5E-2392C7EF65CD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Tests", "tests\Azure.EntityServices.Tests\Azure.EntityServices.Tests.csproj", "{F529F568-9D6F-401E-9F5E-2392C7EF65CD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Samples", "Azure.EntityServices.Samples\Azure.EntityServices.Samples.csproj", "{B324D01D-E6AC-4CA2-9566-794C8E9CA1C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Samples", "samples\Azure.EntityServices.Samples\Azure.EntityServices.Samples.csproj", "{B324D01D-E6AC-4CA2-9566-794C8E9CA1C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Tables", "Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj", "{32A4F986-5049-4A87-81A4-7DA7A68E2A8D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Tables", "src\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj", "{32A4F986-5049-4A87-81A4-7DA7A68E2A8D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Queries", "Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj", "{713D44EB-63CD-4B78-8F8A-DAEAA55F377E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Queries", "src\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj", "{713D44EB-63CD-4B78-8F8A-DAEAA55F377E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Blobs", "Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj", "{4019B11A-8481-4BE3-8B61-01F9FD0AEC5E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Blobs", "src\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj", "{4019B11A-8481-4BE3-8B61-01F9FD0AEC5E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

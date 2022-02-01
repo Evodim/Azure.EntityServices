@@ -24,6 +24,11 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<NoWarn>1701;1702;1705;1591</NoWarn>		
 	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Properties\**" />
+	  <EmbeddedResource Remove="Properties\**" />
+	  <None Remove="Properties\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Azure.Data.Tables" Version="12.3.0" />
@@ -35,18 +40,12 @@
 		<PackageReference Include="Polly" Version="7.2.2" />
 		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<None Include="..\LICENSE">
+		<None Include="..\..\LICENSE" Link="LICENSE">
+			<PackagePath></PackagePath> 
 			<Pack>True</Pack>
-			<PackagePath></PackagePath>
 		</None>
 	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Properties\" />
-	</ItemGroup>
-
 	<ItemGroup>
 	  <ProjectReference Include="..\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj" />
 	</ItemGroup>

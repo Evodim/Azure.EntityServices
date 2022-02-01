@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
-    <ProjectReference Include="..\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj" />
+    <ProjectReference Include="..\..\src\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
+    <ProjectReference Include="..\..\src\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj" />
   </ItemGroup>
 
 </Project>

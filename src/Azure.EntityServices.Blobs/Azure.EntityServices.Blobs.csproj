@@ -23,7 +23,7 @@
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 	<ItemGroup>
-	  <None Include="..\LICENSE" Link="LICENSE">
+	  <None Include="..\..\LICENSE" Link="LICENSE">
 	    <PackagePath></PackagePath>
 	    <Pack>True</Pack>
 	  </None>
