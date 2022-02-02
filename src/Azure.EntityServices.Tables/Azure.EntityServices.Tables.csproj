@@ -17,8 +17,7 @@
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>azure, entity, services, tables</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup>
-		<MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -18,8 +18,7 @@
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>azure, entity, services, blob</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup>
-		<MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 	<ItemGroup>

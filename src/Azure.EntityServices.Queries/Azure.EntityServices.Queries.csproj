@@ -22,8 +22,7 @@
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>entiy, azure, storage, services, queries</PackageTags>
 	</PropertyGroup>
-	<PropertyGroup>
-		<MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 	<ItemGroup>
