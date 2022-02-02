@@ -12,6 +12,9 @@ env:
   BUILD_CONFIGURATION: 'Release'    # set this to the appropriate build configuration
   DOTNET_VERSION: '6.x' 
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
+  MinVerMinimumMajorMinor: '1.0'
+  MinVerTagPrefix: 'v'
+  MinVerDefaultPreReleasePhase: 'preview'
 
 jobs:
   build:
@@ -24,7 +27,7 @@ jobs:
      # Retrieve minVer version
       - name: Set APP_VERSION based on repo w/MinVer
         run: |
-          dotnet tool install -g minver-cli -m 1.0.0 -t v -d preview -v q
+          dotnet tool install -g minver-cli -v q
           APP_VERSION=`minver`
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
