@@ -20,7 +20,7 @@ Features:
 * Lightweight and extensible query expression builder (used to build query filter expressions)
 * Entity table observers, subscribe and apply side effects when any entity changed (experimental)
  
-### How it works?
+## How it works?
 
 EntityTableClient bind any classes (entities) to Entity table storage
 This binding allows to have more control when entity was stored of readed from the table storage
