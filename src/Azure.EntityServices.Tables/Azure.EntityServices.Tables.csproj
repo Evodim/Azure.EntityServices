@@ -16,6 +16,7 @@
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>azure, entity, services, tables</PackageTags>
+		<Description>Entity Table services for Azure storage</Description>
 	</PropertyGroup>
 	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>

@@ -21,6 +21,7 @@
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>entiy, azure, storage, services, queries</PackageTags>
+		<Description>Entity Query services for Azure storage</Description>
 	</PropertyGroup>
 	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>

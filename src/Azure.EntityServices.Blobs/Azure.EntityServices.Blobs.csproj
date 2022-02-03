@@ -17,6 +17,7 @@
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>azure, entity, services, blob</PackageTags>
+		<Description>Entity Blob services for Azure storage</Description>
 	</PropertyGroup>
 	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>
