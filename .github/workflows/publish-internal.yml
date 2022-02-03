@@ -1,4 +1,4 @@
-name: publish internal
+name: PR internal deployment
 
 on:
   pull_request:

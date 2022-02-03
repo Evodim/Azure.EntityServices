@@ -1,4 +1,5 @@
-name: publish public
+name: MAIN public deployment
+
 
 on:  
   push:
