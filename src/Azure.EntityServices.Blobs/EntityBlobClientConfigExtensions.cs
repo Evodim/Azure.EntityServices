@@ -39,7 +39,7 @@ namespace Azure.EntityServices.Blobs
         {
             var property = selector.GetPropertyInfo();
 
-            config?.Indexes.Add(property.Name, property);
+            config?.Tags.Add(property.Name, property);
             return config;
         }
 

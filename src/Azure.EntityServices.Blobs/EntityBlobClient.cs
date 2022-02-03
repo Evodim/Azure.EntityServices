@@ -76,7 +76,7 @@ namespace Azure.EntityServices.Blobs
                 
             }; 
             await _blobStorageService.UploadAsync($"{entityPath}/{ResolveEntityName(entity)}", binaryContent.ToStream(),
-            BuildAllIndexes(entity), BuildAllProps(entity));
+            BuildAllTags(entity), BuildAllProps(entity));
             return entity;
         }
 
@@ -130,9 +130,9 @@ namespace Azure.EntityServices.Blobs
                  .Select(p => new KeyValuePair<string, string>(p.Name, ValueToBlob(p.GetValue(entity))));
         }
 
-        private IEnumerable<KeyValuePair<string, string>> BuildIndexes(T entity)
+        private IEnumerable<KeyValuePair<string, string>> BuildTags(T entity)
         {
-            return _config.Indexes
+            return _config.Tags
                 .Select(p => new KeyValuePair<string, string>(p.Key, ValueToBlob(p.Value.GetValue(entity))));
         }
 
@@ -143,9 +143,9 @@ namespace Azure.EntityServices.Blobs
                    .AsDictionnary();
         }
 
-        private IDictionary<string, string> BuildAllIndexes(T entity)
+        private IDictionary<string, string> BuildAllTags(T entity)
         {
-            return BuildIndexes(entity)
+            return BuildTags(entity)
                  .Union(BuildComputedIndexes(entity))
                  .AsDictionnary();
         }
