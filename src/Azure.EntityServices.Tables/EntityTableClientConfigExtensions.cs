@@ -50,5 +50,13 @@ namespace Azure.EntityServices.Tables
             config.Observers.TryRemove(observerName, out var _);
             return config;
         }
+
+        public static EntityTableClientConfig<T> IgnoreProp<T, P>(this EntityTableClientConfig<T> config, Expression<Func<T, P>> selector)
+        {
+            var property = selector.GetPropertyInfo();
+
+            config?.IgnoredProps.Add(property);
+            return config;
+        }
     }
 }

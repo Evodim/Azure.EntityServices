@@ -427,10 +427,10 @@ namespace Azure.EntityServices.Tables
         }
 
         private IEntityBinder<T> CreateEntityBinderFromEntity(T entity, string customRowKey = null)
-          => new EntityTableBinder<T>(entity, ResolvePartitionKey(entity), customRowKey ?? ResolvePrimaryKey(entity));
+          => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), customRowKey ?? ResolvePrimaryKey(entity), _config.IgnoredProps);
 
         private IEntityBinder<T> CreateEntityBinderFromTableEntity(TableEntity tableEntity)
-            => new EntityTableBinder<T>(tableEntity);
+            => new TableEntityBinder<T>(tableEntity, _config.IgnoredProps);
 
         private TableBatchClient CreateTableBatchClient()
         {

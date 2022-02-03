@@ -47,7 +47,29 @@ namespace Azure.EntityServices.Tests.Table
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
         }
+        [TestMethod]
+        public async Task Should_Ignore_Entity_Prop()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
 
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                 SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .IgnoreProp(p=>p.Genre)                
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+
+            await entityTable.AddOrReplaceAsync(person);
+            person.Genre = Genre.Female;
+            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            created.Genre.Should().Be(default);
+            created.Should().BeEquivalentTo(person, options => options.Excluding(e => e.Genre));
+
+        }
         [TestMethod]
         public async Task Should_Get_By_Indexed_Prop_With_Filter()
         {

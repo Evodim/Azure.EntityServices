@@ -31,7 +31,7 @@ namespace Azure.EntityServices.Tests.Table
             //enum
             person.Situation = Situation.Divorced;
 
-            var tableEntity = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var tableEntity = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
@@ -39,7 +39,7 @@ namespace Azure.EntityServices.Tests.Table
 
                 var result = await ReplaceThenRetrieveAsync(client, tableEntity.Bind());
 
-                var binderResult = new EntityTableBinder<PersonEntity>(result);
+                var binderResult = new TableEntityBinder<PersonEntity>(result);
 
                 var entity = binderResult.UnBind();
 
@@ -59,7 +59,7 @@ namespace Azure.EntityServices.Tests.Table
             var partitionName = Guid.NewGuid().ToString();
 
             var person = Fakers.CreateFakePerson().Generate();
-            var binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
 
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
@@ -67,10 +67,10 @@ namespace Azure.EntityServices.Tests.Table
                 await client.CreateIfNotExistsAsync();
 
                 await ReplaceThenRetrieveAsync(client, binder.Bind());
-                binder = new EntityTableBinder<PersonEntity>(new PersonEntity() { PersonId = person.PersonId, FirstName = "John Do" }, partitionName, person.PersonId.ToString());
+                binder = new TableEntityBinder<PersonEntity>(new PersonEntity() { PersonId = person.PersonId, FirstName = "John Do" }, partitionName, person.PersonId.ToString());
 
                 var merged = await MergeThenRetrieveAsync(client, binder.Bind());
-                var binderResult = new EntityTableBinder<PersonEntity>(merged);
+                var binderResult = new TableEntityBinder<PersonEntity>(merged);
                 var entity = binderResult.UnBind();
 
                 //Only Nullable value and reference types are preserved in merge operation
@@ -99,10 +99,10 @@ namespace Azure.EntityServices.Tests.Table
                 var partitionName = Guid.NewGuid().ToString();
 
                 var person = Fakers.CreateFakePerson().Generate();
-                var binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
 
                 var replaced = await ReplaceThenRetrieveAsync(client, binder.Bind());
-                var binderResult = new EntityTableBinder<PersonEntity>(replaced);
+                var binderResult = new TableEntityBinder<PersonEntity>(replaced);
 
                 binderResult.UnBind();
 
@@ -126,16 +126,16 @@ namespace Azure.EntityServices.Tests.Table
                 var partitionName = Guid.NewGuid().ToString();
                 var person = Fakers.CreateFakePerson().Generate();
 
-                var binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.Metadata.Add("_HasChildren", true);
                 binder.Metadata.Add("_Deleted", false);
 
                 await ReplaceThenRetrieveAsync(client, binder.Bind());
-                binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.Metadata.Add("_HasChildren", false);
 
                 var replaced = await ReplaceThenRetrieveAsync(client, binder.Bind());
-                var binderResult = new EntityTableBinder<PersonEntity>(replaced);
+                var binderResult = new TableEntityBinder<PersonEntity>(replaced);
                 binderResult.UnBind();
 
                 binderResult.Entity.Should().BeEquivalentTo(person);
@@ -160,18 +160,18 @@ namespace Azure.EntityServices.Tests.Table
 
                 var person = Fakers.CreateFakePerson().Generate();
 
-                var binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.Metadata.Add("_HasChildren", true);
                 binder.Metadata.Add("_Deleted", true);
                 binder.Bind();
 
                 await ReplaceThenRetrieveAsync(client, binder.Bind());
 
-                binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.Metadata.Add("_HasChildren", false);
 
                 var merged = await MergeThenRetrieveAsync(client, binder.Bind());
-                var binderResult = new EntityTableBinder<PersonEntity>(merged);
+                var binderResult = new TableEntityBinder<PersonEntity>(merged);
 
                 binderResult.UnBind();
 
@@ -202,12 +202,12 @@ namespace Azure.EntityServices.Tests.Table
                 person.Created = null;
                 person.Situation = null;
 
-                var binder = new EntityTableBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
 
                 await client.UpsertEntityAsync(binder.Bind());
                 var created = await client.GetEntityAsync<TableEntity>(binder.PartitionKey, binder.RowKey);
 
-                var createdEntity = new EntityTableBinder<PersonEntity>(created).UnBind();
+                var createdEntity = new TableEntityBinder<PersonEntity>(created).UnBind();
 
                 createdEntity.Altitude.Should().Be(person.Altitude);
                 createdEntity?.Distance.Should().Be(person.Distance);
