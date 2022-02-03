@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup> 
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+	<PropertyGroup> 
+		<Company>Evodim</Company>
+		<Product>Azure.EntityServices</Product>
+		<Authors>Evodim</Authors>
+		<Copyright>Evodim Solutions - 2022</Copyright>
+		<PackageId>Azure.EntityServices.Tables</PackageId>
+		<PackageLicenseExpression></PackageLicenseExpression>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild> 
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<RepositoryUrl>https://github.com/Evodim/Azure.EntityServices</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
+		<PackageTags>azure, entity, services, tables</PackageTags>
+		<Description>Entity Table services for Azure storage</Description>
+	</PropertyGroup>
+	<PropertyGroup> 
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>1701;1702;1705;1591</NoWarn>		
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Properties\**" />
+	  <EmbeddedResource Remove="Properties\**" />
+	  <None Remove="Properties\**" />
+	</ItemGroup>
+<ItemGroup>
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Azure.Data.Tables" Version="12.3.0" />
+		<PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="1.0.8" />
+		<PackageReference Include="MinVer" Version="2.5.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Polly" Version="7.2.2" />
+		
+		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.11.1" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj" />
+	</ItemGroup>
+
+</Project>

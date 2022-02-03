@@ -1,0 +1,49 @@
+name: PR internal deployment
+
+on:
+  pull_request:
+    branches: [ main ] 
+env:
+  AZURE_ARTIFACTS_FEED_URL: https://pkgs.dev.azure.com/evodim/_packaging/evodim-feed/nuget/v3/index.json    
+  BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
+  DOTNET_VERSION: '6.x' 
+  TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
+  MinVerMinimumMajorMinor: '1.0'
+  MinVerTagPrefix: 'v'
+  MinVerDefaultPreReleasePhase: 'pr-${{ github.event.pull_request.head.ref }}-${{ github.run_number }}'
+
+jobs: 
+  az-artifacts-build-and-deploy-private: 
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repo
+      - uses: actions/checkout@v2
+        with:
+            fetch-depth: 0
+     # Retrieve minVer version
+      - name: Set APP_VERSION based on repo w/MinVer
+        run: |
+          dotnet tool install -g minver-cli -v q
+          APP_VERSION=`minver`
+          echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
+
+      # Setup .NET Core SDK dqsdqs
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          source-url: ${{ env.AZURE_ARTIFACTS_FEED_URL }}
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.AZURE_ARTIFACTS_PAT }} 
+
+      # Run dotnet build and package
+      - name: dotnet build and publish
+        run: |
+          dotnet restore
+          dotnet build --configuration '${{ env.BUILD_CONFIGURATION }}'  --version-suffix '${{ env.APP_VERSION }}'
+          dotnet pack -c '${{ env.BUILD_CONFIGURATION }}' --no-build --version-suffix '${{ env.APP_VERSION }}'
+
+      # Publish the package to Azure Artifacts
+      - name: 'dotnet publish'        
+        run: dotnet nuget push --api-key AzureArtifacts src/Azure.EntityServices.*/bin/Release/*.nupkg
