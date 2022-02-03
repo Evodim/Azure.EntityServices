@@ -8,7 +8,7 @@ on:
      - v[0-9]+.[0-9]+.[0-9]+  
 
 env:
-  AZURE_ARTIFACTS_FEED_URL: https://pkgs.dev.azure.com/evodim/_packaging/evodim-feed/nuget/v3/index.json    
+  AZURE_ARTIFACTS_FEED_URL: https://api.nuget.org/v3/index.json   
   BUILD_CONFIGURATION: 'Release'    # set this to the appropriate build configuration
   DOTNET_VERSION: '6.x' 
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
@@ -61,15 +61,6 @@ jobs:
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
 
-      # Setup .NET Core SDK
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          source-url: ${{ env.AZURE_ARTIFACTS_FEED_URL }}
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.AZURE_ARTIFACTS_PAT }} 
-
       # Run dotnet build and package
       - name: dotnet build and publish
         run: |
@@ -79,4 +70,4 @@ jobs:
 
       # Publish the package to Azure Artifacts
       - name: 'dotnet publish'        
-        run: dotnet nuget push --api-key AzureArtifacts src/Azure.EntityServices.*/bin/Release/*.nupkg
+        run: dotnet nuget push src/Azure.EntityServices.*/bin/Release/*.nupkg --api-key {{ secrets.NUGET_API_KEY }}  --source https://api.nuget.org/v3/index.json
