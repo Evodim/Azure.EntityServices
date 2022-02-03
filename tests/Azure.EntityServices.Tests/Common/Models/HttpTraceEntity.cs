@@ -13,5 +13,8 @@ namespace Azure.EntityServices.Tests.Common.Models
         public string MimeType { get; set; }
         public string Name { get; set; }
         public BinaryData Body { get; set; }
+        public string BodyString { get; set; }
+        public object BodyObject { get; set; }
+       
     }
 }

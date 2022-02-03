@@ -32,7 +32,7 @@ namespace Azure.EntityServices.Blob.Tests
         [TestMethod]
         public async Task Should_Add_Then_Get_Entity()
         {
-            var doc = Fakers.CreateFakedDoc().Generate(1).First(); 
+            var doc = Fakers.CreateFakedDoc().Generate(1).First();
             var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
                 config
                  .SetBlobContentProp(p => p.Content)
@@ -108,29 +108,53 @@ namespace Azure.EntityServices.Blob.Tests
             createdContent.Should().NotBeNull();
             createdContent.ToMD5().Should().Be(createdContent.ToMD5());
         }
+
         [TestMethod]
-        public async Task Should_Store_Entity_Content_As_Json_BinaryData()
+        public async Task Should_Store_Entity_Content_As_String()
         {
             var trace = Fakers.CreateFakedHttpTraceEntity().Generate(1).First();
-            var bodyContent = Fakers.CreateFakePerson().Generate(1).First();
-            trace.Body = BinaryData.FromObjectAsJson(bodyContent);
+            var client = new EntityBlobClient<HttpTraceEntity>(CreateDefaultOptions<HttpTraceEntity>(),
+
+                config => config
+                .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
+                .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
+                .SetBlobContentProp(e => e.BodyString)
+                .IgnoreProp(e => e.Body)
+
+                );
+
+            await client.AddOrReplaceAsync(trace);
+            var createdContent = await client.GetContentAsync(trace);
+
+            createdContent.Should().NotBeNull();
+            createdContent.ToString().Should().Be(trace.BodyString);
+        }
+
+        [TestMethod]
+        public async Task Should_Store_Entity_Content_As_Json()
+        {
+            var trace = Fakers.CreateFakedHttpTraceEntity().Generate(1).First();
+            var person = Fakers.CreateFakePerson().Generate(1);
+            trace.BodyObject = person;
 
             var client = new EntityBlobClient<HttpTraceEntity>(CreateDefaultOptions<HttpTraceEntity>(),
 
                 config => config
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
-                .SetBlobContentProp(e => e.Body));
-               
+                .SetBlobContentProp(e => e.BodyObject)
+                .IgnoreProp(e => e.Body)
+
+                );
 
             await client.AddOrReplaceAsync(trace);
-            var createdContent = await client.GetContentAsync(trace);  
-
-            var typedBodyContent = createdContent.ToObjectFromJson<PersonEntity>();
+            var createdContent = await client.GetContentAsync(trace);
 
             createdContent.Should().NotBeNull();
-            typedBodyContent.Should().BeEquivalentTo(bodyContent);
+            var contentAsPerson = createdContent.ToObjectFromJson<List<PersonEntity>>();
+            contentAsPerson.Should().BeEquivalentTo(person);
         }
+
         [TestMethod]
         public async Task Should_Use_Computed_Prop_With_BinaryData_Content()
         {
@@ -141,7 +165,7 @@ namespace Azure.EntityServices.Blob.Tests
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
                 .AddComputedProp("MD5", e => e.Body.ToMD5()));
-                
+
             await client.AddOrReplaceAsync(trace);
             var reference = client.GetEntityReference(trace);
             var props = await client.GetPropsAsync(reference);
@@ -197,7 +221,7 @@ namespace Azure.EntityServices.Blob.Tests
             .Where(p => p.Name)
             .Equal(docs.First().Name)
             .And(p => p.Reference)
-            .Equal(docs.First().Reference)))          
+            .Equal(docs.First().Reference)))
 
             {
                 readedEntities.AddRange(doc);
@@ -215,7 +239,7 @@ namespace Azure.EntityServices.Blob.Tests
                 .SetBlobContentProp(p => p.Content)
                 .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
                 .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
-                .AddComputedProp("_CreatedSince6Month",p=>p.Created > DateTimeOffset.UtcNow)
+                .AddComputedProp("_CreatedSince6Month", p => p.Created > DateTimeOffset.UtcNow)
                 .AddTag(p => p.Reference)
                 .AddTag(p => p.Name)
                 .AddTag("_CreatedSince6Month"));
@@ -252,7 +276,7 @@ namespace Azure.EntityServices.Blob.Tests
             var reference = client.GetEntityReference(doc);
 
             var props = await client.GetPropsAsync(reference);
-            
+
             props["_EntityPath"].Should().Be($"{nameof(DocumentEntity)}/{DateTimeOffset.UtcNow:yyyy/MM/dd}");
             props["_EntityName"].Should().Be($"{doc.Name}-{doc.Reference}.{doc.Extension}");
         }

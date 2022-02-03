@@ -42,11 +42,15 @@ namespace Azure.EntityServices.Tests.Common.Fakes
             .RuleFor(p => p.OperationId, p => Guid.NewGuid().ToString())
             .RuleFor(p => p.Name, f => f.PickRandom("Session_PUT", "Session_PATH", "Session_START", "Session_STOP"))
             .RuleFor(p => p.Body, f => new BinaryData(DownloadImage(f.Image.LoremFlickrUrl()).GetAwaiter().GetResult()))
+            .RuleFor(p => p.BodyString, f =>  f.Lorem.Text())
             .RuleFor(p => p.MimeType, f => "image/png")
             .RuleFor(p => p.OperationType, f => f.PickRandom<OperationType>())
             .RuleFor(p => p.Host, f => f.Image.LoremFlickrUrl())
             .RuleFor(p => p.Timestamp, f => DateTime.UtcNow)
-            .RuleFor(p => p.HttpMethod, f => f.PickRandom<HttpMethod>());
+            .RuleFor(p => p.HttpMethod, f => f.PickRandom<HttpMethod>())
+            .RuleFor(p => p.BodyObject,f=> null);
+
+            
 
             return fake;
         }

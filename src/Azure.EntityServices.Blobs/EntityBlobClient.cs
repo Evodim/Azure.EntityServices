@@ -3,6 +3,7 @@ using Azure.EntityServices.Queries;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -64,8 +65,16 @@ namespace Azure.EntityServices.Blobs
         }
         private async Task<T> AddOrReplaceAsync(string entityPath,T entity)
         {
-            var binaryContent = _config.ContentProp?.GetValue(entity) as BinaryData;
-            binaryContent= binaryContent ?? BinaryData.FromObjectAsJson(binaryContent);
+            var value = _config.ContentProp?.GetValue(entity);
+            var binaryContent = value switch
+            {
+                Stream v => BinaryData.FromStream(v),
+                string v => BinaryData.FromString(v),
+                byte[] v => BinaryData.FromBytes(v),
+                BinaryData v => v,
+                _ => BinaryData.FromObjectAsJson(value)
+                
+            }; 
             await _blobStorageService.UploadAsync($"{entityPath}/{ResolveEntityName(entity)}", binaryContent.ToStream(),
             BuildAllIndexes(entity), BuildAllProps(entity));
             return entity;
