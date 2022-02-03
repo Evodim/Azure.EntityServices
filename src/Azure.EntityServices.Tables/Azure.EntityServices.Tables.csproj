@@ -40,7 +40,7 @@
 		</PackageReference>
 		<PackageReference Include="Polly" Version="7.2.2" />
 		
-		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="5.0.0" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.11.1" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj" />
