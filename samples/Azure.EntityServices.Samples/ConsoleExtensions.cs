@@ -14,8 +14,7 @@ namespace Azure.EntityServices.Samples
             {
                 WriteLineDuration($"{counter.Key} ", counter.Value);
             }
-            Console.WriteLine("Finished");
-            Console.ReadLine();
+             
         }
         private static void WriteLineDuration(string text, IPerfCounter counter)
         {
