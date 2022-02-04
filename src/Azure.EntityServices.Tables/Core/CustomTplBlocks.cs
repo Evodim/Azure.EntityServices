@@ -81,6 +81,9 @@ namespace Azure.EntityServices.Tables.Core
                     await source.SendAsync(group.ToArray());
                     group.Clear();
                 }
+            },new ExecutionDataflowBlockOptions{
+                MaxDegreeOfParallelism = 1,
+                BoundedCapacity = 1
             });
 
             target.Completion.ContinueWith(delegate

@@ -21,8 +21,6 @@ namespace Azure.EntityServices.Tests.Table
             _commonOptions = () => new EntityTableClientOptions()
             {
                 ConnectionString = TestEnvironment.ConnectionString,
-                MaxParallelTransactions = 1,
-                MaxItemInTransaction = 10,
                 CreateTableIfNotExists = true,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}"
             };
@@ -243,8 +241,6 @@ namespace Azure.EntityServices.Tests.Table
             var options = new EntityTableClientOptions()
             {
                 ConnectionString = TestEnvironment.ConnectionString,
-                MaxParallelTransactions = 10,
-                MaxItemInTransaction = 1000,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
                 CreateTableIfNotExists = true,
             };
@@ -282,8 +278,6 @@ namespace Azure.EntityServices.Tests.Table
             var options = new EntityTableClientOptions()
             {
                 ConnectionString = TestEnvironment.ConnectionString,
-                MaxParallelTransactions = 10,
-                MaxItemInTransaction = 1000,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
                 CreateTableIfNotExists = true,
             };

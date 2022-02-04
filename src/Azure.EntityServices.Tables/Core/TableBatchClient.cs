@@ -73,12 +73,12 @@ namespace Azure.EntityServices.Tables.Core
         {
             if (_pipeline == null)
             {
-                _pipeline = CustomTplBlocks.CreatePipeline(async transactions =>
-                {
-                    var client = new TableClient(_connectionString, _tableName);
-                    var batch = transactions.SelectMany(t => t.Actions);
-                    await _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(batch));
-                },
+                _pipeline = CustomTplBlocks.CreatePipeline(transactions =>
+               {
+                   var client = new TableClient(_connectionString, _tableName);
+                   var batch = transactions.SelectMany(t => t.Actions);
+                   return _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(batch));
+               },
             maxItemInBatch: _options.MaxItemInBatch,
             maxItemInTransaction: _options.MaxItemInTransaction,
             maxParallelTasks: _options.MaxParallelTasks

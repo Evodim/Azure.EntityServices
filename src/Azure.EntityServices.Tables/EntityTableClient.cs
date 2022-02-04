@@ -34,6 +34,8 @@ namespace Azure.EntityServices.Tables
 
         public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator = null)
         {
+            _ = options ?? throw new ArgumentNullException(nameof(options));
+
             _options = options;
             _client = new TableClient(options.ConnectionString, options.TableName);
             _tableService = new TableServiceClient(options.ConnectionString)
@@ -55,6 +57,8 @@ namespace Azure.EntityServices.Tables
 
         public EntityTableClient(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
+            _ = options ?? throw new ArgumentNullException(nameof(options));
+
             _options = options;
             _client = new TableClient(options.ConnectionString, options.TableName);
 
@@ -442,8 +446,8 @@ namespace Azure.EntityServices.Tables
                 {
                     TableName = _options.TableName,
                     ConnectionString = _options.ConnectionString,
-                    MaxItemInBatch = _options.MaxItemInBatch,
-                    MaxItemInTransaction = _options.MaxItemInTransaction,
+                    MaxItemInBatch = _options.MaxItemToGroup,
+                    MaxItemInTransaction = _options.MaxOperationPerTransaction,
                     MaxParallelTasks = _options.MaxParallelTransactions
                 }, _retryPolicy
                 )
