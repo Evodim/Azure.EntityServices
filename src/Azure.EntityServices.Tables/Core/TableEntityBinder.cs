@@ -17,7 +17,7 @@ namespace Azure.EntityServices.Tables.Core
         private readonly TableEntity _tableEntity;
         public T Entity { get; set; }
 
-        private readonly IEnumerable<PropertyInfo> _propsToIgnore = new List<PropertyInfo>();
+        private readonly IEnumerable<string> _propsToIgnore = new List<string>();
 
         public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
         public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>();
@@ -28,7 +28,7 @@ namespace Azure.EntityServices.Tables.Core
             Entity = entity; 
             _tableEntity = new TableEntity();
         }
-        public TableEntityBinder(T entity, IEnumerable<PropertyInfo> propsToIgnore)
+        public TableEntityBinder(T entity,IEnumerable<string> propsToIgnore)
         { 
             _propsToIgnore = propsToIgnore;
             Entity = entity;
@@ -40,7 +40,7 @@ namespace Azure.EntityServices.Tables.Core
             _tableEntity = tableEntity;
            
         }
-        public TableEntityBinder(TableEntity tableEntity, IEnumerable<PropertyInfo> propsToIgnore)
+        public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore)
         {
             _tableEntity = tableEntity;
             _propsToIgnore = propsToIgnore;
@@ -56,7 +56,7 @@ namespace Azure.EntityServices.Tables.Core
            
 
         }
-        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<PropertyInfo> propsToIgnore)
+        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore)
         {
             Entity = entity;
             _tableEntity = new TableEntity(partitionKey, rowKey);
@@ -70,7 +70,7 @@ namespace Azure.EntityServices.Tables.Core
             {
                 _tableEntity.Add(metadata.Key, EntityValueAdapter.ToTable(metadata.Value));
             }
-            foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p)))
+            foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)))
             {
                 _tableEntity.Add(property.Name, EntityValueAdapter.ToTable(property.GetValue(Entity), property));
             }
@@ -87,7 +87,7 @@ namespace Azure.EntityServices.Tables.Core
                 if (EntityProperties.Any(p => p.Name == tableProp.Key)) continue;
                 Metadata.Add(tableProp.Key, tableProp.Value);
             }
-            foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p)))
+            foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)))
             {
                 if (_tableEntity.TryGetValue(property.Name, out var tablePropValue))
                 {

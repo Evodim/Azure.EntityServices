@@ -55,7 +55,7 @@ namespace Azure.EntityServices.Tables
         {
             var property = selector.GetPropertyInfo();
 
-            config?.IgnoredProps.Add(property);
+            config?.IgnoredProps.Add(property.Name);
             return config;
         }
     }
