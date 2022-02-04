@@ -12,14 +12,15 @@ namespace Azure.EntityServices.Samples
 {
     public static class TableSample
     {
-        private const int ENTITY_COUNT = 500;
+        private const int ENTITY_COUNT = 100;
+
         public static async Task Run()
         {
             var tenants = new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" };
             var options = new EntityTableClientOptions(TestEnvironment.ConnectionString,
                 $"{nameof(PersonEntity)}",
                 maxItemsPerBatch: 5000,
-                maxParallelTasks: 5,                
+                maxParallelTasks: 5,
                 createTableIfNotExists: true);
 
             //Configure entity binding in the table storage
@@ -28,6 +29,7 @@ namespace Azure.EntityServices.Samples
                 config
                 .SetPartitionKey(p => p.TenantId)
                 .SetPrimaryKeyProp(p => p.PersonId)
+                .IgnoreProp(p => p.OtherAddress)
                 .AddTag(p => p.Created)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Distance)
@@ -56,6 +58,7 @@ namespace Azure.EntityServices.Samples
             }
 
             var entity = faker.Generate(1).FirstOrDefault();
+
             using (var mesure = counters.Mesure($"Add one entity"))
             {
                 await entityClient.AddAsync(entity);
@@ -113,24 +116,8 @@ namespace Azure.EntityServices.Samples
                     Console.WriteLine($"{mesure.Name} iterate {_.Count()}");
                 }
             }
-
             Console.WriteLine("====================================");
-            foreach (var counter in counters.Get().OrderBy(c => c.Key))
-            {
-                WriteLineDuration($"{counter.Key} ", counter.Value);
-            }
-            Console.WriteLine("Finished");
-            Console.ReadLine();
-        }
-        private static void WriteLineDuration(string text, IPerfCounter counter)
-        {
-            Console.Write(text);
-
-            var prevColor = Console.ForegroundColor;
-            Console.ForegroundColor = (counter.AverageDuration.TotalSeconds < 1) ? ConsoleColor.Green : ConsoleColor.Yellow;
-            Console.WriteLine($"{Math.Round(counter.AverageDuration.TotalSeconds, 3)} seconds");
-
-            Console.ForegroundColor = prevColor;
+            counters.WriteToConsole();
         }
     }
 }

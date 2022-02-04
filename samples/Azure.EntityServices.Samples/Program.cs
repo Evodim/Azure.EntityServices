@@ -6,7 +6,7 @@ namespace Azure.EntityServices.Samples
     {
         private static async Task Main()
         {
-            await BlobSample.Run();
+            await TableSample.Run();
             System.Console.ReadLine();
         }
     }
