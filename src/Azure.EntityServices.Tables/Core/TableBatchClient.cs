@@ -1,21 +1,21 @@
 ﻿using Azure.Data.Tables;
 using Polly.Retry;
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core
 {
-
     public class TableBatchClient
     {
         private readonly AsyncRetryPolicy _retryPolicy;
-        private readonly ConcurrentQueue<TableTransactionAction> _pendingOperations;
+        private readonly TableBatchClientOptions _options;
+        private readonly IList<TableTransactionAction> _pendingOperations;
         private readonly string _tableName;
         private readonly string _connectionString;
-        private readonly IPipeline _pipeline; 
+        private IPipeline _pipeline;
 
         public TableBatchClient(
             TableBatchClientOptions options,
@@ -24,16 +24,11 @@ namespace Azure.EntityServices.Tables.Core
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
 
-            _pendingOperations = new ConcurrentQueue<TableTransactionAction>();
+            _pendingOperations = new List<TableTransactionAction>();
             _connectionString = options.ConnectionString;
             _tableName = options.TableName;
             _retryPolicy = retryPolicy;
-            //Create en configure transaction entity group flow pipepline
-            _pipeline = CustomTplBlocks.CreatePipeline(async transactions =>
-            {
-                var client = new TableClient(_connectionString, _tableName); 
-                await _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(transactions.SelectMany(t => t.Actions))); 
-            }, options.MaxItemPerTransaction, options.MaxParallelTasks);
+            _options = options;
         }
 
         public decimal OutstandingOperations => _pendingOperations.Count;
@@ -41,42 +36,56 @@ namespace Azure.EntityServices.Tables.Core
         public void Insert<TEntity>(TEntity entity)
             where TEntity : ITableEntity
         {
-            _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.Add, entity));
+            _pendingOperations.Add(new TableTransactionAction(TableTransactionActionType.Add, entity));
         }
 
         public void Delete<TEntity>(TEntity entity)
             where TEntity : ITableEntity
         {
-            _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.Delete, entity));
+            _pendingOperations.Add(new TableTransactionAction(TableTransactionActionType.Delete, entity));
         }
 
         public void InsertOrMerge<TEntity>(TEntity entity)
             where TEntity : ITableEntity
         {
-            _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpsertMerge, entity));
+            _pendingOperations.Add(new TableTransactionAction(TableTransactionActionType.UpsertMerge, entity));
         }
 
         public void InsertOrReplace<TEntity>(TEntity entity)
             where TEntity : ITableEntity
         {
-            _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpsertReplace, entity));
+            _pendingOperations.Add(new TableTransactionAction(TableTransactionActionType.UpsertReplace, entity));
         }
 
         public void Merge<TEntity>(TEntity entity)
             where TEntity : ITableEntity
         {
-            _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpdateMerge, entity));
+            _pendingOperations.Add(new TableTransactionAction(TableTransactionActionType.UpdateMerge, entity));
         }
 
         public void Replace<TEntity>(TEntity entity)
             where TEntity : ITableEntity
         {
-            _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity));
+            _pendingOperations.Add(new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity));
         }
 
-        public Task AddToTransactionAsync(string partitionKey, string primaryKey, CancellationToken cancellationToken = default)
+        public Task SubmitTransactionAsync(string partitionKey, CancellationToken cancellationToken = default)
         {
-            var entityTransactionGroup = new EntityTransactionGroup(partitionKey, primaryKey);
+            if (_pipeline == null)
+            {
+                _pipeline = CustomTplBlocks.CreatePipeline(async transactions =>
+                {
+                    var client = new TableClient(_connectionString, _tableName);
+                    var batch = transactions.SelectMany(t => t.Actions);
+                    await _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(batch));
+                },
+            maxItemInBatch: _options.MaxItemInBatch,
+            maxItemInTransaction: _options.MaxItemInTransaction,
+            maxParallelTasks: _options.MaxParallelTasks
+            );
+            }
+
+            var entityTransactionGroup = new EntityTransactionGroup(partitionKey);
             entityTransactionGroup.Actions.AddRange(_pendingOperations.ToList());
             _pendingOperations.Clear();
             return _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
@@ -84,17 +93,17 @@ namespace Azure.EntityServices.Tables.Core
 
         public Task CommitTransactionAsync()
         {
-            return _pipeline.CompleteAsync();
+            return _pipeline?.CompleteAsync();
         }
 
-        public Task ExecuteAsync(CancellationToken cancellationToken = default)
-        { 
+        public async Task SubmitAllAsync(CancellationToken cancellationToken = default)
+        {
             if (_pendingOperations.Count != 0)
             {
                 var client = new TableClient(_connectionString, _tableName);
-                return _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(_pendingOperations, cancellationToken));
+                await _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(_pendingOperations.ToList(), cancellationToken));
+                _pendingOperations.Clear();
             }
-            return Task.CompletedTask;
         }
     }
 }

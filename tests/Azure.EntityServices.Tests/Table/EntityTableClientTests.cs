@@ -21,8 +21,8 @@ namespace Azure.EntityServices.Tests.Table
             _commonOptions = () => new EntityTableClientOptions()
             {
                 ConnectionString = TestEnvironment.ConnectionString,
-                MaxParallelTasks = 1,
-                MaxItemsPerInsertion = 10,
+                MaxParallelTransactions = 1,
+                MaxItemInTransaction = 10,
                 CreateTableIfNotExists = true,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}"
             };
@@ -47,6 +47,7 @@ namespace Azure.EntityServices.Tests.Table
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
         }
+
         [TestMethod]
         public async Task Should_Ignore_Entity_Prop()
         {
@@ -58,7 +59,7 @@ namespace Azure.EntityServices.Tests.Table
                 c.
                  SetPartitionKey(p => p.TenantId)
                 .SetPrimaryKeyProp(p => p.PersonId)
-                .IgnoreProp(p=>p.Genre)                
+                .IgnoreProp(p => p.Genre)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -68,8 +69,8 @@ namespace Azure.EntityServices.Tests.Table
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Genre.Should().Be(default);
             created.Should().BeEquivalentTo(person, options => options.Excluding(e => e.Genre));
-
         }
+
         [TestMethod]
         public async Task Should_Get_By_Indexed_Prop_With_Filter()
         {
@@ -242,8 +243,8 @@ namespace Azure.EntityServices.Tests.Table
             var options = new EntityTableClientOptions()
             {
                 ConnectionString = TestEnvironment.ConnectionString,
-                MaxParallelTasks = 10,
-                MaxItemsPerInsertion = 1000,
+                MaxParallelTransactions = 10,
+                MaxItemInTransaction = 1000,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
                 CreateTableIfNotExists = true,
             };
@@ -281,8 +282,8 @@ namespace Azure.EntityServices.Tests.Table
             var options = new EntityTableClientOptions()
             {
                 ConnectionString = TestEnvironment.ConnectionString,
-                MaxParallelTasks = 10,
-                MaxItemsPerInsertion = 1000,
+                MaxParallelTransactions = 10,
+                MaxItemInTransaction = 1000,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
                 CreateTableIfNotExists = true,
             };

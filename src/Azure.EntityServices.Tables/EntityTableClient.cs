@@ -178,13 +178,13 @@ namespace Azure.EntityServices.Tables
 
                 var entityBinder = CreateEntityBinderFromEntity(entity);
 
-                 //system metada required to handle implicit tag updates
+                //system metada required to handle implicit tag updates
                 entityBinder.Metadata.Add(Deleted_suffix, false);
                 BindDynamicProps(entityBinder);
                 BindTags(batchedClient, cleaner, entityBinder);
                 tableEntities.Add(entityBinder);
                 batchedClient.Insert(entityBinder.Bind());
-                await batchedClient.AddToTransactionAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken);
+                await batchedClient.SubmitTransactionAsync(entityBinder.PartitionKey, cancellationToken);
                 NotifyChange(entityBinder, EntityOperation.Add);
             }
             await batchedClient.CommitTransactionAsync();
@@ -205,7 +205,7 @@ namespace Azure.EntityServices.Tables
                     var entityTagBinder = CreateEntityBinderFromEntity(entity, tag.Value.ToString());
                     batchedClient.Delete(entityTagBinder.Bind());
                 }
-                await batchedClient.ExecuteAsync(cancellationToken);
+                await batchedClient.SubmitAllAsync(cancellationToken);
                 NotifyChange(entityBinder, EntityOperation.Delete);
             }
             catch (Exception ex)
@@ -297,13 +297,12 @@ namespace Azure.EntityServices.Tables
             {
                 //system metada required to handle implicit tag updates
                 entityBinder.Metadata.Add(Deleted_suffix, false);
-                BindDynamicProps(entityBinder); 
-                
-                //we don't need to retrieve existing entity metadata for add operation 
-                    var existingMetadatas = (operation != EntityOperation.Add)?
-                            await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
-                            : null;
-                
+                BindDynamicProps(entityBinder);
+
+                //we don't need to retrieve existing entity metadata for add operation
+                var existingMetadatas = (operation != EntityOperation.Add) ?
+                        await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
+                        : null;
 
                 BindTags(client, cleaner, entityBinder, existingMetadatas);
                 switch (operation)
@@ -311,29 +310,33 @@ namespace Azure.EntityServices.Tables
                     case EntityOperation.Add:
                         client.Insert(entityBinder.Bind());
                         break;
+
                     case EntityOperation.AddOrMerge:
                         client.InsertOrMerge(entityBinder.Bind());
                         break;
+
                     case EntityOperation.AddOrReplace:
                         client.InsertOrReplace(entityBinder.Bind());
                         break;
+
                     case EntityOperation.Replace:
                         client.Replace(entityBinder.Bind());
                         break;
+
                     case EntityOperation.Merge:
                         client.Merge(entityBinder.Bind());
                         break;
 
                     case EntityOperation.Delete:
                         client.Delete(entityBinder.Bind());
-                        break; 
+                        break;
+
                     default:
                         throw new NotImplementedException($"{operation} operation not supported");
-
                 }
-                await client.ExecuteAsync(cancellationToken);
+                await client.SubmitAllAsync(cancellationToken);
                 NotifyChange(entityBinder, operation);
-                await cleaner.ExecuteAsync(cancellationToken);
+                await cleaner.SubmitAllAsync(cancellationToken);
             }
             catch (Exception ex)
             {
@@ -439,7 +442,9 @@ namespace Azure.EntityServices.Tables
                 {
                     TableName = _options.TableName,
                     ConnectionString = _options.ConnectionString,
-                    MaxParallelTasks = _options.MaxParallelTasks
+                    MaxItemInBatch = _options.MaxItemInBatch,
+                    MaxItemInTransaction = _options.MaxItemInTransaction,
+                    MaxParallelTasks = _options.MaxParallelTransactions
                 }, _retryPolicy
                 )
             { };
@@ -452,12 +457,12 @@ namespace Azure.EntityServices.Tables
                 tableService.CreateTableIfNotExists(tableName);
                 return true;
             }
-        
+
             if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
-            { 
+            {
                 return true;
             }
-           
+
             return false;
         }
 

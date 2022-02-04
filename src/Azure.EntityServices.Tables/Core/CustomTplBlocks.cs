@@ -13,30 +13,40 @@ namespace Azure.EntityServices.Tables.Core
         /// Create transaction entity pipeline
         /// </summary>
         /// <param name="asyncProcessor"></param>
-        /// <param name="maxItemPerTransaction"></param>
+        /// <param name="maxItemInTransaction"></param>
         /// <param name="maxParallelTasks"></param>
         /// <returns></returns>
-        public static IPipeline CreatePipeline(Func<EntityTransactionGroup[], Task> asyncProcessor, int maxItemPerTransaction, int maxParallelTasks)
+        public static IPipeline CreatePipeline(Func<EntityTransactionGroup[], Task> asyncProcessor, int maxItemInBatch, int maxItemInTransaction, int maxParallelTasks)
         {
             //Create en configure transaction entity group flow pipepline
-            var pipeline = new BatchBlock<EntityTransactionGroup>(1000, new GroupingDataflowBlockOptions() { Greedy = true, BoundedCapacity = 1000 });
+            var pipeline = new BatchBlock<EntityTransactionGroup>(maxItemInBatch, new GroupingDataflowBlockOptions()
+            {
+                Greedy = true,
+                BoundedCapacity = maxItemInBatch
+            });
             //define blocks
-            var groupPerPartitions = new TransformBlock<EntityTransactionGroup[], IEnumerable<EntityTransactionGroup[]>>(v =>
+            var groupPerPartitionsBlock = new TransformBlock<EntityTransactionGroup[], IEnumerable<EntityTransactionGroup[]>>(v =>
             {
                 return v.GroupBy(k => k.PartitionKey).Select(s => s.ToArray());
             }, new ExecutionDataflowBlockOptions()
             {
+                MaxDegreeOfParallelism = 1,
                 BoundedCapacity = 1
             });
 
-            var entityTransactionBatchGroup = CreateAtomicEntityTransactionGroupBlock(maxItemPerTransaction);
+            var transactionGroupBlock = CreatePartitionedBlock(maxItemInTransaction, maxParallelTasks);
 
-            var target = new ActionBlock<EntityTransactionGroup[]>(asyncProcessor, new ExecutionDataflowBlockOptions() { BoundedCapacity = maxParallelTasks, MaxDegreeOfParallelism = maxParallelTasks });
+            var target = new ActionBlock<EntityTransactionGroup[]>(asyncProcessor,
+                new ExecutionDataflowBlockOptions()
+                {
+                    BoundedCapacity = maxParallelTasks,
+                    MaxDegreeOfParallelism = maxParallelTasks
+                });
 
             //link blocks together
-            pipeline.LinkTo(groupPerPartitions, new DataflowLinkOptions() { PropagateCompletion = true });
-            groupPerPartitions.LinkTo(entityTransactionBatchGroup, new DataflowLinkOptions() { PropagateCompletion = true });
-            entityTransactionBatchGroup.LinkTo(target, new DataflowLinkOptions() { PropagateCompletion = true });
+            pipeline.LinkTo(groupPerPartitionsBlock, new DataflowLinkOptions() { PropagateCompletion = true });
+            groupPerPartitionsBlock.LinkTo(transactionGroupBlock, new DataflowLinkOptions() { PropagateCompletion = true });
+            transactionGroupBlock.LinkTo(target, new DataflowLinkOptions() { PropagateCompletion = true });
 
             return new Pipeline(pipeline, target);
         }
@@ -44,32 +54,34 @@ namespace Azure.EntityServices.Tables.Core
         /// <summary>
         /// Group entity transactions to be processed in a single operation according to azure table storage limitation:  max of 100 entities table for a same partition
         /// </summary>
-        private static IPropagatorBlock<IEnumerable<EntityTransactionGroup[]>, EntityTransactionGroup[]> CreateAtomicEntityTransactionGroupBlock(int batchSize)
+        private static IPropagatorBlock<IEnumerable<EntityTransactionGroup[]>, EntityTransactionGroup[]> CreatePartitionedBlock(int maxItemInGroup, int maxParallelTasks)
         {
-            var source = new BufferBlock<EntityTransactionGroup[]>(new DataflowBlockOptions() { BoundedCapacity = 1 });
+            var source = new BufferBlock<EntityTransactionGroup[]>(new DataflowBlockOptions()
+            {
+                BoundedCapacity = maxParallelTasks
+            });
 
             var target = new ActionBlock<IEnumerable<EntityTransactionGroup[]>>(async partitions =>
             {
                 foreach (var partition in partitions)
                 {
                     var count = 0;
-                    var queue = new Queue<EntityTransactionGroup>();
+                    var group = new List<EntityTransactionGroup>();
                     foreach (var item in partition)
                     {
-                        if (count + item.Actions.Count >= batchSize)
+                        if (count + item.Actions.Count >= maxItemInGroup)
                         {
-                            var data = queue.ToArray();
-                            queue.Clear();
                             Interlocked.Exchange(ref count, 0);
-                            await source.SendAsync(data);
+                            await source.SendAsync(group.ToArray());
+                            group.Clear();
                         }
-                        queue.Enqueue(item);
+                        group.Add(item);
                         Interlocked.Exchange(ref count, count + item.Actions.Count);
                     }
-                    await source.SendAsync(queue.ToArray());
-                    queue.Clear();
+                    await source.SendAsync(group.ToArray());
+                    group.Clear();
                 }
-            }, new ExecutionDataflowBlockOptions() { BoundedCapacity = 1 });
+            });
 
             target.Completion.ContinueWith(delegate
             {
