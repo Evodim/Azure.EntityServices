@@ -13,7 +13,7 @@
 		<Product>Azure.EntityServices</Product>
 		<Authors>Evodim</Authors>
 		<Copyright>Evodim Solutions - 2022</Copyright>
-		<PackageId>Azure.EntityServices.Queries</PackageId>
+		<PackageId>AzureEntityServices.Queries</PackageId>
 		<PackageLicenseExpression></PackageLicenseExpression>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -22,6 +22,7 @@
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>entiy, azure, storage, services, queries</PackageTags>
 		<Description>Entity Query services for Azure storage</Description>
+		<Title>Azure entity services</Title>
 	</PropertyGroup>
 	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>

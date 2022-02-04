@@ -8,7 +8,7 @@
 		<Product>Azure.EntityServices</Product>
 		<Authors>Evodim</Authors>
 		<Copyright>Evodim Solutions - 2022</Copyright>
-		<PackageId>Azure.EntityServices.Tables</PackageId>
+		<PackageId>AzureEntityServices.Tables</PackageId>
 		<PackageLicenseExpression></PackageLicenseExpression>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild> 
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
@@ -17,6 +17,7 @@
 		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
 		<PackageTags>azure, entity, services, tables</PackageTags>
 		<Description>Entity Table services for Azure storage</Description>
+		<Title>Azure entity services</Title>
 	</PropertyGroup>
 	<PropertyGroup> 
 		<MinVerTagPrefix>v</MinVerTagPrefix>
