@@ -22,9 +22,9 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>
     where T : class, new()
     {
-        protected const string Deleted_suffix = "_deleted_";
-        protected const string Tag_suffix = "_tag_";
-        protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{Tag_suffix}";
+        protected const string DeletedTagSuffix = "_deleted_tag_";
+        protected const string TagSuffix = "_tag_";
+        protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{TagSuffix}";
 
         private readonly EntityTableClientConfig<T> _config;
         private readonly EntityTableClientOptions _options;
@@ -32,7 +32,7 @@ namespace Azure.EntityServices.Tables
         private readonly TableServiceClient _tableService;
         private readonly AsyncRetryPolicy _retryPolicy;
 
-        public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator = null)
+        public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator)
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
 
@@ -183,7 +183,7 @@ namespace Azure.EntityServices.Tables
                 var entityBinder = CreateEntityBinderFromEntity(entity);
 
                 //system metada required to handle implicit tag updates
-                entityBinder.Metadata.Add(Deleted_suffix, false);
+                entityBinder.Metadata.Add(DeletedTagSuffix, false);
                 BindDynamicProps(entityBinder);
                 BindTags(batchedClient, cleaner, entityBinder);
                 tableEntities.Add(entityBinder);
@@ -204,7 +204,7 @@ namespace Azure.EntityServices.Tables
 
                 //mark indexed tag soft deleted
                 batchedClient.Delete(entityBinder.Bind());
-                foreach (var tag in metadatas.Where(m => m.Key.EndsWith(Tag_suffix)))
+                foreach (var tag in metadatas.Where(m => m.Key.EndsWith(TagSuffix)))
                 {
                     var entityTagBinder = CreateEntityBinderFromEntity(entity, tag.Value.ToString());
                     batchedClient.Delete(entityTagBinder.Bind());
@@ -300,7 +300,7 @@ namespace Azure.EntityServices.Tables
             try
             {
                 //system metada required to handle implicit tag updates
-                entityBinder.Metadata.Add(Deleted_suffix, false);
+                entityBinder.Metadata.Add(DeletedTagSuffix, false);
                 BindDynamicProps(entityBinder);
 
                 //we don't need to retrieve existing entity metadata for add operation
@@ -356,7 +356,7 @@ namespace Azure.EntityServices.Tables
                  .Where("PartitionKey").Equal(partition)
                  .And("RowKey").GreaterThanOrEqual(tagName)
                  .And("RowKey").LessThan($"{tagName}~")
-                 .And(Deleted_suffix).Equal(false);
+                 .And(DeletedTagSuffix).Equal(false);
             if (query != null) baseQuery.And(query);
 
             var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
@@ -417,12 +417,12 @@ namespace Azure.EntityServices.Tables
             if (existingMetadatas != null)
             {
                 //cleanup old indexed tags
-                foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(Tag_suffix)))
+                foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(TagSuffix)))
                 {
                     var tagValue = metadata.Value.ToString();
                     var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
                     //mark tag deleted
-                    entityBinder.Metadata.Add(Deleted_suffix, true);
+                    entityBinder.Metadata.Add(DeletedTagSuffix, true);
                     client.InsertOrReplace(entityBinder.Bind());
                     cleaner.Delete(entityBinder.Bind());
                 }
