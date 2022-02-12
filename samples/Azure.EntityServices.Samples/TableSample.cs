@@ -1,6 +1,7 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Samples.Diagnostics;
 using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tests.Common;
 using Azure.EntityServices.Tests.Common.Fakes;
 using Azure.EntityServices.Tests.Common.Models;
@@ -12,7 +13,7 @@ namespace Azure.EntityServices.Samples
 {
     public static class TableSample
     {
-        private const int ENTITY_COUNT = 1000;
+        private const int ENTITY_COUNT = 100;
 
         public static async Task Run()
         {
@@ -100,6 +101,17 @@ namespace Azure.EntityServices.Samples
                 await foreach (var _ in entityClient.GetAsync(
                         person.TenantId,
                         w => w.Where("_FirstLastName3Chars").Equal("arm")))
+                {
+                    Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
+                }
+            }
+            using (var mesure = counters.Mesure("4.2. Get LastName start with 'arm' (free query without given partition)"))
+            {
+                await foreach (var _ in entityClient.GetAsync(
+                        w => w
+                        .WherePartitionKey()
+                        .Equal(person.TenantId)                        
+                        .And("_FirstLastName3Chars").Equal("arm")))
                 {
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
