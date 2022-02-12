@@ -70,6 +70,28 @@ namespace Azure.EntityServices.Tables
             _config = config;
         }
 
+        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var queryExpr = new FilterExpression<T>();
+            //build primaryKey prefix
+            var primaryKeyName = ResolvePrimaryKey("");
+            //apply implicit filter in the query to exclude duplicated tag entities
+            var query = queryExpr
+              .WherePartitionKey().GreaterThanOrEqual(primaryKeyName)
+              .AndRowKey().LessThan($"{primaryKeyName}~");
+
+            if (filter != null)
+            {
+                query.And(filter);
+            }
+            var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
+
+            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
+            {
+                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
+            }
+        }
+
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(string partition, Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var queryExpr = new FilterExpression<T>();
@@ -77,9 +99,9 @@ namespace Azure.EntityServices.Tables
             var primaryKeyName = ResolvePrimaryKey("");
             //apply implicit filter in the query to exclude duplicated tag entities
             var query = queryExpr
-              .Where("PartitionKey").Equal(partition)
-              .And("RowKey").GreaterThanOrEqual(primaryKeyName)
-              .And("RowKey").LessThan($"{primaryKeyName}~");
+              .WherePartitionKey().Equal(partition)
+              .AndRowKey().GreaterThanOrEqual(primaryKeyName)
+              .AndRowKey().LessThan($"{primaryKeyName}~");
 
             if (filter != null)
             {
@@ -353,9 +375,9 @@ namespace Azure.EntityServices.Tables
             var queryExpr = new FilterExpression<T>();
             //scope query to given tagName
             var baseQuery = queryExpr
-                 .Where("PartitionKey").Equal(partition)
-                 .And("RowKey").GreaterThanOrEqual(tagName)
-                 .And("RowKey").LessThan($"{tagName}~")
+                .WherePartitionKey().Equal(partition)
+                 .AndRowKey().GreaterThanOrEqual(tagName)
+                 .AndRowKey().LessThan($"{tagName}~")
                  .And(DeletedTagSuffix).Equal(false);
             if (query != null) baseQuery.And(query);
 
