@@ -96,7 +96,7 @@ namespace Azure.EntityServices.Samples
                 }
             }
 
-            using (var mesure = counters.Mesure("4. Get LastName start with 'arm'"))
+            using (var mesure = counters.Mesure("4.1 Get LastName start with 'arm'"))
             {
                 await foreach (var _ in entityClient.GetAsync(
                         person.TenantId,
@@ -117,7 +117,7 @@ namespace Azure.EntityServices.Samples
                 }
             }
 
-            using (var mesure = counters.Mesure("5. Get by LastName start with 'arm' (indexed tag)"))
+            using (var mesure = counters.Mesure("4.3 Get by LastName start with 'arm' (indexed tag)"))
             {
                 await foreach (var _ in entityClient.GetByTagAsync(
                       person.TenantId,
