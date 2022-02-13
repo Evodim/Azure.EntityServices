@@ -1,15 +1,15 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tests.Common;
-using Azure.EntityServices.Tests.Common.Fakes;
-using Azure.EntityServices.Tests.Common.Models;
+using Azure.EntityServices.Table.Common;
+using Azure.EntityServices.Table.Common.Fakes;
+using Azure.EntityServices.Table.Common.Models;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tests.Table
+namespace Azure.EntityServices.Table.Tests
 {
     [TestClass]
     public class EntityTableClientTests

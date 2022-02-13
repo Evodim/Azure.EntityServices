@@ -1,12 +1,12 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core;
-using Azure.EntityServices.Tests.Common.Models;
+using Azure.EntityServices.Table.Common.Models;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Reflection;
 
-namespace Azure.EntityServices.Tests.Table
+namespace Azure.EntityServices.Table.Tests
 {
     [TestClass]
     public class QueryExpressionTests

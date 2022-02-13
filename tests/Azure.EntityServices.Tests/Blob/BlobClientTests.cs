@@ -1,6 +1,6 @@
 
 using Azure.EntityServices.Blobs;
-using Azure.EntityServices.Tests.Common;
+using Azure.EntityServices.Table.Common;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using FluentAssertions;

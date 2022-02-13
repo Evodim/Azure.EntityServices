@@ -1,4 +1,4 @@
-﻿using Azure.EntityServices.Tests.Common.Models;
+﻿using Azure.EntityServices.Table.Common.Models;
 using Bogus;
 using Bogus.Extensions;
 using System;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tests.Common.Fakes
+namespace Azure.EntityServices.Table.Common.Fakes
 {
     public static class Fakers
     {

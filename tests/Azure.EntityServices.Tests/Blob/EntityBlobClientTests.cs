@@ -1,9 +1,9 @@
 using Azure.EntityServices.Blobs;
 using Azure.EntityServices.Blobs.Extensions;
 using Azure.EntityServices.Queries;
-using Azure.EntityServices.Tests.Common;
-using Azure.EntityServices.Tests.Common.Fakes;
-using Azure.EntityServices.Tests.Common.Models;
+using Azure.EntityServices.Table.Common;
+using Azure.EntityServices.Table.Common.Fakes;
+using Azure.EntityServices.Table.Common.Models;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
