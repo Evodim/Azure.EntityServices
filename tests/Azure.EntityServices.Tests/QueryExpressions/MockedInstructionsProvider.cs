@@ -1,6 +1,6 @@
 ﻿using Azure.EntityServices.Queries.Core;
 
-namespace Azure.EntityServices.Tests.Table
+namespace Azure.EntityServices.Table.Tests
 {
     public class MockedInstructionsProvider : InstructionsProviderBase, IQueryInstructions
     {

@@ -1,11 +1,11 @@
 ﻿using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tests.Common.Models;
+using Azure.EntityServices.Table.Common.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Azure.EntityServices.Tests.Table
+namespace Azure.EntityServices.Table.Tests
 {
     public class DummyObserver : IEntityObserver<PersonEntity>
     {

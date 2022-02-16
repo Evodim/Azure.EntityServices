@@ -1,4 +1,4 @@
-﻿namespace Azure.EntityServices.Tests.Common.Models
+﻿namespace Azure.EntityServices.Table.Common.Models
 {
     public class MessageModel
     {

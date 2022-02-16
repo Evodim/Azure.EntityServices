@@ -1,7 +1,7 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Queries.Core;
 
-namespace Azure.EntityServices.Tests.Table
+namespace Azure.EntityServices.Table.Tests
 {
     public class MockedExpressionBuilder<T> : BaseQueryExpressionBuilder<T>
     {
