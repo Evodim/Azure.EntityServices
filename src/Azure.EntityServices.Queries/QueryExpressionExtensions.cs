@@ -22,9 +22,9 @@ namespace Azure.EntityServices.Queries
 
         public static IFilterOperator<T> LessThanOrEqual<T, P>(this IQueryFilter<T, P> query, P value) => query.AddFilterCondition(nameof(IQueryInstructions.LessThanOrEqual), value);
 
-        public static IQueryFilter<T, P> And<T, P>(this IFilterOperator<T> query, Expression<Func<T, P>> property) => query.AddOperator(nameof(IQueryInstructions.And), property);
-
         public static IQueryFilter<T> And<T>(this IFilterOperator<T> query, string property) => query.AddOperator(nameof(IQueryInstructions.And), property);
+
+        public static IQueryFilter<T, P> And<T, P>(this IFilterOperator<T> query, Expression<Func<T, P>> property) => query.AddOperator(nameof(IQueryInstructions.And), property);
 
         public static IQueryFilter<T> Not<T>(this IFilterOperator<T> query, string property) => query.AddOperator(nameof(IQueryInstructions.Not), property);
 

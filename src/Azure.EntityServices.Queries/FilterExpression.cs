@@ -7,11 +7,19 @@ namespace Azure.EntityServices.Queries
 {
     public class FilterExpression<T, P> : FilterExpression<T>, IQueryFilter<T, P>
     {
+       
         public IFilterOperator<T> AddFilterCondition(string comparison, P value) => base.AddFilterCondition(comparison, value);
     }
-
+    
     public class FilterExpression<T> : IFilterExpression<T>
     {
+        public virtual  IFilterExpression<T>  Factory() { 
+            return new FilterExpression<T>(); 
+        }
+        public virtual IFilterExpression<T> Factory<P>()
+        {
+            return new FilterExpression<T,P>();
+        }
         public string PropertyName { get; set; }
         public Type PropertyType { get; set; }
         public string Comparator { get; set; }
@@ -26,23 +34,23 @@ namespace Azure.EntityServices.Queries
         {
             Operator = expressionOperator;
             var prop = property.GetPropertyInfo() ?? throw new InvalidFilterCriteriaException("Given Expression should be a valid property selector");
-            var newOperation = new FilterExpression<T, P>()
-            {
-                PropertyName = prop.Name,
-                PropertyType = prop.PropertyType
-            };
+            var newOperation = Factory<P>();
+
+            newOperation.PropertyName = prop.Name;
+            newOperation.PropertyType = prop.PropertyType;
+            
             NextOperation = newOperation;
-            return newOperation;
+            return newOperation as IQueryFilter<T,P>;
         }
 
         public IQueryFilter<T> AddOperator(string expressionOperator, string property)
         {
             Operator = expressionOperator;
-            var newOperation = new FilterExpression<T>()
-            {
-                PropertyName = property,
-                PropertyType = typeof(object)
-            };
+            var newOperation = Factory();
+
+            newOperation.PropertyName = property;
+            newOperation.PropertyType = typeof(object);
+            
             NextOperation = newOperation;
             return newOperation;
         }
@@ -57,7 +65,7 @@ namespace Azure.EntityServices.Queries
 
         public IFilterOperator<T> AddGroupExpression(string expressionOperator, Action<IQueryCompose<T>> subQuery)
         {
-            var childExpression = new FilterExpression<T>();
+            var childExpression = Factory();
             subQuery.Invoke(childExpression);
 
             childExpression.GroupOperator = expressionOperator;
