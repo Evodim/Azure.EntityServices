@@ -3,6 +3,7 @@ using Azure.EntityServices.Queries.Core;
 
 namespace Azure.EntityServices.Tables.Extensions
 {
+
     /// <summary>
     /// Helpers to extend filter expression with partition key et row key filters abstraction
     /// </summary>
@@ -24,4 +25,5 @@ namespace Azure.EntityServices.Tables.Extensions
 
         public static IQueryFilter<T> OrPartitionKey<T>(this IFilterOperator<T> query) => query.AddOperator(nameof(IQueryInstructions.Or), "PartitionKey");
     }
+
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Azure.EntityServices.Tables.Helpers;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 

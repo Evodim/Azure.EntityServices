@@ -70,51 +70,6 @@ namespace Azure.EntityServices.Tables
             _config = config;
         }
 
-        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            var queryExpr = new FilterExpression<T>();
-            //build primaryKey prefix
-            var primaryKeyName = ResolvePrimaryKey("");
-            //apply implicit filter in the query to exclude duplicated tag entities
-            var query = queryExpr
-              .WherePartitionKey().GreaterThanOrEqual(primaryKeyName)
-              .AndRowKey().LessThan($"{primaryKeyName}~");
-
-            if (filter != null)
-            {
-                query.And(filter);
-            }
-            var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
-
-            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
-            {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
-            }
-        }
-
-        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(string partition, Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            var queryExpr = new FilterExpression<T>();
-            //build primaryKey prefix
-            var primaryKeyName = ResolvePrimaryKey("");
-            //apply implicit filter in the query to exclude duplicated tag entities
-            var query = queryExpr
-              .WherePartitionKey().Equal(partition)
-              .AndRowKey().GreaterThanOrEqual(primaryKeyName)
-              .AndRowKey().LessThan($"{primaryKeyName}~");
-
-            if (filter != null)
-            {
-                query.And(filter);
-            }
-            var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
-
-            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
-            {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
-            }
-        }
-
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
         {
             var rowKey = ResolvePrimaryKey(id);
@@ -138,35 +93,59 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(string partition, Expression<Func<T, P>> tagProperty, P tagValue, Action<IQueryCompose<T>> filter = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<IQueryTagFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            if (!_config.Tags.ContainsKey(tagProperty.GetPropertyInfo().Name))
-            {
-                throw new EntityTableClientException($"Property: {tagProperty.GetPropertyInfo().Name}, not tagged");
-            }
+            
+            var query = new TagFilterExpression<T>(tagName,(tag,value)=> TagValueBuilder(tag,value));
 
-            var propertyKey = BuildTag(tagProperty.GetPropertyInfo(), tagValue);
+            filter.Invoke(query.WhereTag());         
+            
+            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
-            await foreach (var page in RunQueryWithIndexedTagAsync(partition, propertyKey, filter, cancellationToken))
+            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
             {
-                yield return page;
+                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
         }
-
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string partition, string tagProperty, object tagValue, Action<IQueryCompose<T>> filter = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<IQueryTagFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            if (!_config.ComputedTags.Contains(tagProperty) && !_config.Tags.ContainsKey(tagProperty))
-            {
-                throw new EntityTableClientException($"Property: {tagProperty}, not tagged");
-            }
 
-            var tag = BuildTag(tagProperty, tagValue);
-            await foreach (var page in RunQueryWithIndexedTagAsync(partition, tag, filter, cancellationToken))
+            var query = new TagFilterExpression<T>(tagProperty.GetPropertyInfo().Name, (tag, value) => TagValueBuilder(tag, value));
+
+            filter.Invoke(query.WhereTag());
+
+            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
+
+            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
             {
-                yield return page;
+                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
+            }
+        }       
+        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var queryExpr = new FilterExpression<T>();
+            //build primaryKey prefix
+            var primaryKeyName = ResolvePrimaryKey("");
+            //apply implicit filter in the query to exclude duplicated tag entities
+
+
+            var query =
+                queryExpr
+              .WhereRowKey().GreaterThanOrEqual(primaryKeyName)
+              .AndRowKey().LessThan($"{primaryKeyName}~");   
+
+            if (filter != null)
+            {
+                query.And(filter);
+            }
+            var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
+
+            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
+            {
+                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
         }
-
+         
         public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
         {
             return UpdateEntity(entity, EntityOperation.AddOrReplace, cancellationToken);
@@ -270,9 +249,12 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return ResolvePrimaryKey(_config.PrimaryKeyProp.GetValue(entity));
+            return $"${TagValueBuilder(_config.PrimaryKeyProp.Name,_config.PrimaryKeyProp.GetValue(entity))}";
         }
-
+        public string ResolvePrimaryKey(object value)
+        {
+            return $"${TagValueBuilder(_config.PrimaryKeyProp.Name, value)}";
+        }
         public void AddObserver(string name, IEntityObserver<T> observer)
         {
             _config.Observers.TryAdd(name, observer);
@@ -289,7 +271,7 @@ namespace Azure.EntityServices.Tables
             InsertOrMerge
         }
 
-        protected virtual string ComputeKeyConvention(string name, object value) => $"{name}-{value.ToInvariantString()}";
+        protected string ComputeKeyConvention(string name, object value) => $"{name}-{value?.ToInvariantString()}";
 
         protected void NotifyChange(IEntityBinder<T> entityBinder, EntityOperation operation)
         {
@@ -368,37 +350,8 @@ namespace Azure.EntityServices.Tables
             {
                 throw new EntityTableClientException($"An error occured during the request, partition:{entityBinder?.PartitionKey} rowkey:{entityBinder?.RowKey}", ex);
             }
-        }
-
-        private async IAsyncEnumerable<IEnumerable<T>> RunQueryWithIndexedTagAsync(string partition, string tagName, Action<IQueryCompose<T>> query = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            var queryExpr = new FilterExpression<T>();
-            //scope query to given tagName
-            var baseQuery = queryExpr
-                .WherePartitionKey().Equal(partition)
-                 .AndRowKey().GreaterThanOrEqual(tagName)
-                 .AndRowKey().LessThan($"{tagName}~")
-                 .And(DeletedTagSuffix).Equal(false);
-            if (query != null) baseQuery.And(query);
-
-            var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
-
-            await foreach (var page in _client.QueryAsync<TableEntity>(strQuery, cancellationToken: cancellationToken).AsPages())
-            {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
-            }
-        }
-
-        private string BuildTag(PropertyInfo property, object value) => BuildTag(property.Name, value);
-
-        private string BuildTag(string propertyName, object value)
-        {
-            if (!_config.ComputedTags.Contains(propertyName) && !_config.Tags.ContainsKey(propertyName)) throw new KeyNotFoundException($"Given tag not configured");
-            var strValue = value.ToInvariantString();
-            return $"{ComputeKeyConvention(propertyName, strValue)}";
-        }
-
-        private string ResolvePrimaryKey(object value) => $"${ComputeKeyConvention(_config.PrimaryKeyProp.Name, value)}";
+        } 
+        private string TagValueBuilder(string key,object value) => $"{ComputeKeyConvention(key, value)}";
 
         private string CreateRowKey(PropertyInfo property, T entity) => $"{ComputeKeyConvention(property.Name, property.GetValue(entity).ToInvariantString())}{ResolvePrimaryKey(entity)}";
 
@@ -496,5 +449,6 @@ namespace Azure.EntityServices.Tables
         {
             return _client.DeleteAsync(cancellationToken);
         }
+             
     }
 }
