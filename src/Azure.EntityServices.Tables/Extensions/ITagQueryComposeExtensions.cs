@@ -1,6 +1,4 @@
-﻿using Azure.EntityServices.Queries;
-
-namespace Azure.EntityServices.Tables.Extensions
+﻿namespace Azure.EntityServices.Tables.Extensions
 {
     /// <summary>
     /// Helpers to extend filter expression with partition key et row key filters abstraction
@@ -11,5 +9,4 @@ namespace Azure.EntityServices.Tables.Extensions
 
         public static IQueryTagFilter<T> AndTag<T>(this ITagQueryCompose<T> query) => query.AddTagQuery("RowKey");
     }
-
 }
