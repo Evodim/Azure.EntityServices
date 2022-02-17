@@ -1,12 +1,11 @@
 ﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Table.Common.Models;
+using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Core;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Reflection;
-using Azure.EntityServices.Tables.Extensions;
-using Azure.EntityServices.Tables;
 
 namespace Azure.EntityServices.Table.Tests
 {
@@ -125,11 +124,10 @@ namespace Azure.EntityServices.Table.Tests
                 .Be("PartitionKey eq 'Tenant-1' and TenantId eq '10' and Genre eq 'Female'");
         }
 
-
         [TestMethod]
         public void Should_Tag_Equal_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created",(k,v)=> $"{k}-{v}"));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().Equal("2022-10-22")
@@ -139,13 +137,13 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt 'Created-2022-10-22' and RowKey lt 'Created-2022-10-22~' and _deleted_tag_ eq false and TenantId eq '10'");
-
+                .Be("RowKey gt 'Created-2022-10-22$' and RowKey lt 'Created-2022-10-22$~' and _deleted_tag_ eq false and TenantId eq '10'");
         }
+
         [TestMethod]
         public void Should_Use_Tag_GreaterThanOrEqual_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created",(k,v)=> $"{k}-{v}"));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().GreaterThanOrEqual("2022-10-22")
@@ -155,13 +153,13 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt 'Created-2022-10-22' and RowKey lt 'Created-~' and _deleted_tag_ eq false and TenantId eq '10'");
-
+                .Be("RowKey gt 'Created-2022-10-22$' and RowKey lt 'Created-~' and _deleted_tag_ eq false and TenantId eq '10'");
         }
+
         [TestMethod]
         public void Should_Use_Tag_LessThanOrEqual_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created",(k, v) => $"{k}-{v}"));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().LessThanOrEqual("2022-10-22")
@@ -171,9 +169,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt 'Created-' and RowKey lt 'Created-2022-10-22~' and _deleted_tag_ eq false and TenantId eq '10'");
-
+                .Be("RowKey gt 'Created-' and RowKey lt 'Created-2022-10-22$~' and _deleted_tag_ eq false and TenantId eq '10'");
         }
-
     }
 }
