@@ -3,10 +3,10 @@ using System.Linq.Expressions;
 
 namespace Azure.EntityServices.Tables
 {
-    public interface ITagQueryCompose<T> : IQueryTagFilter<T>
+    public interface ITagQueryCompose<T> : ITagQueryFilter<T>
     {
-        IQueryTagFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property);
+        ITagQueryFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property);
 
-        IQueryTagFilter<T> AddTagQuery(string property);
+        ITagQueryFilter<T> AddTagQuery(string property);
     }
 }

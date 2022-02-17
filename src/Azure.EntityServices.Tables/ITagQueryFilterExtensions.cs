@@ -1,13 +1,13 @@
 ﻿using Azure.EntityServices.Queries;
 
-namespace Azure.EntityServices.Tables.Extensions
+namespace Azure.EntityServices.Tables
 {
     /// <summary>
     /// Extend table query capabilities to use it for tag filters
     /// </summary>
-    public static class IQueryTagFilterExtensions
+    public static class ITagQueryFilterExtensions
     {
-        public static IFilterOperator<T> Between<T, P>(this IQueryTagFilter<T, P> query, P minValue,P maxValue)
+        public static IFilterOperator<T> Between<T, P>(this ITagQueryFilter<T, P> query, P minValue,P maxValue)
         {
             return (query as IQueryFilter<T>)
                   .GreaterThan($"{query.TagValueBuilder(query.TagName, minValue)}$")
@@ -15,7 +15,7 @@ namespace Azure.EntityServices.Tables.Extensions
                   .LessThan($"{query.TagValueBuilder(query.TagName, maxValue)}$~")
                   .And("_deleted_tag_").Equal(false);
         }
-        public static IFilterOperator<T> Equal<T, P>(this IQueryTagFilter<T, P> query, P value)
+        public static IFilterOperator<T> Equal<T, P>(this ITagQueryFilter<T, P> query, P value)
         {
             return (query as IQueryFilter<T>)
                   .GreaterThan($"{query.TagValueBuilder(query.TagName, value)}$")
@@ -25,7 +25,7 @@ namespace Azure.EntityServices.Tables.Extensions
         }
      
 
-        public static IFilterOperator<T> GreaterThan<T, P>(this IQueryTagFilter<T, P> query, P value)
+        public static IFilterOperator<T> GreaterThan<T, P>(this ITagQueryFilter<T, P> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"{query.TagValueBuilder(query.TagName, value)}$~")
@@ -34,7 +34,7 @@ namespace Azure.EntityServices.Tables.Extensions
                .And("_deleted_tag_").Equal(false);
         }
 
-        public static IFilterOperator<T> GreaterThanOrEqual<T, P>(this IQueryTagFilter<T> query, P value)
+        public static IFilterOperator<T> GreaterThanOrEqual<T, P>(this ITagQueryFilter<T> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"{query.TagValueBuilder(query.TagName, value)}$")
@@ -42,7 +42,7 @@ namespace Azure.EntityServices.Tables.Extensions
                .LessThan($"{query.TagName}-~")
                .And("_deleted_tag_").Equal(false);
         }
-        public static IFilterOperator<T> LessThan<T, P>(this IQueryTagFilter<T> query, P value)
+        public static IFilterOperator<T> LessThan<T, P>(this ITagQueryFilter<T> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"{query.TagName}-")
@@ -51,7 +51,7 @@ namespace Azure.EntityServices.Tables.Extensions
                .And("_deleted_tag_").Equal(false);
         }
 
-        public static IFilterOperator<T> LessThanOrEqual<T, P>(this IQueryTagFilter<T> query, P value)
+        public static IFilterOperator<T> LessThanOrEqual<T, P>(this ITagQueryFilter<T> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"{query.TagName}-")

@@ -93,7 +93,7 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<IQueryTagFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<ITagQueryFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             
             var query = new TagFilterExpression<T>(tagName,(tag,value)=> TagValueBuilder(tag,value));
@@ -107,7 +107,7 @@ namespace Azure.EntityServices.Tables
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
         }
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<IQueryTagFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<ITagQueryFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
 
             var query = new TagFilterExpression<T>(tagProperty.GetPropertyInfo().Name, (tag, value) => TagValueBuilder(tag, value));

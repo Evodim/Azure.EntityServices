@@ -2,8 +2,7 @@
 using Azure.EntityServices.Samples.Diagnostics;
 using Azure.EntityServices.Table.Common.Fakes;
 using Azure.EntityServices.Table.Common.Models;
-using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Extensions;
+using Azure.EntityServices.Tables; 
 using Azure.EntityServices.Tests.Common;
 using System;
 using System.Linq;

@@ -7,12 +7,6 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables
 {
-    public interface IEntityTableClientRuntimeConfig<T>
-    {
-        void AddObserver(string name, IEntityObserver<T> observer);
-
-        void RemoveObserver(string name);
-    }
 
     public interface IEntityTableClient<T> : IEntityTableClientRuntimeConfig<T>
     {
@@ -32,9 +26,9 @@ namespace Azure.EntityServices.Tables
 
         IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, CancellationToken cancellationToken = default);
  
-        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<IQueryTagFilter<T>> filter, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<ITagQueryFilter<T>> filter, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<IQueryTagFilter<T>> filter, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<ITagQueryFilter<T>> filter, CancellationToken cancellationToken = default);
 
         Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
 

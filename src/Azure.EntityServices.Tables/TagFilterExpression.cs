@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace Azure.EntityServices.Tables
 {
-    public class TagFilterExpression<T, P> : TagFilterExpression<T>, IQueryTagFilter<T, P>
+    public class TagFilterExpression<T, P> : TagFilterExpression<T>, ITagQueryFilter<T, P>
     {
         public TagFilterExpression(string tagName, Func<string, object, string> tagValueBuilder) : base(tagName, tagValueBuilder)
         {
@@ -28,14 +28,14 @@ namespace Azure.EntityServices.Tables
             TagValueBuilder = tagValueBuilder;
         }
 
-        public IQueryTagFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property)
+        public ITagQueryFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property)
         {
-            return AddQuery(property) as IQueryTagFilter<T, P>;
+            return AddQuery(property) as ITagQueryFilter<T, P>;
         }
 
-        public IQueryTagFilter<T> AddTagQuery(string property)
+        public ITagQueryFilter<T> AddTagQuery(string property)
         {
-            return AddQuery(property) as IQueryTagFilter<T>;
+            return AddQuery(property) as ITagQueryFilter<T>;
         }
 
         public override IFilterExpression<T> Factory()
