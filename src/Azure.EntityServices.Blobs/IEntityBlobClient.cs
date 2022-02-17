@@ -13,7 +13,7 @@ namespace Azure.EntityServices.Blobs
 
         IAsyncEnumerable<IReadOnlyList<T>> ListAsync(string entityPath);
 
-        IAsyncEnumerable<IReadOnlyList<T>> ListAsync(Action<IQueryCompose<T>> query);
+        IAsyncEnumerable<IReadOnlyList<T>> ListAsync(Action<IQuery<T>> query);
 
         IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListPropsAsync(string entityPath);
 

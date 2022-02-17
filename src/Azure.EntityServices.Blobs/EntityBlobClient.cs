@@ -95,7 +95,7 @@ namespace Azure.EntityServices.Blobs
             }
         }
          
-        public async IAsyncEnumerable<IReadOnlyList<T>> ListAsync(Action<IQueryCompose<T>> query)
+        public async IAsyncEnumerable<IReadOnlyList<T>> ListAsync(Action<IQuery<T>> query)
         {
             var queryExpr = new FilterExpression<T>();
 
