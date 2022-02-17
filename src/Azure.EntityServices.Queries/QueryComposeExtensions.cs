@@ -5,13 +5,13 @@ namespace Azure.EntityServices.Queries {
     /// <summary>
     /// Helpers to extend filter expression with partition key et row key filters abstraction
     /// </summary>
-public static class IQueryComposeExtensions
+public static class IQueryExtensions
     {
-        public static IQueryFilter<T> WherePartitionKey<T>(this IQueryCompose<T> query) 
-            => query.AddQuery("PartitionKey");
+        public static IQueryFilter<T> WherePartitionKey<T>(this IQuery<T> query) 
+            => (query as IQueryCompose<T>).AddQuery("PartitionKey");
 
-        public static IQueryFilter<T> WhereRowKey<T>(this IQueryCompose<T> query) 
-            => query.AddQuery("RowKey");
+        public static IQueryFilter<T> WhereRowKey<T>(this IQuery<T> query) 
+            => (query as IQueryCompose<T>).AddQuery("RowKey");
 
         public static IQueryFilter<T> AndRowKey<T>(this IFilterOperator<T> query) 
             => query.AddOperator(nameof(IQueryInstructions.And), "RowKey");

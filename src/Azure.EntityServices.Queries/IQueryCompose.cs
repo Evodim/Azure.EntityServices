@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace Azure.EntityServices.Queries
 {
-    public interface IQueryCompose<T>
+    public interface IQueryCompose<T>: IQuery<T>
     {
         IQueryFilter<T, P> AddQuery<P>(Expression<Func<T, P>> property);
 

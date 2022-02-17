@@ -77,7 +77,7 @@ namespace Azure.EntityServices.Samples
             using (var mesure = counters.Mesure("2. Get By Any prop"))
             {
                 await foreach (var _ in entityClient.GetAsync(
-                        w => w
+                       filter => filter
                         .WherePartitionKey()
                         .Equal(person.TenantId)
                         .And(p => p.LastName)
@@ -91,8 +91,9 @@ namespace Azure.EntityServices.Samples
 
             using (var mesure = counters.Mesure("3. Get By indexed tag)"))
             {
-                await foreach (var _ in entityClient.GetByTagAsync(p => p.LastName,
+                await foreach (var _ in entityClient.GetByTagAsync(
                     filter => filter
+                    .WhereTag(p => p.LastName)
                     .Equal(person.LastName)
                     .AndPartitionKey()
                     .Equal(person.TenantId)))
@@ -105,7 +106,7 @@ namespace Azure.EntityServices.Samples
             using (var mesure = counters.Mesure("4.1 Get LastName start with 'arm'"))
             {
                 await foreach (var _ in entityClient.GetAsync(
-                        w => w
+                        filter => filter
                         .Where("_FirstLastName3Chars")
                         .Equal("arm")
                         .AndPartitionKey()
@@ -118,8 +119,9 @@ namespace Azure.EntityServices.Samples
 
             using (var mesure = counters.Mesure("4.2 Get by LastName start with 'arm' (using indexed tag)"))
             {
-                await foreach (var _ in entityClient.GetByTagAsync("_FirstLastName3Chars",
+                await foreach (var _ in entityClient.GetByTagAsync(
                     filter => filter
+                    .WhereTag("_FirstLastName3Chars")
                     .Equal("arm")
                     .AndPartitionKey()
                     .Equal(person.TenantId)))

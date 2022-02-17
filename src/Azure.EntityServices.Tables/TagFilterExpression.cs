@@ -18,10 +18,16 @@ namespace Azure.EntityServices.Tables
 
     public class TagFilterExpression<T> : FilterExpression<T>, ITagQueryCompose<T>
     {
-        public string TagName { get; }
+        public string TagName { get; set; }
 
         public Func<string, object, string> TagValueBuilder { get; }
 
+        public TagFilterExpression(Func<string, object, string> tagValueBuilder)
+        {
+          
+            TagValueBuilder = tagValueBuilder;
+        }
+        
         public TagFilterExpression(string tagName, Func<string, object, string> tagValueBuilder)
         {
             TagName = tagName;

@@ -7,7 +7,6 @@ using Polly.Retry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -93,13 +92,10 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<ITagQueryFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            
-            var query = new TagFilterExpression<T>(tagName,(tag,value)=> TagValueBuilder(tag,value));
-
-            filter.Invoke(query.WhereTag());         
-            
+            var query = new TagFilterExpression<T>("", (tag, value) => TagValueBuilder(tag, value));
+            filter.Invoke(query);
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
             await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
@@ -107,20 +103,7 @@ namespace Azure.EntityServices.Tables
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
         }
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<ITagQueryFilter<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
 
-            var query = new TagFilterExpression<T>(tagProperty.GetPropertyInfo().Name, (tag, value) => TagValueBuilder(tag, value));
-
-            filter.Invoke(query.WhereTag());
-
-            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
-
-            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
-            {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
-            }
-        }       
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var queryExpr = new FilterExpression<T>();
@@ -128,11 +111,10 @@ namespace Azure.EntityServices.Tables
             var primaryKeyName = ResolvePrimaryKey("");
             //apply implicit filter in the query to exclude duplicated tag entities
 
-
             var query =
                 queryExpr
               .WhereRowKey().GreaterThanOrEqual(primaryKeyName)
-              .AndRowKey().LessThan($"{primaryKeyName}~");   
+              .AndRowKey().LessThan($"{primaryKeyName}~");
 
             if (filter != null)
             {
@@ -145,7 +127,7 @@ namespace Azure.EntityServices.Tables
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
         }
-         
+
         public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
         {
             return UpdateEntity(entity, EntityOperation.AddOrReplace, cancellationToken);
@@ -249,12 +231,14 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return $"${TagValueBuilder(_config.PrimaryKeyProp.Name,_config.PrimaryKeyProp.GetValue(entity))}";
+            return $"${TagValueBuilder(_config.PrimaryKeyProp.Name, _config.PrimaryKeyProp.GetValue(entity))}";
         }
+
         public string ResolvePrimaryKey(object value)
         {
             return $"${TagValueBuilder(_config.PrimaryKeyProp.Name, value)}";
         }
+
         public void AddObserver(string name, IEntityObserver<T> observer)
         {
             _config.Observers.TryAdd(name, observer);
@@ -350,8 +334,9 @@ namespace Azure.EntityServices.Tables
             {
                 throw new EntityTableClientException($"An error occured during the request, partition:{entityBinder?.PartitionKey} rowkey:{entityBinder?.RowKey}", ex);
             }
-        } 
-        private string TagValueBuilder(string key,object value) => $"{ComputeKeyConvention(key, value)}";
+        }
+
+        private string TagValueBuilder(string key, object value) => $"{ComputeKeyConvention(key, value)}";
 
         private string CreateRowKey(PropertyInfo property, T entity) => $"{ComputeKeyConvention(property.Name, property.GetValue(entity).ToInvariantString())}{ResolvePrimaryKey(entity)}";
 
@@ -449,6 +434,5 @@ namespace Azure.EntityServices.Tables
         {
             return _client.DeleteAsync(cancellationToken);
         }
-             
     }
 }

@@ -26,9 +26,7 @@ namespace Azure.EntityServices.Tables
 
         IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, CancellationToken cancellationToken = default);
  
-        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<ITagQueryFilter<T>> filter, CancellationToken cancellationToken = default);
-
-        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<ITagQueryFilter<T>> filter, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, CancellationToken cancellationToken = default);
 
         Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
 
