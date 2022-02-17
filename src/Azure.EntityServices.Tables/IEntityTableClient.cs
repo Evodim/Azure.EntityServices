@@ -24,7 +24,7 @@ namespace Azure.EntityServices.Tables
 
         Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default);
  
         IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, CancellationToken cancellationToken = default);
 

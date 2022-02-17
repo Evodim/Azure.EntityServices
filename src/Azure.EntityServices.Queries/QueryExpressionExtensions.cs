@@ -6,11 +6,11 @@ namespace Azure.EntityServices.Queries
 {
     public static class QueryExpressionExtensions
     {
-        public static IQueryFilter<T, P> Where<T, P>(this IQueryCompose<T> query, Expression<Func<T, P>> property)
-            => query.AddQuery(property);
+        public static IQueryFilter<T, P> Where<T, P>(this IQuery<T> query, Expression<Func<T, P>> property)
+            => (query as IQueryCompose<T>).AddQuery(property);
 
-        public static IQueryFilter<T> Where<T>(this IQueryCompose<T> query, string property)
-            => query.AddQuery(property);
+        public static IQueryFilter<T> Where<T>(this IQuery<T> query, string property)
+            => (query as IQueryCompose<T>).AddQuery(property);
 
         public static IFilterOperator<T> Equal<T, P>(this IQueryFilter<T, P> query, P value)
             => query.AddFilterCondition(nameof(IQueryInstructions.Equal), value);

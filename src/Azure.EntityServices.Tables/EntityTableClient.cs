@@ -104,7 +104,7 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             var queryExpr = new FilterExpression<T>();
             //build primaryKey prefix
