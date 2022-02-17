@@ -1,12 +1,11 @@
-﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Queries.Core;
+﻿using Azure.EntityServices.Queries.Core;
 
-namespace Azure.EntityServices.Tables.Extensions
-{
+namespace Azure.EntityServices.Queries { 
+
     /// <summary>
     /// Helpers to extend filter expression with partition key et row key filters abstraction
     /// </summary>
-    public static class IQueryComposeExtensions
+public static class IQueryComposeExtensions
     {
         public static IQueryFilter<T> WherePartitionKey<T>(this IQueryCompose<T> query) => query.AddQuery("PartitionKey");
 
@@ -24,4 +23,5 @@ namespace Azure.EntityServices.Tables.Extensions
 
         public static IQueryFilter<T> OrPartitionKey<T>(this IFilterOperator<T> query) => query.AddOperator(nameof(IQueryInstructions.Or), "PartitionKey");
     }
+
 }

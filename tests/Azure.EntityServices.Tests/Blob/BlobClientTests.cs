@@ -1,5 +1,5 @@
-
 using Azure.EntityServices.Blobs;
+using Azure.EntityServices.Table.Common;
 using Azure.EntityServices.Tests.Common;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;

@@ -1,15 +1,16 @@
 ﻿using Azure.EntityServices.Queries;
+using Azure.EntityServices.Table.Common.Fakes;
+using Azure.EntityServices.Table.Common.Models;
 using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tests.Common;
-using Azure.EntityServices.Tests.Common.Fakes;
-using Azure.EntityServices.Tests.Common.Models;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tests.Table
+namespace Azure.EntityServices.Table.Tests
 {
     [TestClass]
     public class EntityTableClientTests
@@ -70,7 +71,7 @@ namespace Azure.EntityServices.Tests.Table
         }
 
         [TestMethod]
-        public async Task Should_Get_By_Indexed_Prop_With_Filter()
+        public async Task Should_Get_By_Indexed_Tag_With_Filter()
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
@@ -88,7 +89,48 @@ namespace Azure.EntityServices.Tests.Table
 
                 var person = persons.First();
                 //get all entities both primary and projected
-                await foreach (var resultPage in entityTable.GetByTagAsync(person.TenantId, p => p.Created, person.Created, filter: p => p.Where(p => p.Rank).Equal(person.Rank)))
+                await foreach (var resultPage in entityTable.GetByTagAsync(p => p.Created,
+                    filter => filter
+                    .Equal(person.Created)
+                    .And(p => p.Rank)
+                    .Equal(person.Rank)
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)))
+                {
+                    resultPage.First().Should().BeEquivalentTo(person);
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Get_By_Indexed_Tag_Without_Given_Partition_Key()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await entityTable.AddManyAsync(persons);
+
+                var person = persons.First();
+                //get all entities both primary and projected
+                await foreach (var resultPage in entityTable.GetByTagAsync(p => p.Created,
+                    filter: p => p.Equal(person.Created)
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)
+                    .And(p => p.Rank)
+                    .Equal(person.Rank)))
                 {
                     resultPage.First().Should().BeEquivalentTo(person);
                 }
@@ -121,7 +163,7 @@ namespace Azure.EntityServices.Tests.Table
         }
 
         [TestMethod]
-        public async Task Should_Get_Indexed_Prop_On_InsertOrUpdate()
+        public async Task Should_Get_Indexed_Tag_After_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
@@ -133,7 +175,7 @@ namespace Azure.EntityServices.Tests.Table
             try
             {
                 await tableEntity.AddOrReplaceAsync(person);
-                await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, p => p.LastName, person.LastName))
+                await foreach (var resultPage in tableEntity.GetByTagAsync(p => p.LastName, filter => filter.Equal(person.LastName).AndPartitionKey().Equal(person.TenantId)))
                 {
                     resultPage.Count().Should().Be(1);
                     resultPage.First().Should().BeEquivalentTo(person);
@@ -184,7 +226,11 @@ namespace Azure.EntityServices.Tests.Table
             try
             {
                 await tableEntity.AddOrReplaceAsync(person);
-                await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, "_FirstLastName3Chars", First3Char(person.LastName)))
+                await foreach (var resultPage in tableEntity.GetByTagAsync( "_FirstLastName3Chars",
+                    filter=>filter
+                    .Equal(First3Char(person.LastName))
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)))
                 {
                     First3Char(resultPage.FirstOrDefault()?.LastName ?? "").Should().Be(First3Char(person.LastName));
                 }
@@ -196,7 +242,7 @@ namespace Azure.EntityServices.Tests.Table
         }
 
         [TestMethod]
-        public async Task Should_Remove_Indexes_OnDelete()
+        public async Task Should_Remove_Tags_OnDelete()
         {
             static string First3Char(string s) => s.ToLower()[..3];
 
@@ -217,12 +263,20 @@ namespace Azure.EntityServices.Tests.Table
                 await tableEntity.DeleteAsync(created);
 
                 (await tableEntity.GetByIdAsync(person.TenantId, person.PersonId)).Should().BeNull();
-                await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, "_FirstLastName3Chars", First3Char(person.LastName)))
+                await foreach (var resultPage in tableEntity.GetByTagAsync("_FirstLastName3Chars",
+                    filter=> filter
+                    .Equal(First3Char(person.LastName))
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)))
                 {
                     resultPage.Should().BeEmpty();
                 }
 
-                await foreach (var resultPage in tableEntity.GetByTagAsync(person.TenantId, p => p.LastName, person.LastName))
+                await foreach (var resultPage in tableEntity.GetByTagAsync(p => p.LastName, 
+                    filter => filter
+                    .Equal(person.LastName)
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)))
                 {
                     resultPage.Should().BeEmpty();
                 }
@@ -294,7 +348,9 @@ namespace Azure.EntityServices.Tests.Table
                 await tableEntity.AddManyAsync(persons);
 
                 //get all entities both primary and projected
-                await foreach (var pagedResult in tableEntity.GetAsync(persons.First().TenantId))
+                await foreach (var pagedResult in tableEntity.GetAsync(filter=>filter
+                .WherePartitionKey()
+                .Equal(persons.First().TenantId)))
                 {
                     pagedResult.Should().HaveCount(130);
                 }
@@ -302,6 +358,244 @@ namespace Azure.EntityServices.Tests.Table
             finally
             {
                 await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Query_By_Tag_Filter_With_Equal_Extension()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await entityTable.AddManyAsync(persons);
+
+                var person = persons.Last();
+
+                await foreach (var resultPage in entityTable.GetByTagAsync("Created", filter => filter.Equal(person.Created)))
+                {
+                    resultPage.First().Should().BeEquivalentTo(person);
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Query_By_Tag_Filter_With_GreaterThanOrEqual()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var oldestDate = persons.Min(p => p.Created.Value);
+                var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
+                olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
+                persons.Add(olderPerson);
+                await entityTable.AddManyAsync(persons);
+
+                await foreach (var resultPage in entityTable.GetByTagAsync("Created", filter => filter.GreaterThanOrEqual(oldestDate)))
+                {
+                    resultPage.Should().BeEquivalentTo(persons.Where(p => p != olderPerson));
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Query_By_Tag_Filter_With_GreaterThan()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var oldestDate = persons.Min(p => p.Created.Value);
+                var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
+                olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
+                persons.Add(olderPerson);
+                await entityTable.AddManyAsync(persons);
+
+                await foreach (var resultPage in entityTable.GetByTagAsync("Created", filter => filter.GreaterThan(oldestDate)))
+                {
+                    resultPage.Select(p => p.Created).All(p => p.Value > oldestDate).Should().BeTrue();
+                    resultPage.Should().NotContain(olderPerson);
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Query_By_Tag_Filter_With_LessThan()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var latestDate = persons.Max(p => p.Created);
+                var lastestPerson = Fakers.CreateFakePerson().Generate(1).First();
+                lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
+                persons.Add(lastestPerson);
+                await entityTable.AddManyAsync(persons);
+
+                await foreach (var resultPage in entityTable.GetByTagAsync("Created", filter => filter.LessThan(latestDate)))
+                {
+                    resultPage.Select(p => p.Created).All(p => p.Value < latestDate).Should().BeTrue();
+                    resultPage.Should().NotContain(lastestPerson);
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Query_By_Tag_Filter_With_LessThanOrEqual()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var latestDate = persons.Max(p => p.Created);
+                var lastestPerson = Fakers.CreateFakePerson().Generate(1).First();
+                lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
+                persons.Add(lastestPerson);
+                await entityTable.AddManyAsync(persons);
+                await foreach (var resultPage in entityTable.GetByTagAsync("Created", filter => filter.LessThanOrEqual(latestDate)))
+                {
+                    resultPage.Should().BeEquivalentTo(persons.Where(p => p != lastestPerson));
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Query_By_Tag_Filter_With_Between_Extension()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var latestDate = persons.Max(p => p.Created);
+                var latestPerson = Fakers.CreateFakePerson().Generate(1).First();
+                latestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
+                persons.Add(latestPerson);
+
+                var oldestDate = persons.Min(p => p.Created.Value);
+                var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
+                olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
+                persons.Add(olderPerson);
+
+                await entityTable.AddManyAsync(persons);
+                await foreach (var resultPage in entityTable.GetByTagAsync("Created", filter => filter.Between(oldestDate, latestDate)))
+                {
+                    resultPage.Should().BeEquivalentTo(persons
+                        .Where(p => p.Created > olderPerson.Created
+                        &&
+                        p.Created < latestPerson.Created));
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Combine_Query_With_Mixed_Tag_And_Prop_Filters()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                persons.Last().Created = DateTimeOffset.UtcNow;
+                persons.Last().Altitude = -100;
+
+                await entityTable.AddManyAsync(persons);
+                //Query by Created Tag
+                await foreach (var resultPage in entityTable.GetByTagAsync(p => p.Created,
+                    tag =>
+                        tag
+                        .GreaterThanOrEqual(persons.Last().Created)
+                        .And(p => p.Altitude)
+                        .LessThanOrEqual(-100)
+
+                    ))
+                {
+                    resultPage.Count().Should().BePositive();
+                    resultPage.Select(p => p.Altitude).All(p => p <= 100).Should().BeTrue();
+                }
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
             }
         }
     }

@@ -7,12 +7,6 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables
 {
-    public interface IEntityTableClientRuntimeConfig<T>
-    {
-        void AddObserver(string name, IEntityObserver<T> observer);
-
-        void RemoveObserver(string name);
-    }
 
     public interface IEntityTableClient<T> : IEntityTableClientRuntimeConfig<T>
     {
@@ -31,12 +25,10 @@ namespace Azure.EntityServices.Tables
         Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
 
         IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQueryCompose<T>> filter = default, CancellationToken cancellationToken = default);
+ 
+        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string tagName, Action<ITagQueryFilter<T>> filter, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<IEnumerable<T>> GetAsync(string partition, Action<IQueryCompose<T>> filter = default, CancellationToken cancellationToken = default);
-
-        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(string partition, Expression<Func<T, P>> tagProperty, P tagValue, Action<IQueryCompose<T>> filter = null, CancellationToken cancellationToken = default);
-
-        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(string partition, string tagProperty, object tagValue, Action<IQueryCompose<T>> filter = null, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<IEnumerable<T>> GetByTagAsync<P>(Expression<Func<T, P>> tagProperty, Action<ITagQueryFilter<T>> filter, CancellationToken cancellationToken = default);
 
         Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
 

@@ -1,10 +1,9 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Samples.Diagnostics;
-using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Extensions;
+using Azure.EntityServices.Table.Common.Fakes;
+using Azure.EntityServices.Table.Common.Models;
+using Azure.EntityServices.Tables; 
 using Azure.EntityServices.Tests.Common;
-using Azure.EntityServices.Tests.Common.Fakes;
-using Azure.EntityServices.Tests.Common.Models;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -75,22 +74,29 @@ namespace Azure.EntityServices.Samples
                 _ = await entityClient.GetByIdAsync(person.TenantId, person.PersonId);
             }
 
-            using (var mesure = counters.Mesure("2. Get By LastName"))
+            using (var mesure = counters.Mesure("2. Get By Any prop"))
             {
                 await foreach (var _ in entityClient.GetAsync(
-                        person.TenantId,
-                        w => w.Where(p => p.LastName).Equal(person.LastName)))
+                        w => w
+                        .WherePartitionKey()
+                        .Equal(person.TenantId)
+                        .And(p => p.LastName)
+                        .Equal(person.LastName)
+
+                        ))
                 {
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
             }
 
-            using (var mesure = counters.Mesure("3. Get By LastName (indexed tag)"))
+            using (var mesure = counters.Mesure("3. Get By indexed tag)"))
             {
-                await foreach (var _ in entityClient.GetByTagAsync(
-                        person.TenantId,
-                        p => p.LastName,
-                        person.LastName))
+                await foreach (var _ in entityClient.GetByTagAsync(p => p.LastName,
+                    filter => filter
+                    .Equal(person.LastName)
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)))
+
                 {
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
@@ -99,29 +105,24 @@ namespace Azure.EntityServices.Samples
             using (var mesure = counters.Mesure("4.1 Get LastName start with 'arm'"))
             {
                 await foreach (var _ in entityClient.GetAsync(
-                        person.TenantId,
-                        w => w.Where("_FirstLastName3Chars").Equal("arm")))
-                {
-                    Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
-                }
-            }
-            using (var mesure = counters.Mesure("4.2. Get LastName start with 'arm' (free query without given partition)"))
-            {
-                await foreach (var _ in entityClient.GetAsync(
                         w => w
-                        .WherePartitionKey()
-                        .Equal(person.TenantId)                        
-                        .And("_FirstLastName3Chars").Equal("arm")))
+                        .Where("_FirstLastName3Chars")
+                        .Equal("arm")
+                        .AndPartitionKey()
+                        .Equal(person.TenantId)
+                        ))
                 {
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
             }
 
-            using (var mesure = counters.Mesure("4.3 Get by LastName start with 'arm' (indexed tag)"))
+            using (var mesure = counters.Mesure("4.2 Get by LastName start with 'arm' (using indexed tag)"))
             {
-                await foreach (var _ in entityClient.GetByTagAsync(
-                      person.TenantId,
-                     "_FirstLastName3Chars", "arm"))
+                await foreach (var _ in entityClient.GetByTagAsync("_FirstLastName3Chars",
+                    filter => filter
+                    .Equal("arm")
+                    .AndPartitionKey()
+                    .Equal(person.TenantId)))
                 {
                     Console.WriteLine($"{mesure.Name} iterate {_.Count()}");
                 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Azure.EntityServices.Tests.Common.Models
+namespace Azure.EntityServices.Table.Common.Models
 {
     public enum OperationType
     {
