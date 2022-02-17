@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Reflection;
 using Azure.EntityServices.Tables.Extensions;
+using Azure.EntityServices.Tables;
 
 namespace Azure.EntityServices.Table.Tests
 {

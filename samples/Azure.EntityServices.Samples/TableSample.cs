@@ -77,13 +77,13 @@ namespace Azure.EntityServices.Samples
 
             using (var mesure = counters.Mesure("2. Get By Any prop"))
             {
-                await foreach (var _ in entityClient.GetAsync(                       
+                await foreach (var _ in entityClient.GetAsync(
                         w => w
                         .WherePartitionKey()
                         .Equal(person.TenantId)
                         .And(p => p.LastName)
                         .Equal(person.LastName)
-                         
+
                         ))
                 {
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
@@ -92,8 +92,8 @@ namespace Azure.EntityServices.Samples
 
             using (var mesure = counters.Mesure("3. Get By indexed tag)"))
             {
-                await foreach (var _ in entityClient.GetByTagAsync(p => p.LastName, 
-                    filter=>filter
+                await foreach (var _ in entityClient.GetByTagAsync(p => p.LastName,
+                    filter => filter
                     .Equal(person.LastName)
                     .AndPartitionKey()
                     .Equal(person.TenantId)))
@@ -105,7 +105,7 @@ namespace Azure.EntityServices.Samples
 
             using (var mesure = counters.Mesure("4.1 Get LastName start with 'arm'"))
             {
-                await foreach (var _ in entityClient.GetAsync(                       
+                await foreach (var _ in entityClient.GetAsync(
                         w => w
                         .Where("_FirstLastName3Chars")
                         .Equal("arm")
@@ -115,12 +115,12 @@ namespace Azure.EntityServices.Samples
                 {
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
-            }          
+            }
 
             using (var mesure = counters.Mesure("4.2 Get by LastName start with 'arm' (using indexed tag)"))
             {
                 await foreach (var _ in entityClient.GetByTagAsync("_FirstLastName3Chars",
-                    filter=>filter
+                    filter => filter
                     .Equal("arm")
                     .AndPartitionKey()
                     .Equal(person.TenantId)))
