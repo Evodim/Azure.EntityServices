@@ -106,21 +106,19 @@ namespace Azure.EntityServices.Tables
 
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var queryExpr = new FilterExpression<T>();
+            var query = new FilterExpression<T>();
             //build primaryKey prefix
             var primaryKeyName = ResolvePrimaryKey("");
-            //apply implicit filter in the query to exclude duplicated tag entities
+          
+            //add group expression to scope the filter with non tagged rows
+            query
+                  .WhereRowKey()
+                  .GreaterThanOrEqual(primaryKeyName)
+                  .AndRowKey()
+                  .LessThan($"{primaryKeyName}~")
+                  .And(filter); 
 
-            var query =
-                queryExpr
-              .WhereRowKey().GreaterThanOrEqual(primaryKeyName)
-              .AndRowKey().LessThan($"{primaryKeyName}~");
-
-            if (filter != null)
-            {
-                query.And(filter);
-            }
-            var strQuery = new TableStorageQueryBuilder<T>(queryExpr).Build();
+            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
             await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
             {
