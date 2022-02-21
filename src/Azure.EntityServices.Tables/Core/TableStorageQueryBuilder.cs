@@ -41,7 +41,10 @@ namespace Azure.EntityServices.Tables.Core
             if (expression.PropertyType == typeof(long) || expression.PropertyType == typeof(long?))
                 return TableQuery.GenerateFilterConditionForLong(expression.PropertyName, GetInstruction(expression.Comparator), (long)expression.PropertyValue);
 
-            return TableQuery.GenerateFilterCondition(expression.PropertyName, GetInstruction(expression.Comparator), expression.PropertyValue.ToInvariantString());
+            return TableQuery.GenerateFilterCondition(
+                expression.PropertyName,
+                GetInstruction(expression.Comparator),
+                expression.PropertyValue.ToInvariantString());
         }
     }
 }

@@ -253,7 +253,7 @@ namespace Azure.EntityServices.Tables
             InsertOrMerge
         }
 
-        protected string ComputeKeyConvention(string name, object value) => $"{name}-{value?.ToInvariantString()}";
+        protected string BuildRowKey(string name, object value) => $"{name}-{value?.ToInvariantString() ?? "$null"}";
 
         protected void NotifyChange(IEntityBinder<T> entityBinder, EntityOperation operation)
         {
@@ -334,11 +334,11 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        private string TagValueBuilder(string key, object value) => $"{ComputeKeyConvention(key, value)}";
+        private string TagValueBuilder(string key, object value) => $"{BuildRowKey(key, value)}";
 
-        private string CreateRowKey(PropertyInfo property, T entity) => $"{ComputeKeyConvention(property.Name, property.GetValue(entity).ToInvariantString())}{ResolvePrimaryKey(entity)}";
+        private string CreateRowKey(PropertyInfo property, T entity) => $"{BuildRowKey(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
 
-        private string CreateRowKey(string key, object value, T entity) => $"{ComputeKeyConvention(key, value.ToInvariantString())}{ResolvePrimaryKey(entity)}";
+        private string CreateRowKey(string key, object value, T entity) => $"{BuildRowKey(key, value)}{ResolvePrimaryKey(entity)}";
 
         private void BindDynamicProps(IEntityBinder<T> tableEntity, bool toDelete = false)
         {

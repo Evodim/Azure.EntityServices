@@ -102,7 +102,10 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_Nullable_Filter()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
+            //tagBuilder thant handle null values
+            Func<string,object,string> tagBuilder = (k, v) => $"{k}-{v ?? "$null"}";
+
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", tagBuilder));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().Equal(null)
@@ -112,7 +115,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt 'Created-' and RowKey lt 'Created-2022-10-22$~' and _deleted_tag_ eq false and TenantId eq '10'");
+                .Be("RowKey gt 'Created-$null$' and RowKey lt 'Created-$null$~' and _deleted_tag_ eq false and TenantId eq '10'");
         }
     }
 }

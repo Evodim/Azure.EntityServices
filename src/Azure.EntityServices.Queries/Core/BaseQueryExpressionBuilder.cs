@@ -21,11 +21,10 @@ namespace Azure.EntityServices.Queries.Core
             {
                 if (expression == null) return string.Empty;
                 StringBuilder queryBuilder = new StringBuilder();
-                if (expression.PropertyValue != null)
-                {
-                    var strExpression = ExpressionFilterConverter(expression);
-                    queryBuilder.Append(strExpression);
-                }
+
+                var strExpression = ExpressionFilterConverter(expression);
+                queryBuilder.Append(strExpression);
+               
                 if (expression.Group.Count > 0)
                 {
                     foreach (var operation in expression.Group)

@@ -8,7 +8,8 @@ namespace Azure.EntityServices.Queries
     public class FilterExpression<T, P> : FilterExpression<T>, IQueryFilter<T, P>
     {
        
-        public IFilterOperator<T> AddFilterCondition(string comparison, P value) => base.AddFilterCondition(comparison, value);
+        public IFilterOperator<T> AddFilterCondition(string comparison, P value) 
+            => AddFilterCondition(comparison, value, typeof(P));
     }
     
     public class FilterExpression<T> : IFilterExpression<T>
@@ -62,7 +63,13 @@ namespace Azure.EntityServices.Queries
             PropertyType = value?.GetType() ?? typeof(object);
             return this;
         }
-
+        public IFilterOperator<T> AddFilterCondition(string comparison, object value, Type type)
+        {
+            PropertyValue = value;
+            Comparator = comparison;
+            PropertyType = type;
+            return this;
+        }
         public IFilterOperator<T> AddGroupExpression(string expressionOperator, Action<IQueryCompose<T>> subQuery)
         {
             var childExpression = Factory();
