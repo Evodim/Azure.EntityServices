@@ -68,11 +68,11 @@ namespace Azure.EntityServices.Tables.Core
         {
             foreach (var metadata in Metadata)
             {
-                _tableEntity.Add(metadata.Key, EntityValueAdapter.ToTable(metadata.Value));
+                _tableEntity.Add(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value));
             }
             foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)))
             {
-                _tableEntity.Add(property.Name, EntityValueAdapter.ToTable(property.GetValue(Entity), property));
+                _tableEntity.Add(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
             }
             return _tableEntity;
         }
@@ -91,7 +91,7 @@ namespace Azure.EntityServices.Tables.Core
             {
                 if (_tableEntity.TryGetValue(property.Name, out var tablePropValue))
                 {
-                    EntityValueAdapter.FromTable(Entity, property, tablePropValue);
+                    EntityValueAdapter.ReadValue(Entity, property, tablePropValue);
                 }
             }
 

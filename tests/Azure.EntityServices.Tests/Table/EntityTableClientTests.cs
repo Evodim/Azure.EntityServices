@@ -45,6 +45,26 @@ namespace Azure.EntityServices.Table.Tests
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
         }
+        [TestMethod]
+        public async Task Should_InsertOrReplace_Entity_With_Null_values()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+            person.Altitude = null;
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                 SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            await entityTable.AddOrReplaceAsync(person);
+
+            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            created.Should().BeEquivalentTo(person);
+            created.Altitude.Should().Be(null);
+        }
 
         [TestMethod]
         public async Task Should_Ignore_Entity_Prop()
