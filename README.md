@@ -1,15 +1,18 @@
 # Azure.EntityServices
-This project provide libraries as an abstraction layer of Azure blobs and tables storage SDK
+## Azure Storage client to use generic entities in tables and blobs
+![Public](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-public.yml/badge.svg)
+![Internal](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-internal.yml/badge.svg)
+
 
 ## Purpose
 
-Azure.EntityServices help you to store, update and search generic entities in Azure table storage
-Entities could be any classes without dependencies on any framework or azure storage implementation
+Azure.EntityServices help you to store, update and search generic entities in Azure storage tables and blobs
+Entities could be any pure classes without any infrastructure specific dependencies
 
 Initial project (experimental) was located here: [EntityStorageServices](https://github.com/Evodim/EntityStorageServices)
 This new version was partiallly rewritted and based on the new official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
 
-This project is focused on entities abstraction and performance
+This project is focused on azure sdk abstraction and performance
  
 Features:
 
