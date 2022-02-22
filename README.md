@@ -16,11 +16,11 @@ This project is focused on azure sdk abstraction and performance
  
 Features:
 
-* You can use any generic entities without azure sdk dependencies: no need to inehrits from ITableEntity or TableEntity neither
-* You can extend entity properties with dynamic properties (and could be tagged)
-* You can tag any entity or dynamic properties to be indexed for faster search in large amount of items
+* You can use any generic entities without azure sdk dependencies: no needs to inehrit from ITableEntity or TableEntity neither
+* You can extend entity properties with dynamic properties 
+* You can tag any entity or dynamic properties to be indexed for faster search for tables with large amount of items
 * Handle more primitive types that are not supported by default in azure table storage 
-* Lightweight and extensible query expression builder (used to build query filter expressions)
+* Lightweight and extensible query expression builder (used to build advanced filter expressions)
 * Entity table observers, subscribe and apply side effects when any entity changed (experimental)
  
 ## How it works?
