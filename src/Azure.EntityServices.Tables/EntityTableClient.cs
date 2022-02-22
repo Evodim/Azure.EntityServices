@@ -94,7 +94,7 @@ namespace Azure.EntityServices.Tables
 
         public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var query = new TagFilterExpression<T>("", (tag, value) => TagValueBuilder(tag, value));
+            var query = new TagFilterExpression<T>("");
             filter.Invoke(query);
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
@@ -229,12 +229,12 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return $"${TagValueBuilder(_config.PrimaryKeyProp.Name, _config.PrimaryKeyProp.GetValue(entity))}";
+            return $"${TableQueryHelper.ToRowKey(_config.PrimaryKeyProp.Name, _config.PrimaryKeyProp.GetValue(entity))}";
         }
 
         public string ResolvePrimaryKey(object value)
         {
-            return $"${TagValueBuilder(_config.PrimaryKeyProp.Name, value)}";
+            return $"${TableQueryHelper.ToRowKey(_config.PrimaryKeyProp.Name, value)}";
         }
 
         public void AddObserver(string name, IEntityObserver<T> observer)
@@ -252,8 +252,7 @@ namespace Azure.EntityServices.Tables
             Insert,
             InsertOrMerge
         }
-
-        protected string BuildRowKey(string name, object value) => $"{name}-{value?.ToInvariantString() ?? "$null"}";
+         
 
         protected void NotifyChange(IEntityBinder<T> entityBinder, EntityOperation operation)
         {
@@ -334,11 +333,10 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        private string TagValueBuilder(string key, object value) => $"{BuildRowKey(key, value)}";
+       
+        private string CreateRowKey(PropertyInfo property, T entity) => $"{TableQueryHelper.ToRowKey(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
 
-        private string CreateRowKey(PropertyInfo property, T entity) => $"{BuildRowKey(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
-
-        private string CreateRowKey(string key, object value, T entity) => $"{BuildRowKey(key, value)}{ResolvePrimaryKey(entity)}";
+        private string CreateRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToRowKey(key, value)}{ResolvePrimaryKey(entity)}";
 
         private void BindDynamicProps(IEntityBinder<T> tableEntity, bool toDelete = false)
         {

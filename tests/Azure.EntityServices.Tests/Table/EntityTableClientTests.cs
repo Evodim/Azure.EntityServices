@@ -394,8 +394,6 @@ namespace Azure.EntityServices.Table.Tests
             });
             try
             {
-           
-
                 var latestPerson = persons.Last();
                 latestPerson.Altitude = -100;
                 await tableEntity.AddManyAsync(persons);
@@ -404,7 +402,7 @@ namespace Azure.EntityServices.Table.Tests
                 filter => filter
                 .WherePartitionKey()
                 .Equal(persons.First().TenantId)
-                .And(p=>p.Altitude)
+                .And(p => p.Altitude)
                 .Equal(latestPerson.Altitude)))
                 {
                     pagedResult.Should().HaveCount(1);
@@ -416,11 +414,10 @@ namespace Azure.EntityServices.Table.Tests
             }
         }
 
-
         [TestMethod]
         public async Task Should_Filter_Entities_With_Nullable_Properties()
         {
-            var persons = Fakers.CreateFakePerson().Generate(130);
+            var persons = Fakers.CreateFakePerson().Generate(10);
 
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
@@ -441,20 +438,26 @@ namespace Azure.EntityServices.Table.Tests
             });
             try
             {
-
-
                 var latestPerson = persons.Last();
-                latestPerson.Altitude =null;
+                latestPerson.BankAmount = null;
+                latestPerson.Altitude = null;
+                latestPerson.Situation = null;
                 await tableEntity.AddManyAsync(persons);
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(
                 filter => filter
                 .WherePartitionKey()
-                .Equal(persons.First().TenantId)
-                .And(p => p.Altitude)
-                .Equal(latestPerson.Altitude)))
+                    .Equal(persons.First().TenantId)
+                    .And(p => p.BankAmount)
+                    .Equal(null)
+                    .And(p => p.Altitude)
+                    .Equal(null)
+                    .And(p => p.Situation)
+                    .Equal(null))
+                    )
                 {
                     pagedResult.Should().HaveCount(1);
+                    pagedResult.First().Should().BeEquivalentTo(latestPerson);
                 }
             }
             finally
@@ -462,6 +465,7 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.DropTableAsync();
             }
         }
+
         [TestMethod]
         public async Task Should_Query_By_Tag_Filter_With_Equal_Extension()
         {
@@ -483,12 +487,11 @@ namespace Azure.EntityServices.Table.Tests
 
                 await foreach (var resultPage in entityTable.GetByTagAsync(
                 filter => filter
-                .WhereTag(p=>p.Created)
+                .WhereTag(p => p.Created)
                 .Equal(person.Created)))
                 {
                     resultPage.First().Should().BeEquivalentTo(person);
                 }
-
             }
             finally
             {
@@ -586,7 +589,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 await foreach (var resultPage in entityTable.GetByTagAsync(
                     filter => filter
-                    .WhereTag(p=>p.Created)
+                    .WhereTag(p => p.Created)
                     .LessThan(latestDate)))
                 {
                     resultPage.Select(p => p.Created).All(p => p.Value < latestDate).Should().BeTrue();
@@ -663,7 +666,7 @@ namespace Azure.EntityServices.Table.Tests
                 await foreach (var resultPage in entityTable.GetByTagAsync(
                     filter =>
                     filter
-                    .WhereTag(p=>p.Created)
+                    .WhereTag(p => p.Created)
                     .Between(oldestDate, latestDate)))
                 {
                     resultPage.Should().BeEquivalentTo(persons

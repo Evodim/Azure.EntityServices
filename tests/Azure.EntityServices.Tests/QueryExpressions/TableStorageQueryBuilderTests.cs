@@ -5,14 +5,12 @@ using Azure.EntityServices.Tables.Core;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
- 
 
 namespace Azure.EntityServices.Table.Tests
 {
     [TestClass]
     public class TableStorageQueryBuilderTests
-    { 
-
+    {
         [TestMethod]
         public void Should_Build_TableStorage_Query_Expression()
         {
@@ -53,7 +51,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Tag_Equal_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().Equal("2022-10-22")
@@ -69,7 +67,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_Tag_GreaterThanOrEqual_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().GreaterThanOrEqual("2022-10-22")
@@ -85,7 +83,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_Tag_LessThanOrEqual_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", (k, v) => $"{k}-{v}"));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().LessThanOrEqual("2022-10-22")
@@ -98,24 +96,23 @@ namespace Azure.EntityServices.Table.Tests
                 .Be("RowKey gt 'Created-' and RowKey lt 'Created-2022-10-22$~' and _deleted_tag_ eq false and TenantId eq '10'");
         }
 
-
         [TestMethod]
         public void Should_Use_Nullable_Filter()
         {
-            //tagBuilder thant handle null values
-            Func<string,object,string> tagBuilder = (k, v) => $"{k}-{v ?? "$null"}";
-
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created", tagBuilder));
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag().Equal(null)
-           .And(p => p.TenantId).Equal("10");
+           .And(p => p.TenantId).Equal("10")
+           .And(p => p.Created).Equal(null)
+           .Or(p => p.Enabled).Equal(null)
+           .Or(p => p.Altitude).Equal(null);
 
             var queryStr = builder.Build();
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt 'Created-$null$' and RowKey lt 'Created-$null$~' and _deleted_tag_ eq false and TenantId eq '10'");
+                .Be("RowKey gt 'Created-$null$' and RowKey lt 'Created-$null$~' and _deleted_tag_ eq false and TenantId eq '10' and Created eq null or Enabled eq null or Altitude eq null");
         }
     }
 }
