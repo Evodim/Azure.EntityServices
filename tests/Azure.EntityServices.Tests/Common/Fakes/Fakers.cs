@@ -1,6 +1,5 @@
 ﻿using Azure.EntityServices.Table.Common.Models;
 using Bogus;
-using Bogus.Extensions;
 using System;
 using System.Linq;
 using System.Net;
@@ -42,15 +41,13 @@ namespace Azure.EntityServices.Table.Common.Fakes
             .RuleFor(p => p.OperationId, p => Guid.NewGuid().ToString())
             .RuleFor(p => p.Name, f => f.PickRandom("Session_PUT", "Session_PATH", "Session_START", "Session_STOP"))
             .RuleFor(p => p.Body, f => new BinaryData(DownloadImage(f.Image.LoremFlickrUrl()).GetAwaiter().GetResult()))
-            .RuleFor(p => p.BodyString, f =>  f.Lorem.Text())
+            .RuleFor(p => p.BodyString, f => f.Lorem.Text())
             .RuleFor(p => p.MimeType, f => "image/png")
             .RuleFor(p => p.OperationType, f => f.PickRandom<OperationType>())
             .RuleFor(p => p.Host, f => f.Image.LoremFlickrUrl())
             .RuleFor(p => p.Timestamp, f => DateTime.UtcNow)
             .RuleFor(p => p.HttpMethod, f => f.PickRandom<HttpMethod>())
-            .RuleFor(p => p.BodyObject,f=> null);
-
-            
+            .RuleFor(p => p.BodyObject, f => null);
 
             return fake;
         }
@@ -64,7 +61,7 @@ namespace Azure.EntityServices.Table.Common.Fakes
             //Set a global policy by using Faker.DefaultStrictMode
             .StrictMode(true)
             //OrderId is deterministic
-            .RuleFor(p => p.TenantId, f => (accounts==null)?Guid.NewGuid().ToString(): f.PickRandom(accounts))
+            .RuleFor(p => p.TenantId, f => (accounts == null) ? Guid.NewGuid().ToString() : f.PickRandom(accounts))
             .RuleFor(p => p.PersonId, f => Guid.NewGuid())
             .RuleFor(p => p.Rank, f => rankid++)
             .RuleFor(p => p.Address, f => FakedAddress())
@@ -79,7 +76,7 @@ namespace Azure.EntityServices.Table.Common.Fakes
             .RuleFor(p => p.Longitude, f => f.Random.Double())
             .RuleFor(p => p.Latitude, f => f.Random.Double())
             .RuleFor(p => p.Distance, f => f.Random.Decimal())
-            .RuleFor(p => p.Altitude, f => f.Random.Decimal().OrNull(f))
+            .RuleFor(p => p.Altitude, f => f.Random.Decimal())
             .RuleFor(p => p.Genre, f => f.Random.Enum<Genre>())
             .RuleFor(p => p.Situation, f => f.Random.Enum<Situation>())
             .RuleFor(p => p.BankAmount, f => f.Random.Float())

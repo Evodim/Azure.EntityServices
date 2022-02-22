@@ -20,8 +20,8 @@ namespace Azure.EntityServices.Queries.Core
             try
             {
                 if (expression == null) return string.Empty;
-                StringBuilder queryBuilder = new StringBuilder();
-                if (expression.PropertyValue != null)
+                StringBuilder queryBuilder = new();
+                if (expression.PropertyName != null)
                 {
                     var strExpression = ExpressionFilterConverter(expression);
                     queryBuilder.Append(strExpression);

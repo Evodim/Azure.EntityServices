@@ -6,7 +6,7 @@ namespace Azure.EntityServices.Tables
 {
     public class TagFilterExpression<T, P> : TagFilterExpression<T>, ITagQueryFilter<T, P>
     {
-        public TagFilterExpression(string tagName, Func<string, object, string> tagValueBuilder) : base(tagName, tagValueBuilder)
+        public TagFilterExpression(string tagName) : base(tagName)
         {
         }
 
@@ -20,18 +20,18 @@ namespace Azure.EntityServices.Tables
     {
         public string TagName { get; set; }
 
-        public Func<string, object, string> TagValueBuilder { get; }
+       
 
-        public TagFilterExpression(Func<string, object, string> tagValueBuilder)
+        public TagFilterExpression()
         {
           
-            TagValueBuilder = tagValueBuilder;
+           
         }
         
-        public TagFilterExpression(string tagName, Func<string, object, string> tagValueBuilder)
+        public TagFilterExpression(string tagName)
         {
             TagName = tagName;
-            TagValueBuilder = tagValueBuilder;
+          
         }
 
         public ITagQueryFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property)
@@ -46,12 +46,12 @@ namespace Azure.EntityServices.Tables
 
         public override IFilterExpression<T> Factory()
         {
-            return new TagFilterExpression<T>(TagName, TagValueBuilder);
+            return new TagFilterExpression<T>(TagName);
         }
 
         public override IFilterExpression<T> Factory<P>()
         {
-            return new TagFilterExpression<T, P>(TagName, TagValueBuilder);
+            return new TagFilterExpression<T, P>(TagName);
         }
     }
 }

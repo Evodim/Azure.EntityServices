@@ -45,6 +45,26 @@ namespace Azure.EntityServices.Table.Tests
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
         }
+        [TestMethod]
+        public async Task Should_InsertOrReplace_Entity_With_Null_values()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+            person.Altitude = null;
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                 SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            await entityTable.AddOrReplaceAsync(person);
+
+            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            created.Should().BeEquivalentTo(person);
+            created.Altitude.Should().Be(null);
+        }
 
         [TestMethod]
         public async Task Should_Ignore_Entity_Prop()
@@ -356,11 +376,111 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.AddManyAsync(persons);
 
                 //get all entities both primary and projected
-                await foreach (var pagedResult in tableEntity.GetAsync(filter => filter
+                await foreach (var pagedResult in tableEntity.GetAsync(
+                filter => filter
                 .WherePartitionKey()
                 .Equal(persons.First().TenantId)))
                 {
                     pagedResult.Should().HaveCount(130);
+                }
+            }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Filter_Entities()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(130);
+
+            //force entities to have same partition (tenantId)
+            var partitionName = Guid.NewGuid().ToString();
+            persons.ForEach(p => p.TenantId = partitionName);
+            var options = new EntityTableClientOptions()
+            {
+                ConnectionString = TestEnvironment.ConnectionString,
+                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
+                CreateTableIfNotExists = true,
+            };
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+            {
+                config
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var latestPerson = persons.Last();
+                latestPerson.Altitude = -100;
+                await tableEntity.AddManyAsync(persons);
+                //get all entities both primary and projected
+                await foreach (var pagedResult in tableEntity.GetAsync(
+                filter => filter
+                .WherePartitionKey()
+                .Equal(persons.First().TenantId)
+                .And(p => p.Altitude)
+                .Equal(latestPerson.Altitude)))
+                {
+                    pagedResult.Should().HaveCount(1);
+                }
+            }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Filter_Entities_With_Nullable_Properties()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            //force entities to have same partition (tenantId)
+            var partitionName = Guid.NewGuid().ToString();
+            persons.ForEach(p => p.TenantId = partitionName);
+            var options = new EntityTableClientOptions()
+            {
+                ConnectionString = TestEnvironment.ConnectionString,
+                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
+                CreateTableIfNotExists = true,
+            };
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+            {
+                config
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                var latestPerson = persons.Last();
+                latestPerson.BankAmount = null;
+                latestPerson.Altitude = null;
+                latestPerson.Situation = null;
+                latestPerson.Enabled =true;
+                await tableEntity.AddManyAsync(persons);
+                //get all entities both primary and projected
+                await foreach (var pagedResult in tableEntity.GetAsync(
+                filter => filter
+                .WherePartitionKey()
+                    .Equal(persons.First().TenantId)
+                    .And(p => p.BankAmount)
+                    .Equal(null)
+                    .And(p => p.Altitude)
+                    .Equal(null)
+                    .And(p => p.Situation)
+                    .Equal(null)
+                    .And(p => p.Enabled)
+                    .NotEqual(null))
+                    )
+                {
+                    pagedResult.Should().HaveCount(1);
+                    pagedResult.First().Should().BeEquivalentTo(latestPerson);
                 }
             }
             finally
@@ -389,14 +509,12 @@ namespace Azure.EntityServices.Table.Tests
                 var person = persons.Last();
 
                 await foreach (var resultPage in entityTable.GetByTagAsync(
-                    filter =>
-
-                filter.WhereTag("Created")
+                filter => filter
+                .WhereTag(p => p.Created)
                 .Equal(person.Created)))
                 {
                     resultPage.First().Should().BeEquivalentTo(person);
                 }
-                
             }
             finally
             {
@@ -458,8 +576,8 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.AddManyAsync(persons);
 
                 await foreach (var resultPage in entityTable.GetByTagAsync(
-                    filter =>
-                    filter.WhereTag("Created").GreaterThan(oldestDate)))
+                    filter => filter
+                    .WhereTag("Created").GreaterThan(oldestDate)))
                 {
                     resultPage.Select(p => p.Created).All(p => p.Value > oldestDate).Should().BeTrue();
                     resultPage.Should().NotContain(olderPerson);
@@ -493,8 +611,8 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.AddManyAsync(persons);
 
                 await foreach (var resultPage in entityTable.GetByTagAsync(
-                    filter =>
-                    filter.WhereTag("Created")
+                    filter => filter
+                    .WhereTag(p => p.Created)
                     .LessThan(latestDate)))
                 {
                     resultPage.Select(p => p.Created).All(p => p.Value < latestDate).Should().BeTrue();
@@ -529,9 +647,8 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.AddManyAsync(persons);
                 await foreach (var resultPage in entityTable.GetByTagAsync(
 
-                    filter =>
-
-                    filter.WhereTag("Created")
+                    filter => filter
+                    .WhereTag("Created")
                     .LessThanOrEqual(latestDate)))
                 {
                     resultPage.Should().BeEquivalentTo(persons.Where(p => p != lastestPerson));
@@ -571,7 +688,8 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.AddManyAsync(persons);
                 await foreach (var resultPage in entityTable.GetByTagAsync(
                     filter =>
-                    filter.WhereTag("Created")
+                    filter
+                    .WhereTag(p => p.Created)
                     .Between(oldestDate, latestDate)))
                 {
                     resultPage.Should().BeEquivalentTo(persons
@@ -608,7 +726,8 @@ namespace Azure.EntityServices.Table.Tests
                 //Query by Created Tag
                 await foreach (var resultPage in entityTable.GetByTagAsync(
                     filter =>
-                        filter.WhereTag(p => p.Created)
+                        filter
+                        .WhereTag(p => p.Created)
                         .GreaterThanOrEqual(persons.Last().Created)
                         .And(p => p.Altitude)
                         .LessThanOrEqual(-100)

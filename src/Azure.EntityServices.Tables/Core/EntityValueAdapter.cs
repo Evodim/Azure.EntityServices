@@ -15,7 +15,7 @@ namespace Azure.EntityServices.Tables.Core
         /// <param name="value"></param>
         /// <param name="entityProp"></param>
         /// <returns></returns>
-        public static object ToTable(object value, PropertyInfo entityProp = null)
+        public static object WriteValue(object value, PropertyInfo entityProp = null)
         {
             if (value == null)
             {
@@ -59,7 +59,7 @@ namespace Azure.EntityServices.Tables.Core
         /// <param name="value"></param>
         /// <param name="entityProp"></param>
         /// <returns></returns>
-        public static void FromTable<T>(T entity, PropertyInfo entityProp, object tablePropValue)
+        public static void ReadValue<T>(T entity, PropertyInfo entityProp, object tablePropValue)
         {
             var propertyType = entityProp.PropertyType;
 
