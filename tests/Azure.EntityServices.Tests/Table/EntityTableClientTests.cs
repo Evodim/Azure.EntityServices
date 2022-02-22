@@ -462,6 +462,7 @@ namespace Azure.EntityServices.Table.Tests
                 latestPerson.BankAmount = null;
                 latestPerson.Altitude = null;
                 latestPerson.Situation = null;
+                latestPerson.Enabled =true;
                 await tableEntity.AddManyAsync(persons);
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(
@@ -473,7 +474,9 @@ namespace Azure.EntityServices.Table.Tests
                     .And(p => p.Altitude)
                     .Equal(null)
                     .And(p => p.Situation)
-                    .Equal(null))
+                    .Equal(null)
+                    .And(p => p.Enabled)
+                    .NotEqual(null))
                     )
                 {
                     pagedResult.Should().HaveCount(1);
