@@ -112,7 +112,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt 'Created-$null$' and RowKey lt 'Created-$null$~' and _deleted_tag_ eq false and TenantId eq '10' and Created eq null or Enabled eq null or Altitude eq null");
+                .Be("RowKey gt 'Created-$' and RowKey lt 'Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Created eq null or Enabled eq null or Altitude eq null");
         }
     }
 }
