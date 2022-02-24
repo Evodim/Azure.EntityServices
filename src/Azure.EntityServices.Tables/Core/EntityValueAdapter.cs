@@ -164,6 +164,15 @@ namespace Azure.EntityServices.Tables.Core
 
                         return;
                     }
+                    if (propertyType == typeof(bool))
+                    {
+                        if (bool.TryParse(strPropValue,out var value))
+                        {
+                            entityProp.SetValue(entity, value, null);
+                        }
+
+                        return;
+                    }
                     if (propertyType.IsEnum)
                     {
                         if (Enum.TryParse(propertyType, strPropValue, out var parsedEnum))

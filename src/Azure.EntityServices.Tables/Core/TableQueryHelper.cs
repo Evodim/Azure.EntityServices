@@ -40,7 +40,7 @@ namespace Azure.EntityServices.Tables.Core
                 Guid v => string.Format("{0}", v),
                 BinaryData v => string.Format("X{0}", v),
                 decimal v => Convert.ToString(v, CultureInfo.InvariantCulture),
-                _ => givenValue == null ? "$null" : $"{givenValue}"
+                _ => givenValue == null ? "" : $"{givenValue}"
             };
         }
 
