@@ -95,14 +95,14 @@ namespace Azure.EntityServices.Samples
                 do
                 {
                     var result = await entityClient.GetPagedAsync(
-                           pageSize: 100,
+                           maxPerPage: 100,
                            nextPageToken: token);
-                        count += result.Entities.Count();
+                    count += result.Entities.Count();
 
-                        Console.WriteLine($"{mesure.Name} iterate {count}");
-                        token = result.ContinuationToken;
+                    Console.WriteLine($"{mesure.Name} iterate {count}");
+                    token = result.ContinuationToken;
                 }
-                while(!string.IsNullOrEmpty(token));
+                while (!string.IsNullOrEmpty(token));
             }
             using (var mesure = counters.Mesure("3. Get By indexed tag)"))
             {
