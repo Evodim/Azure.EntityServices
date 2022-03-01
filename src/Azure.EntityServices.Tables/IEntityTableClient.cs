@@ -1,7 +1,6 @@
 ﻿using Azure.EntityServices.Queries;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,7 +24,9 @@ namespace Azure.EntityServices.Tables
         Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
 
         IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default);
- 
+
+        Task<EntityPage<T>> GetPagedAsync(Action<IQuery<T>> filter = default, int? pageSize = null, string nextPageToken = null, CancellationToken cancellationToken = default);
+
         IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, CancellationToken cancellationToken = default);
 
         Task DeleteAsync(T entity, CancellationToken cancellationToken = default);

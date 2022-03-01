@@ -109,14 +109,14 @@ namespace Azure.EntityServices.Tables
             var query = new FilterExpression<T>();
             //build primaryKey prefix
             var primaryKeyName = ResolvePrimaryKey("");
-          
+
             //add group expression to scope the filter with non tagged rows
             query
                   .WhereRowKey()
                   .GreaterThanOrEqual(primaryKeyName)
                   .AndRowKey()
                   .LessThan($"{primaryKeyName}~")
-                  .And(filter); 
+                  .And(filter);
 
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
@@ -124,6 +124,33 @@ namespace Azure.EntityServices.Tables
             {
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
+        }
+
+        public async Task<EntityPage<T>> GetPagedAsync(
+            Action<IQuery<T>> filter = default,
+            int? pageSize = null,
+            string nextPageToken = null,
+            CancellationToken cancellationToken = default)
+        {
+            var query = new FilterExpression<T>();
+            //build primaryKey prefix
+            var primaryKeyName = ResolvePrimaryKey("");
+
+            //add group expression to scope the filter with non tagged rows
+            query
+                  .WhereRowKey()
+                  .GreaterThanOrEqual(primaryKeyName)
+                  .AndRowKey()
+                  .LessThan($"{primaryKeyName}~")
+                  .And(filter);
+
+            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
+            var pageEnumerator =
+                _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: pageSize)
+                         .AsPages(nextPageToken)
+                         .GetAsyncEnumerator(cancellationToken);
+            await pageEnumerator.MoveNextAsync();
+            return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
         }
 
         public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
@@ -252,7 +279,6 @@ namespace Azure.EntityServices.Tables
             Insert,
             InsertOrMerge
         }
-         
 
         protected void NotifyChange(IEntityBinder<T> entityBinder, EntityOperation operation)
         {
@@ -333,7 +359,6 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-       
         private string CreateRowKey(PropertyInfo property, T entity) => $"{TableQueryHelper.ToRowKey(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
 
         private string CreateRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToRowKey(key, value)}{ResolvePrimaryKey(entity)}";
@@ -429,6 +454,19 @@ namespace Azure.EntityServices.Tables
         public Task DropTableAsync(CancellationToken cancellationToken = default)
         {
             return _client.DeleteAsync(cancellationToken);
+        }
+    }
+
+    public record struct EntityPage<T>(IEnumerable<T> Entities, string ContinuationToken)
+    {
+        public static implicit operator (IEnumerable<T>, string ContinuationToken)(EntityPage<T> value)
+        {
+            return (value.Entities, value.ContinuationToken);
+        }
+
+        public static implicit operator EntityPage<T>((IEnumerable<T>, string ContinuationToken) value)
+        {
+            return new EntityPage<T>(value.Item1, value.ContinuationToken);
         }
     }
 }
