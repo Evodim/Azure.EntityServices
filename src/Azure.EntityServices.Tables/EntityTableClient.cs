@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables
 {
+     
     /// <summary>
     /// Client to manage pure entities in azure Tables
     /// </summary>
@@ -110,9 +111,9 @@ namespace Azure.EntityServices.Tables
             return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
         }
 
-        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, int? maxPerPage = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await foreach (var page in QueryEntityAsync(filter, maxPerPage, null, cancellationToken))
+            await foreach (var page in QueryEntityAsync(filter, null, null, cancellationToken))
             {
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
