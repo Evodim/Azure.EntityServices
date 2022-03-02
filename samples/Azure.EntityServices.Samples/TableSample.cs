@@ -88,7 +88,22 @@ namespace Azure.EntityServices.Samples
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
             }
+            using (var mesure = counters.Mesure("2.1 GetPaged without filter"))
+            {
+                long count = 0;
+                string token = null;
+                do
+                {
+                    var result = await entityClient.GetPagedAsync(
+                           maxPerPage: 100,
+                           nextPageToken: token);
+                    count += result.Entities.Count();
 
+                    Console.WriteLine($"{mesure.Name} iterate {count}");
+                    token = result.ContinuationToken;
+                }
+                while (!string.IsNullOrEmpty(token));
+            }
             using (var mesure = counters.Mesure("3. Get By indexed tag)"))
             {
                 await foreach (var _ in entityClient.GetByTagAsync(

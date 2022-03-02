@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables
 {
+     
     /// <summary>
     /// Client to manage pure entities in azure Tables
     /// </summary>
@@ -93,37 +94,42 @@ namespace Azure.EntityServices.Tables
         }
 
         public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-        {
-            var query = new TagFilterExpression<T>("");
-            filter.Invoke(query);
-            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
-            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
+        {
+            await foreach (var page in QueryEntityByTagAsync(filter, null, null, cancellationToken))
             {
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
         }
 
+        public async Task<EntityPage<T>> GetByTagPagedAsync(Action<ITagQuery<T>> filter, int? maxPerPage = null, string nextPageToken = null, CancellationToken cancellationToken = default)
+        {
+            var pageEnumerator =
+              QueryEntityByTagAsync(filter, maxPerPage, nextPageToken, cancellationToken)
+                       .GetAsyncEnumerator(cancellationToken);
+            await pageEnumerator.MoveNextAsync();
+            return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
+        }
+
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var query = new FilterExpression<T>();
-            //build primaryKey prefix
-            var primaryKeyName = ResolvePrimaryKey("");
-          
-            //add group expression to scope the filter with non tagged rows
-            query
-                  .WhereRowKey()
-                  .GreaterThanOrEqual(primaryKeyName)
-                  .AndRowKey()
-                  .LessThan($"{primaryKeyName}~")
-                  .And(filter); 
-
-            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
-
-            await foreach (var page in _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken).AsPages())
+            await foreach (var page in QueryEntityAsync(filter, null, null, cancellationToken))
             {
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
+        }
+
+        public async Task<EntityPage<T>> GetPagedAsync(
+            Action<IQuery<T>> filter = default,
+            int? maxPerPage = null,
+            string nextPageToken = null,
+            CancellationToken cancellationToken = default)
+        {
+            var pageEnumerator =
+                QueryEntityAsync(filter, maxPerPage, nextPageToken, cancellationToken)
+                         .GetAsyncEnumerator(cancellationToken);
+            await pageEnumerator.MoveNextAsync();
+            return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
         }
 
         public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
@@ -247,12 +253,16 @@ namespace Azure.EntityServices.Tables
             _config.Observers.TryRemove(name, out var _);
         }
 
+        public Task DropTableAsync(CancellationToken cancellationToken = default)
+        {
+            return _client.DeleteAsync(cancellationToken);
+        }
+
         protected enum BatchOperation
         {
             Insert,
             InsertOrMerge
         }
-         
 
         protected void NotifyChange(IEntityBinder<T> entityBinder, EntityOperation operation)
         {
@@ -333,7 +343,6 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-       
         private string CreateRowKey(PropertyInfo property, T entity) => $"{TableQueryHelper.ToRowKey(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
 
         private string CreateRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToRowKey(key, value)}{ResolvePrimaryKey(entity)}";
@@ -426,9 +435,45 @@ namespace Azure.EntityServices.Tables
             return false;
         }
 
-        public Task DropTableAsync(CancellationToken cancellationToken = default)
+        private IAsyncEnumerable<Page<TableEntity>> QueryEntityAsync(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
         {
-            return _client.DeleteAsync(cancellationToken);
+            var query = new FilterExpression<T>();
+            //build primaryKey prefix
+            var primaryKeyName = ResolvePrimaryKey("");
+
+            //add group expression to scope the filter with non tagged rows
+            query
+                  .WhereRowKey()
+                  .GreaterThanOrEqual(primaryKeyName)
+                  .AndRowKey()
+                  .LessThan($"{primaryKeyName}~")
+                  .And(filter);
+
+            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
+
+            return _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken);
+        }
+
+        private IAsyncEnumerable<Page<TableEntity>> QueryEntityByTagAsync(Action<ITagQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
+        {
+            var query = new TagFilterExpression<T>("");
+            filter.Invoke(query);
+            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
+
+            return _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken);
+        }
+    }
+
+    public record struct EntityPage<T>(IEnumerable<T> Entities, string ContinuationToken)
+    {
+        public static implicit operator (IEnumerable<T>, string ContinuationToken)(EntityPage<T> value)
+        {
+            return (value.Entities, value.ContinuationToken);
+        }
+
+        public static implicit operator EntityPage<T>((IEnumerable<T>, string ContinuationToken) value)
+        {
+            return new EntityPage<T>(value.Item1, value.ContinuationToken);
         }
     }
 }
