@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-
+using Azure.EntityServices.Tables.Extensions;
 namespace Azure.EntityServices.Table.Tests
 {
     [TestClass]
@@ -44,6 +44,40 @@ namespace Azure.EntityServices.Table.Tests
 
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
+        }
+
+        [TestMethod]
+        public async Task Should_Refresh_Tag_When_Value_Updated()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+            
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                 SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            await entityTable.AddOrReplaceAsync(person);
+
+            var oldLastName = person.LastName;
+            person.LastName += "_updated";
+            await entityTable.AddOrReplaceAsync(person);
+
+            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            
+            created.LastName.Should().BeEquivalentTo(person.LastName);
+            var tagResult =await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName).Equal(person.LastName)).AllAsync();
+
+            tagResult.Count().Should().Be(1);
+            tagResult.First().Should().BeEquivalentTo(person);
+
+            var oldTagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName).Equal(oldLastName)).AllAsync();
+            oldTagResult.Count().Should().Be(0);
+             
+           
         }
 
         [TestMethod]

@@ -21,6 +21,8 @@ namespace Azure.EntityServices.Tables
 
         Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
+        Task<long> UpdateManyAsync(Action<T> updateAction, Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default);
+
         Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
 
         IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default);

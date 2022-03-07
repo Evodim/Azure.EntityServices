@@ -1,4 +1,6 @@
 ﻿using Azure.Data.Tables;
+using Azure.EntityServices.Tables.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -23,13 +25,15 @@ namespace Azure.EntityServices.Tables.Core
         public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>();
 
         public static readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties();
+
         public TableEntityBinder(T entity)
         {
-            Entity = entity; 
+            Entity = entity;
             _tableEntity = new TableEntity();
         }
-        public TableEntityBinder(T entity,IEnumerable<string> propsToIgnore)
-        { 
+
+        public TableEntityBinder(T entity, IEnumerable<string> propsToIgnore)
+        {
             _propsToIgnore = propsToIgnore;
             Entity = entity;
             _tableEntity = new TableEntity();
@@ -38,30 +42,30 @@ namespace Azure.EntityServices.Tables.Core
         public TableEntityBinder(TableEntity tableEntity)
         {
             _tableEntity = tableEntity;
-           
         }
+
         public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore)
         {
             _tableEntity = tableEntity;
             _propsToIgnore = propsToIgnore;
         }
+
         public TableEntityBinder(string partitionKey, string rowKey)
         {
             _tableEntity = new TableEntity(partitionKey, rowKey);
         }
+
         public TableEntityBinder(T entity, string partitionKey, string rowKey)
         {
             Entity = entity;
             _tableEntity = new TableEntity(partitionKey, rowKey);
-           
-
         }
+
         public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore)
         {
             Entity = entity;
             _tableEntity = new TableEntity(partitionKey, rowKey);
             _propsToIgnore = propsToIgnore;
-
         }
 
         public TableEntity Bind()
@@ -85,6 +89,11 @@ namespace Azure.EntityServices.Tables.Core
             {
                 //ignore entity properties
                 if (EntityProperties.Any(p => p.Name == tableProp.Key)) continue;
+                //ignore system properties
+                if (tableProp.Key == TableConstants.RowKey ||
+                    tableProp.Key == TableConstants.PartitionKey ||
+                    tableProp.Key == TableConstants.Timestamp) continue;
+
                 Metadata.Add(tableProp.Key, tableProp.Value);
             }
             foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)))
@@ -96,6 +105,19 @@ namespace Azure.EntityServices.Tables.Core
             }
 
             return Entity;
+        }
+
+        public void BindDynamicProps(IDictionary<string, Func<T, object>> props, bool toDelete = false)
+        {
+            foreach (var prop in props)
+            {
+                if (toDelete && Metadata.ContainsKey(prop.Key))
+                {
+                    Metadata.Remove(prop.Key);
+                    continue;
+                }
+                Metadata.AddOrUpdate(prop.Key, prop.Value.Invoke(Entity));
+            }
         }
     }
 }
