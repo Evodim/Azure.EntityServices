@@ -21,7 +21,7 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>
     where T : class, new()
     {
-        protected const string DeletedTagSuffix = "_deleted_tag";
+        protected const string DeletedTagSuffix = $"_deleted{TagSuffix}";
         protected const string TagSuffix = "_tag_";
         protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{TagSuffix}";
 
