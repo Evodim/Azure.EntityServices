@@ -193,22 +193,24 @@ namespace Azure.EntityServices.Tables
 
                     var binder = CreateEntityBinderFromTableEntity(tableEntity);
                     var entity = binder.UnBind();
-
                     updateAction.Invoke(entity);
-
+                    var existingMetadata = binder.Metadata.ToDictionary(d=>d.Key,d=>d.Value);
+                    binder.Metadata.Clear();
+                    //system metada required to cleanup old tags
                     binder.Metadata.Add(DeletedTagSuffix, false);
                     binder.BindDynamicProps(_config.DynamicProps);
-                    UpdateTags(batchedClient, cleaner, binder, binder.Metadata);
+
+                    UpdateTags(batchedClient, cleaner, binder, existingMetadata);
                     batchedClient.Replace(tableEntity);
 
                     await batchedClient.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
                     await cleaner.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
-                    NotifyChange(binder, EntityOperation.Add);
                     count++;
                 }
+               
             }
             await batchedClient.CommitTransactionAsync();
-            //await cleaner.CommitTransactionAsync();
+            await cleaner.CommitTransactionAsync();
             return count;
         }
 
