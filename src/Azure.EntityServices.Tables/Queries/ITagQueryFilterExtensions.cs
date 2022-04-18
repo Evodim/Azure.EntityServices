@@ -14,7 +14,7 @@ namespace Azure.EntityServices.Tables
                   .GreaterThan($"{TableQueryHelper.ToRowKey(query.TagName, minValue)}$")
                   .And($"RowKey")
                   .LessThan($"{TableQueryHelper.ToRowKey(query.TagName, maxValue)}$~")
-                  .And("_deleted_tag_").Equal(false);
+                  .And(EntitytableConstants.DeletedTag).Equal(false);
         }
         public static IFilterOperator<T> Equal<T, P>(this ITagQueryFilter<T, P> query, P value)
         {
@@ -22,7 +22,7 @@ namespace Azure.EntityServices.Tables
                   .GreaterThan($"{TableQueryHelper.ToRowKey(query.TagName, value)}$")
                   .And($"RowKey")
                   .LessThan($"{TableQueryHelper.ToRowKey(query.TagName, value)}$~")
-                  .And("_deleted_tag_").Equal(false);
+                  .And(EntitytableConstants.DeletedTag).Equal(false);
         }
      
 
@@ -32,7 +32,7 @@ namespace Azure.EntityServices.Tables
                .GreaterThan($"{TableQueryHelper.ToRowKey(query.TagName, value)}$~")
                .And($"RowKey")
                .LessThan($"{query.TagName}-~")
-               .And("_deleted_tag_").Equal(false);
+               .And(EntitytableConstants.DeletedTag).Equal(false);
         }
 
         public static IFilterOperator<T> GreaterThanOrEqual<T, P>(this ITagQueryFilter<T> query, P value)
@@ -41,7 +41,7 @@ namespace Azure.EntityServices.Tables
                .GreaterThan($"{TableQueryHelper.ToRowKey(query.TagName,value)}$")
                .And($"RowKey")
                .LessThan($"{query.TagName}-~")
-               .And("_deleted_tag_").Equal(false);
+               .And(EntitytableConstants.DeletedTag).Equal(false);
         }
         public static IFilterOperator<T> LessThan<T, P>(this ITagQueryFilter<T> query, P value)
         {
@@ -49,7 +49,7 @@ namespace Azure.EntityServices.Tables
                .GreaterThan($"{query.TagName}-")
                .And($"RowKey")
                .LessThan($"{TableQueryHelper.ToRowKey(query.TagName, value)}$")
-               .And("_deleted_tag_").Equal(false);
+               .And(EntitytableConstants.DeletedTag).Equal(false);
         }
 
         public static IFilterOperator<T> LessThanOrEqual<T, P>(this ITagQueryFilter<T> query, P value)
@@ -58,7 +58,7 @@ namespace Azure.EntityServices.Tables
                .GreaterThan($"{query.TagName}-")
                .And($"RowKey")
                .LessThan($"{TableQueryHelper.ToRowKey(query.TagName, value)}$~")
-               .And("_deleted_tag_").Equal(false);
+               .And(EntitytableConstants.DeletedTag).Equal(false);
         }
      
     }
