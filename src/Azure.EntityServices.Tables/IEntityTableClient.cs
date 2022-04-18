@@ -36,5 +36,7 @@ namespace Azure.EntityServices.Tables
         Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
 
         Task DropTableAsync(CancellationToken cancellationToken = default);
+
+        Task CreateTableAsync(CancellationToken cancellationToken = default);
     }
 }
