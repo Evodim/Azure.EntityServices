@@ -70,13 +70,14 @@ namespace Azure.EntityServices.Tables.Core
 
         public TableEntity Bind()
         {
+            
             foreach (var metadata in Metadata)
             {
-                _tableEntity.Add(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value));
+                _tableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value));
             }
             foreach (var property in EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)))
             {
-                _tableEntity.Add(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
+                _tableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
             }
             return _tableEntity;
         }
