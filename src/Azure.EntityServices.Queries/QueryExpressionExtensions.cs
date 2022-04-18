@@ -37,7 +37,7 @@ namespace Azure.EntityServices.Queries
             => query.AddOperator(nameof(IQueryInstructions.And), property);
 
         public static IFilterOperator<T> And<T>(this IFilterOperator<T> query, Action<IQueryCompose<T>> subQuery)
-            => query.AddGroupExpression(nameof(IQueryInstructions.And), subQuery);
+            => (subQuery==null)? query : query.AddGroupExpression(nameof(IQueryInstructions.And), subQuery);
 
         public static IQueryFilter<T, P> Not<T, P>(this IFilterOperator<T> query, Expression<Func<T, P>> property)
             => query.AddOperator(nameof(IQueryInstructions.Not), property);
@@ -46,7 +46,7 @@ namespace Azure.EntityServices.Queries
             => query.AddOperator(nameof(IQueryInstructions.Not), property);
 
         public static IFilterOperator<T> Or<T>(this IFilterOperator<T> query, Action<IQueryCompose<T>> subQuery)
-            => query.AddGroupExpression(nameof(IQueryInstructions.Or), subQuery);
+            => (subQuery == null) ? query : query.AddGroupExpression(nameof(IQueryInstructions.Or), subQuery);
 
         public static IQueryFilter<T, P> Or<T, P>(this IFilterOperator<T> query, Expression<Func<T, P>> property)
             => query.AddOperator(nameof(IQueryInstructions.Or), property);
