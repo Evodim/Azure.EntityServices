@@ -93,7 +93,8 @@ namespace Azure.EntityServices.Tables.Core
 
         public Task CommitTransactionAsync()
         {
-            return _pipeline?.CompleteAsync();
+            return (_pipeline == null)? Task.CompletedTask: 
+            _pipeline.CompleteAsync();
         }
 
         public async Task SubmitAllAsync(CancellationToken cancellationToken = default)
