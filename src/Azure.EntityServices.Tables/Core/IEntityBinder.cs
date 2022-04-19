@@ -1,4 +1,5 @@
 ﻿using Azure.Data.Tables;
+using System;
 using System.Collections.Generic;
 
 namespace Azure.EntityServices.Tables.Core
@@ -11,6 +12,7 @@ namespace Azure.EntityServices.Tables.Core
         IDictionary<string, object> Properties { get; }
         IDictionary<string, object> Metadata { get; } 
         TableEntity Bind(); 
+        void BindDynamicProps(IDictionary<string, Func<T, object>> props, bool toDelete = false); 
         T UnBind();
     }
 }

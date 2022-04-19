@@ -14,17 +14,16 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables
 {
-     
     /// <summary>
-    /// Client to manage pure entities in azure Tables
+    /// Client to manage entities in azure Tables
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class EntityTableClient<T> : IEntityTableClient<T>
     where T : class, new()
     {
-        protected const string DeletedTagSuffix = "_deleted_tag_";
-        protected const string TagSuffix = "_tag_";
-        protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{TagSuffix}";
+       
+        protected const string IndexedTagSuffix = "_indexed_tag_";
+        protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{IndexedTagSuffix}";
 
         private readonly EntityTableClientConfig<T> _config;
         private readonly EntityTableClientOptions _options;
@@ -167,18 +166,51 @@ namespace Azure.EntityServices.Tables
                 var tableEntities = new List<IEntityBinder<T>>();
                 if (cancellationToken.IsCancellationRequested) break;
 
-                var entityBinder = CreateEntityBinderFromEntity(entity);
-
-                //system metada required to handle implicit tag updates
-                entityBinder.Metadata.Add(DeletedTagSuffix, false);
-                BindDynamicProps(entityBinder);
-                BindTags(batchedClient, cleaner, entityBinder);
-                tableEntities.Add(entityBinder);
-                batchedClient.Insert(entityBinder.Bind());
-                await batchedClient.SubmitTransactionAsync(entityBinder.PartitionKey, cancellationToken);
-                NotifyChange(entityBinder, EntityOperation.Add);
+                var binder = CreateEntityBinderFromEntity(entity);
+                //system metada required to cleanup old tags
+                binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
+                binder.BindDynamicProps(_config.DynamicProps);
+                UpdateTags(batchedClient, cleaner, binder);
+                tableEntities.Add(binder);
+                batchedClient.Insert(binder.Bind());
+                await batchedClient.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
+                NotifyChange(binder, EntityOperation.Add);
             }
             await batchedClient.CommitTransactionAsync();
+        }
+
+        public async Task<long> UpdateManyAsync(Action<T> updateAction, Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default)
+        {
+            long count = 0;
+            var batchedClient = CreateTableBatchClient();
+            var cleaner = CreateTableBatchClient();
+
+            await foreach (var page in QueryEntityAsync(filter, null, null, cancellationToken))
+            {
+                foreach (var tableEntity in page.Values)
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
+
+                    var binder = CreateEntityBinderFromTableEntity(tableEntity);
+                    var entity = binder.UnBind();
+                    updateAction.Invoke(entity);
+                    var existingMetadata = binder.Metadata.ToDictionary(d => d.Key, d => d.Value);
+                    binder.Metadata.Clear();
+                    //system metada required to cleanup old tags
+                    binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
+                    binder.BindDynamicProps(_config.DynamicProps);
+
+                    UpdateTags(batchedClient, cleaner, binder, existingMetadata);
+                    batchedClient.InsertOrMerge(binder.Bind());
+
+                    await batchedClient.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
+                    // await cleaner.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
+                    count++;
+                }
+            }
+            await batchedClient.CommitTransactionAsync();
+            //await cleaner.CommitTransactionAsync();
+            return count;
         }
 
         public async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
@@ -191,7 +223,7 @@ namespace Azure.EntityServices.Tables
 
                 //mark indexed tag soft deleted
                 batchedClient.Delete(entityBinder.Bind());
-                foreach (var tag in metadatas.Where(m => m.Key.EndsWith(TagSuffix)))
+                foreach (var tag in metadatas.Where(m => m.Key.EndsWith(IndexedTagSuffix)))
                 {
                     var entityTagBinder = CreateEntityBinderFromEntity(entity, tag.Value.ToString());
                     batchedClient.Delete(entityTagBinder.Bind());
@@ -257,7 +289,10 @@ namespace Azure.EntityServices.Tables
         {
             return _client.DeleteAsync(cancellationToken);
         }
-
+        public Task CreateTableAsync(CancellationToken cancellationToken = default)
+        {
+            return _client.CreateIfNotExistsAsync(cancellationToken);
+        }
         protected enum BatchOperation
         {
             Insert,
@@ -294,16 +329,16 @@ namespace Azure.EntityServices.Tables
             var entityBinder = CreateEntityBinderFromEntity(entity);
             try
             {
-                //system metada required to handle implicit tag updates
-                entityBinder.Metadata.Add(DeletedTagSuffix, false);
-                BindDynamicProps(entityBinder);
+                //system metada required to cleanup old tags
+                entityBinder.Metadata.Add(EntitytableConstants.DeletedTag, false);
+                entityBinder.BindDynamicProps(_config.DynamicProps);
 
                 //we don't need to retrieve existing entity metadata for add operation
                 var existingMetadatas = (operation != EntityOperation.Add) ?
                         await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
                         : null;
 
-                BindTags(client, cleaner, entityBinder, existingMetadatas);
+                UpdateTags(client, cleaner, entityBinder, existingMetadatas);
                 switch (operation)
                 {
                     case EntityOperation.Add:
@@ -347,20 +382,7 @@ namespace Azure.EntityServices.Tables
 
         private string CreateRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToRowKey(key, value)}{ResolvePrimaryKey(entity)}";
 
-        private void BindDynamicProps(IEntityBinder<T> tableEntity, bool toDelete = false)
-        {
-            foreach (var prop in _config.DynamicProps)
-            {
-                if (toDelete && tableEntity.Metadata.ContainsKey(prop.Key))
-                {
-                    tableEntity.Metadata.Remove(prop.Key);
-                    continue;
-                }
-                tableEntity.Metadata.Add(prop.Key, prop.Value.Invoke(tableEntity.Entity));
-            }
-        }
-
-        private void BindTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
+        private void UpdateTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
         {
             var tags = new Dictionary<string, object>();
             foreach (var propInfo in _config.Tags)
@@ -369,7 +391,7 @@ namespace Azure.EntityServices.Tables
                 var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
                 tableEntity.CopyMetadataTo(entityBinder);
                 client.InsertOrReplace(entityBinder.Bind());
-                tags.Add(TagName(propInfo.Key), tagValue);
+                tags.AddOrUpdate(TagName(propInfo.Key), tagValue);
             }
             foreach (var tagPrefix in _config.ComputedTags)
             {
@@ -377,25 +399,28 @@ namespace Azure.EntityServices.Tables
                 var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
                 tableEntity.CopyMetadataTo(entityBinder);
                 client.InsertOrReplace(entityBinder.Bind());
-                tags.Add(TagName(tagPrefix), tagValue);
+                tags.AddOrUpdate(TagName(tagPrefix), tagValue);
             }
             if (existingMetadatas != null)
             {
                 //cleanup old indexed tags
-                foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(TagSuffix)))
+                foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(IndexedTagSuffix)))
                 {
                     var tagValue = metadata.Value.ToString();
                     var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
                     //mark tag deleted
-                    entityBinder.Metadata.Add(DeletedTagSuffix, true);
-                    client.InsertOrReplace(entityBinder.Bind());
-                    cleaner.Delete(entityBinder.Bind());
+                    var table = entityBinder.Bind();
+                    entityBinder.Metadata.Add(EntitytableConstants.DeletedTag, true);
+                    client.InsertOrReplace(table);
+                    cleaner.Delete(table);
                 }
             }
 
             //attach tag keys to main entity
             foreach (var tag in tags)
-                tableEntity.Metadata.Add(tag);
+            {
+                tableEntity.Metadata.AddOrUpdate(tag);
+            }
         }
 
         private IEntityBinder<T> CreateEntityBinderFromEntity(T entity, string customRowKey = null)
@@ -421,17 +446,18 @@ namespace Azure.EntityServices.Tables
 
         private static bool HandleStorageException(string tableName, TableServiceClient tableService, bool createTableIfNotExists, RequestFailedException requestFailedException)
         {
-            if (createTableIfNotExists && (requestFailedException?.ErrorCode == "TableNotFound"))
-            {
-                tableService.CreateTableIfNotExists(tableName);
-                return true;
-            }
+           
+                if (createTableIfNotExists && (requestFailedException?.ErrorCode == "TableNotFound"))
+                {
+                 
+                    tableService.CreateTableIfNotExists(tableName); 
+                    return true;
+                }
 
-            if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
-            {
-                return true;
-            }
-
+                if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
+                {
+                    return true;
+                } 
             return false;
         }
 

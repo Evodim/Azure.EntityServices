@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading.Tasks;
 using Azure.EntityServices.Tests.Common;
+using System.Collections.Generic;
 
 namespace Azure.EntityServices.Table.Tests
 {
@@ -20,7 +21,7 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Handle_Extented_Values_Wit_hBindable_Entity()
+        public async Task Should_Bind_Extented_Storage_Types()
         {
             var partitionName = Guid.NewGuid().ToShortGuid();
 
@@ -38,7 +39,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 await client.CreateIfNotExistsAsync();
 
-                var result = await ReplaceThenRetrieveAsync(client, tableEntity.Bind());
+                var result = await UpsertAndGetEntity(client, tableEntity.Bind());
 
                 var binderResult = new TableEntityBinder<PersonEntity>(result);
 
@@ -55,7 +56,7 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_InsertOrMerge_Bindable_Entity()
+        public async Task Should_Bind_On_InsertOrMerge()
         {
             var partitionName = Guid.NewGuid().ToString();
 
@@ -67,7 +68,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 await client.CreateIfNotExistsAsync();
 
-                await ReplaceThenRetrieveAsync(client, binder.Bind());
+                await UpsertAndGetEntity(client, binder.Bind());
                 binder = new TableEntityBinder<PersonEntity>(new PersonEntity() { PersonId = person.PersonId, FirstName = "John Do" }, partitionName, person.PersonId.ToString());
 
                 var merged = await MergeThenRetrieveAsync(client, binder.Bind());
@@ -90,7 +91,7 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_InsertOrReplace_Bindable_Entity()
+        public async Task Should_Bind_On_Update()
         {
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
@@ -102,7 +103,7 @@ namespace Azure.EntityServices.Table.Tests
                 var person = Fakers.CreateFakePerson().Generate();
                 var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
 
-                var replaced = await ReplaceThenRetrieveAsync(client, binder.Bind());
+                var replaced = await UpsertAndGetEntity(client, binder.Bind());
                 var binderResult = new TableEntityBinder<PersonEntity>(replaced);
 
                 binderResult.UnBind();
@@ -115,9 +116,9 @@ namespace Azure.EntityServices.Table.Tests
                 await client.DeleteAsync();
             }
         }
-
+         
         [TestMethod]
-        public async Task Should_InsertOrReplace_Metadatas_With_Bindable_Entity()
+        public async Task Should_Bind_Metadatas_On_Update()
         {
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
@@ -131,11 +132,11 @@ namespace Azure.EntityServices.Table.Tests
                 binder.Metadata.Add("_HasChildren", true);
                 binder.Metadata.Add("_Deleted", false);
 
-                await ReplaceThenRetrieveAsync(client, binder.Bind());
+                await UpsertAndGetEntity(client, binder.Bind());
                 binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.Metadata.Add("_HasChildren", false);
 
-                var replaced = await ReplaceThenRetrieveAsync(client, binder.Bind());
+                var replaced = await UpsertAndGetEntity(client, binder.Bind());
                 var binderResult = new TableEntityBinder<PersonEntity>(replaced);
                 binderResult.UnBind();
 
@@ -148,9 +149,8 @@ namespace Azure.EntityServices.Table.Tests
                 await client.DeleteAsync();
             }
         }
-
         [TestMethod]
-        public async Task Should_Merge_Metadatas_With_Bindable_Entity()
+        public async Task Should_Bind_Metadatas_On_Merge()
         {
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
@@ -166,7 +166,7 @@ namespace Azure.EntityServices.Table.Tests
                 binder.Metadata.Add("_Deleted", true);
                 binder.Bind();
 
-                await ReplaceThenRetrieveAsync(client, binder.Bind());
+                await UpsertAndGetEntity(client, binder.Bind());
 
                 binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.Metadata.Add("_HasChildren", false);
@@ -178,8 +178,43 @@ namespace Azure.EntityServices.Table.Tests
 
                 binderResult.Entity.Should().BeEquivalentTo(person);
                 binderResult.Metadata.Should().Contain("_HasChildren", false);
-                binderResult.Metadata.Should().ContainKey("_Deleted", because: "InsertOrMerge preserve non updated prop and metadatas");
+                binderResult.Metadata.Should().ContainKey("_Deleted");
                 binderResult.Metadata.Should().Contain("_Deleted", true);
+            }
+            finally
+            {
+                await client.DeleteAsync();
+            }
+        }
+        [TestMethod]
+        public async Task Should_Bind_DynamicProps()
+        {
+            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            try
+            {
+              
+                var dynamicProps = new Dictionary<string, Func<PersonEntity, object>>() { ["_distance_less_than_500m"] = (e) => e.Distance < 500 };
+                await client.CreateIfNotExistsAsync();
+
+                var partitionName = Guid.NewGuid().ToString();
+                var person = Fakers.CreateFakePerson().Generate();
+                
+                person.Distance = 250;
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                binder.BindDynamicProps(dynamicProps);
+
+                var added=await UpsertAndGetEntity(client, binder.Bind()); 
+                added.Should().ContainKey("_distance_less_than_500m");
+                (added["_distance_less_than_500m"] as bool?)?.Should().BeTrue();
+
+                person.Distance = 501;
+                 var binderToUpdate = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                binderToUpdate.BindDynamicProps(dynamicProps);
+                
+                var replaced = await UpsertAndGetEntity(client, binderToUpdate.Bind());
+
+                replaced.Should().ContainKey("_distance_less_than_500m");
+                (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();  
             }
             finally
             {
@@ -188,7 +223,7 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Store_Nullable_Types_In_Bindable_Entity()
+        public async Task Should_Bind_Nullable_Types()
         {
             var partitionName = Guid.NewGuid().ToString();
             var person = Fakers.CreateFakePerson().Generate();
@@ -227,7 +262,7 @@ namespace Azure.EntityServices.Table.Tests
             return await client.GetEntityAsync<TableEntity>(tableEntity.PartitionKey, tableEntity.RowKey);
         }
 
-        private static async Task<TableEntity> ReplaceThenRetrieveAsync<T>(TableClient client, T tableEntity)
+        private static async Task<TableEntity> UpsertAndGetEntity<T>(TableClient client, T tableEntity)
            where T : class, ITableEntity, new()
         {
             await client.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);

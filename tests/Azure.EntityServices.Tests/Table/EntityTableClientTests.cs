@@ -2,6 +2,7 @@
 using Azure.EntityServices.Table.Common.Fakes;
 using Azure.EntityServices.Table.Common.Models;
 using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tests.Common;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -44,6 +45,38 @@ namespace Azure.EntityServices.Table.Tests
 
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             created.Should().BeEquivalentTo(person);
+        }
+
+        [TestMethod]
+        public async Task Should_Refresh_Tag_When_Value_Updated()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c.
+                 SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            await entityTable.AddOrReplaceAsync(person);
+
+            var oldLastName = person.LastName;
+            person.LastName += "_updated";
+            await entityTable.AddOrReplaceAsync(person);
+
+            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+
+            created.LastName.Should().BeEquivalentTo(person.LastName);
+            var tagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName).Equal(person.LastName)).AllAsync();
+
+            tagResult.Count().Should().Be(1);
+            tagResult.First().Should().BeEquivalentTo(person);
+
+            var oldTagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName).Equal(oldLastName)).AllAsync();
+            oldTagResult.Count().Should().Be(0);
         }
 
         [TestMethod]
@@ -384,6 +417,90 @@ namespace Azure.EntityServices.Table.Tests
                 {
                     pagedResult.Should().HaveCount(130);
                 }
+            }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Update_Many_Indexed_Entities()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(130);
+
+            //force entities to have same partition (tenantId)
+            var partitionName = Guid.NewGuid().ToString();
+            persons.ForEach(p => p.TenantId = partitionName);
+            var options = new EntityTableClientOptions()
+            {
+                ConnectionString = TestEnvironment.ConnectionString,
+                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
+                CreateTableIfNotExists = true,
+            };
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+            {
+                config
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await tableEntity.AddManyAsync(persons);
+
+                await tableEntity.UpdateManyAsync(person =>
+                {
+                    person.LastName += "_updated";
+                });
+
+                //get all entities both primary and projected
+                await foreach (var pagedResult in tableEntity.GetAsync(
+                filter => filter
+                .WherePartitionKey()
+                .Equal(persons.First().TenantId)))
+                {
+                    pagedResult.Should().HaveCount(130);
+                    pagedResult.All(person => person.LastName.EndsWith("_updated")).Should().BeTrue();
+                }
+            }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Update_Many_Indexed_Entities_With_No_Existing_Entities()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(130);
+
+            //force entities to have same partition (tenantId)
+            var partitionName = Guid.NewGuid().ToString();
+            persons.ForEach(p => p.TenantId = partitionName);
+            var options = new EntityTableClientOptions()
+            {
+                ConnectionString = TestEnvironment.ConnectionString,
+                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
+                CreateTableIfNotExists = true,
+            };
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+            {
+                config
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await tableEntity.CreateTableAsync();
+                var updated = await tableEntity.UpdateManyAsync(person =>
+                {
+                    person.LastName = person.LastName + "updated";
+                });
+                updated.Should().Be(0);
             }
             finally
             {

@@ -33,10 +33,10 @@ namespace Azure.EntityServices.Samples
                 .AddTag(p => p.Distance)
                 .AddTag(p => p.Enabled)
 
-                .AddComputedProp("_IsInFrance", p => p.Address.State == "France")
-                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress.Count > 1)
+                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
                 .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                .AddComputedProp("_FirstLastName3Chars", p => p.LastName.ToLower()[..3])
+                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
 
                 .AddTag("_FirstLastName3Chars");
             });
@@ -104,7 +104,7 @@ namespace Azure.EntityServices.Samples
                 }
                 while (!string.IsNullOrEmpty(token));
             }
-            using (var mesure = counters.Mesure("3. Get By indexed tag)"))
+            using (var mesure = counters.Mesure("3. Get By indexed tag"))
             {
                 await foreach (var _ in entityClient.GetByTagAsync(
                     filter => filter
@@ -143,6 +143,16 @@ namespace Azure.EntityServices.Samples
                 {
                     Console.WriteLine($"{mesure.Name} iterate {_.Count()}");
                 }
+            }
+
+            using (var mesure = counters.Mesure("5 update many entities"))
+            {
+                var updated = await entityClient.UpdateManyAsync(u =>
+                {
+                    u.LastName += "_yes";
+
+                }, filter => filter.WherePartitionKey().Equal("tenant1"));
+                Console.WriteLine($"Updated {updated} entities...");
             }
             Console.WriteLine("====================================");
             counters.WriteToConsole();
