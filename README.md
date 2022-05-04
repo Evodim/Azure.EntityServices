@@ -74,6 +74,7 @@ Querying entities 1 times...
 2. Get By LastName 14,275 seconds
 3. Get By LastName (indexed tag) 0,211 seconds
 4. Get LastName start with 'arm' 8,29 seconds
-5. Get by LastName start with 'arm' (indexed tag) 0,776 seconds```
+5. Get by LastName start with 'arm' (indexed tag) 0,776 seconds
+```
 
 *You should use a real azure table storage connection with more than 100K entities to highlight performance improvment with indexed tags*
