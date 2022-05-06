@@ -106,8 +106,15 @@ namespace Azure.EntityServices.Tables
             var pageEnumerator =
               QueryEntityByTagAsync(filter, maxPerPage, nextPageToken, cancellationToken)
                        .GetAsyncEnumerator(cancellationToken);
-            await pageEnumerator.MoveNextAsync();
-            return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
+            try
+            {
+                await pageEnumerator.MoveNextAsync();
+                return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
+            }
+            finally
+            {
+                await pageEnumerator.DisposeAsync();
+            }
         }
 
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -124,11 +131,19 @@ namespace Azure.EntityServices.Tables
             string nextPageToken = null,
             CancellationToken cancellationToken = default)
         {
-            var pageEnumerator =
-                QueryEntityAsync(filter, maxPerPage, nextPageToken, cancellationToken)
-                         .GetAsyncEnumerator(cancellationToken);
-            await pageEnumerator.MoveNextAsync();
-            return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
+            
+                var pageEnumerator =
+                    QueryEntityAsync(filter, maxPerPage, nextPageToken, cancellationToken)
+                             .GetAsyncEnumerator(cancellationToken);
+            try
+            {
+                await pageEnumerator.MoveNextAsync(); 
+                return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
+            }
+            finally
+            {
+                await pageEnumerator.DisposeAsync();
+            }
         }
 
         public Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default)
