@@ -25,45 +25,47 @@ namespace Azure.EntityServices.Tables
         protected const string IndexedTagSuffix = "_indexed_tag_";
         protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{IndexedTagSuffix}";
 
-        private readonly EntityTableClientConfig<T> _config;
-        private readonly EntityTableClientOptions _options;
-        private readonly TableClient _client;
-        private readonly TableServiceClient _tableService;
-        private readonly AsyncRetryPolicy _retryPolicy;
+        private EntityTableClientConfig<T> _config;
+        private EntityTableClientOptions _options;
+        private AsyncRetryPolicy _retryPolicy;
+        private TableClient _client;
+        private TableServiceClient _tableService;
+      
 
         public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator)
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
+            _config = new();
+            configurator?.Invoke(_config);
+            Configure(options, _config);
+        }
 
+        public EntityTableClient(EntityTableClientOptions options, EntityTableClientConfig<T> config)
+        {
+            _ = options ?? throw new ArgumentNullException(nameof(options));
+            _ = config ?? throw new ArgumentNullException(nameof(config));
+
+            Configure(options,config);
+        }
+        private void Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
+        {
             _options = options;
+            _config= config;
+            _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _client = new TableClient(options.ConnectionString, options.TableName);
             _tableService = new TableServiceClient(options.ConnectionString)
             {
             };
-            //Default partitionKeyResolver
-            _config = new EntityTableClientConfig<T>
-            {
-                PartitionKeyResolver = (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}"
-            };
-            configurator?.Invoke(_config);
+        
+
             //PrimaryKey required
             _ = _config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
 
             _retryPolicy = Policy
                             .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
                             .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
-        }
-
-        public EntityTableClient(EntityTableClientOptions options, EntityTableClientConfig<T> config)
-        {
-            _ = options ?? throw new ArgumentNullException(nameof(options));
-
-            _options = options;
-            _client = new TableClient(options.ConnectionString, options.TableName);
-            _ = config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
-            //Default partitionKeyResolver
-            config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _config = config;
+
         }
 
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
