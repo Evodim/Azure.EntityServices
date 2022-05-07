@@ -60,12 +60,9 @@ namespace Azure.EntityServices.Tables
 
             _options = options;
             _client = new TableClient(options.ConnectionString, options.TableName);
-
             _ = config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
-
             //Default partitionKeyResolver
-            _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
-
+            config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _config = config;
         }
 
