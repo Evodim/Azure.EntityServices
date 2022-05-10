@@ -70,13 +70,18 @@ namespace Azure.EntityServices.Table.Tests
             var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
 
             created.LastName.Should().BeEquivalentTo(person.LastName);
-            var tagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName).Equal(person.LastName)).AllAsync();
 
-            tagResult.Count().Should().Be(1);
+            var tagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName)
+            .Equal(person.LastName)).ToListAsync();
+
+            tagResult.Count.Should().Be(1);
             tagResult.First().Should().BeEquivalentTo(person);
 
-            var oldTagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName).Equal(oldLastName)).AllAsync();
-            oldTagResult.Count().Should().Be(0);
+            var anyResult = await entityTable
+                .GetByTagAsync(f => f.WhereTag(p => p.LastName)
+                .Equal(oldLastName))
+                .AnyAsync();
+            anyResult.Should().BeFalse();
         }
 
         [TestMethod]
