@@ -97,7 +97,7 @@ namespace Azure.EntityServices.Samples
                 {
                     var result = await entityClient.GetPagedAsync(
                            filter => filter.WherePartitionKey().Equal("tenant1"),
-                           maxPerPage: 100,
+                           maxPerPage: 1000,
                            nextPageToken: token);
                     count += result.Entities.Count();
 
