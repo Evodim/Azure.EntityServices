@@ -19,7 +19,8 @@ namespace Azure.EntityServices.Samples
             var tenants = new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" };
             var options = new EntityTableClientOptions(TestEnvironment.ConnectionString,
                 $"{nameof(PersonEntity)}",
-                createTableIfNotExists: true);
+                createTableIfNotExists: true,
+                maxParallelTransactions:10);
 
             //Configure entity binding in the table storage
             var entityClient = new EntityTableClient<PersonEntity>(options, config =>
@@ -88,13 +89,14 @@ namespace Azure.EntityServices.Samples
                     Console.WriteLine($"{mesure.Name} iterate { _.Count()}");
                 }
             }
-            using (var mesure = counters.Mesure("2.1 GetPaged without filter"))
+            using (var mesure = counters.Mesure("2.1 GetPaged with partition filter"))
             {
                 long count = 0;
                 string token = null;
                 do
                 {
                     var result = await entityClient.GetPagedAsync(
+                           filter => filter.WherePartitionKey().Equal("tenant1"),
                            maxPerPage: 100,
                            nextPageToken: token);
                     count += result.Entities.Count();
@@ -151,7 +153,9 @@ namespace Azure.EntityServices.Samples
                 {
                     u.LastName += "_yes";
 
-                }, filter => filter.WherePartitionKey().Equal("tenant1"));
+                }, filter => filter
+                .WherePartitionKey()
+                .Equal("tenant1"));
                 Console.WriteLine($"Updated {updated} entities...");
             }
             Console.WriteLine("====================================");
