@@ -79,7 +79,7 @@ namespace Azure.EntityServices.Tables.Core
                    var client = new TableClient(_connectionString, _tableName);
                    var operations = transactions.SelectMany(t => t.Actions);
 #if DEBUG
-                   System.Diagnostics.Debug.WriteLine("operation to send to the pipeline: {0}", operations.Count());
+                   System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
 #endif
                    return _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations));
                },

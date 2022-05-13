@@ -503,7 +503,7 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.CreateTableAsync();
                 var updated = await tableEntity.UpdateManyAsync(person =>
                 {
-                    person.LastName = person.LastName + "updated";
+                    person.LastName += "updated";
                 });
                 updated.Should().Be(0);
             }

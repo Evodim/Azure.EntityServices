@@ -203,9 +203,7 @@ namespace Azure.EntityServices.Tables
             {
                 foreach (var tableEntity in page.Values)
                 {
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine("Update many iterate {0}", page.Values.Count);
-#endif
+
                     if (cancellationToken.IsCancellationRequested) break;
 
                     var binder = CreateEntityBinderFromTableEntity(tableEntity);
@@ -219,11 +217,13 @@ namespace Azure.EntityServices.Tables
 
                     UpdateTags(batchedClient, cleaner, binder, existingMetadata);
                     batchedClient.InsertOrMerge(binder.Bind());
-
-                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
+                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken); 
                     await cleaner.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                     count++;
                 }
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("Entities updated {0}", count);
+#endif
             }
             await batchedClient.CommitTransactionAsync();
             await cleaner.CommitTransactionAsync();
