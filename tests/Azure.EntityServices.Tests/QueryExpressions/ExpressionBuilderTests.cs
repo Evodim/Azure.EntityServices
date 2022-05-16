@@ -1,6 +1,6 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Table.Common.Models;
-
+using Azure.EntityServices.Tables;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
