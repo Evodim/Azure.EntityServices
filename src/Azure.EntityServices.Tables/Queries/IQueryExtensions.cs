@@ -1,6 +1,7 @@
-﻿using Azure.EntityServices.Queries.Core;
+﻿using Azure.EntityServices.Queries;
+using Azure.EntityServices.Queries.Core;
 
-namespace Azure.EntityServices.Queries { 
+namespace Azure.EntityServices.Tables { 
 
     /// <summary>
     /// Helpers to extend filter expression with partition key et row key filters abstraction
