@@ -6,7 +6,7 @@ namespace Azure.EntityServices.Tables {
     /// <summary>
     /// Helpers to extend filter expression with partition key et row key filters abstraction
     /// </summary>
-public static class ITableQueryExtensions
+public static class IQueryExtensions
     {
         public static IQueryFilter<T> WherePartitionKey<T>(this IQuery<T> query) 
             => (query as IQueryCompose<T>).AddQuery("PartitionKey");

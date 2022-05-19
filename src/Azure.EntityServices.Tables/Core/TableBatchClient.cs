@@ -16,7 +16,9 @@ namespace Azure.EntityServices.Tables.Core
         private readonly string _tableName;
         private readonly string _connectionString;
         private IPipeline _pipeline;
-
+#if DEBUG
+        private static int _taskCount = 0;
+#endif
         public TableBatchClient(
             TableBatchClientOptions options,
             AsyncRetryPolicy retryPolicy)
@@ -76,10 +78,16 @@ namespace Azure.EntityServices.Tables.Core
                 _pipeline = CustomTplBlocks.CreatePipeline(transactions =>
                {
 
+#if DEBUG
+                   System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}", Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
+#endif
                    var client = new TableClient(_connectionString, _tableName);
                    var operations = transactions.SelectMany(t => t.Actions);
 #if DEBUG
                    System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
+#endif
+#if DEBUG
+                   Interlocked.Decrement(ref _taskCount);
 #endif
                    return _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations));
                },
