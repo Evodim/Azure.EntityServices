@@ -72,6 +72,10 @@ namespace Azure.EntityServices.Queries
         }
         public IFilterOperator<T> AddGroupExpression(string expressionOperator, Action<IQueryCompose<T>> subQuery)
         {
+            if (subQuery == null)
+            {
+                return this;
+            }
             var childExpression = Factory();
             subQuery.Invoke(childExpression);
 

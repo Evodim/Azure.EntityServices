@@ -187,7 +187,7 @@ namespace Azure.EntityServices.Tables
                 UpdateTags(batchedClient, cleaner, binder);
                 tableEntities.Add(binder);
                 batchedClient.Insert(binder.Bind());
-                await batchedClient.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
+                await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                 NotifyChange(binder, EntityOperation.Add);
             }
             await batchedClient.CommitTransactionAsync();
@@ -203,6 +203,7 @@ namespace Azure.EntityServices.Tables
             {
                 foreach (var tableEntity in page.Values)
                 {
+
                     if (cancellationToken.IsCancellationRequested) break;
 
                     var binder = CreateEntityBinderFromTableEntity(tableEntity);
@@ -216,14 +217,16 @@ namespace Azure.EntityServices.Tables
 
                     UpdateTags(batchedClient, cleaner, binder, existingMetadata);
                     batchedClient.InsertOrMerge(binder.Bind());
-
-                    await batchedClient.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
-                    // await cleaner.SubmitTransactionAsync(binder.PartitionKey, cancellationToken);
+                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken); 
+                    await cleaner.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                     count++;
                 }
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("Entities updated {0}", count);
+#endif
             }
             await batchedClient.CommitTransactionAsync();
-            //await cleaner.CommitTransactionAsync();
+            await cleaner.CommitTransactionAsync();
             return count;
         }
 
@@ -452,7 +455,7 @@ namespace Azure.EntityServices.Tables
                     ConnectionString = _options.ConnectionString,
                     MaxItemInBatch = _options.MaxItemToGroup,
                     MaxItemInTransaction = _options.MaxOperationPerTransaction,
-                    MaxParallelTasks = _options.MaxParallelTransactions
+                    MaxParallelTasks = _options.MaxParallelTransactions == -1 ? Environment.ProcessorCount : _options.MaxParallelTransactions
                 }, _retryPolicy
                 )
             { };
