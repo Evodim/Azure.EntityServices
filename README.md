@@ -64,17 +64,7 @@ Upcoming:
 
 
 ### Output of sample console projet based on a table with 3 billions of entities (standard storageV2)
-
-```
-Generate faked 2000 entities...Ok
-Insert 4000 entities...in 12,6176517 seconds
-Querying entities 1 times...
-====================================
-1. Get By Id 0,037 seconds
-2. Get By LastName 14,275 seconds
-3. Get By LastName (indexed tag) 0,211 seconds
-4. Get LastName start with 'arm' 8,29 seconds
-5. Get by LastName start with 'arm' (indexed tag) 0,776 seconds
-```
+ 
+![image](https://user-images.githubusercontent.com/4396827/169525865-b060cee9-9d0b-4cf6-870f-7076f0374d7c.png)
 
 *You should use a real azure table storage connection with more than 100K entities to highlight performance improvment with indexed tags*
