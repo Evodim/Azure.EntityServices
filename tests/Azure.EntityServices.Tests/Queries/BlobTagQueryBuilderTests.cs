@@ -10,7 +10,7 @@ using System.Reflection;
 namespace Azure.EntityServices.Blob.Tests
 {
     [TestClass]
-    public class BlobTagQueryExpressionTests
+    public class BlobTagQueryBuilderTests
     {
         [TestMethod]
         public void Should_Build_Query_Expression_With_Default_Instructions()
