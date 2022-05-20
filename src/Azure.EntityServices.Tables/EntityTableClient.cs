@@ -455,7 +455,7 @@ namespace Azure.EntityServices.Tables
                     ConnectionString = _options.ConnectionString,
                     MaxItemInBatch = _options.MaxItemToGroup,
                     MaxItemInTransaction = _options.MaxOperationPerTransaction,
-                    MaxParallelTasks = _options.MaxParallelTransactions
+                    MaxParallelTasks = _options.MaxParallelTransactions == -1 ? Environment.ProcessorCount : _options.MaxParallelTransactions
                 }, _retryPolicy
                 )
             { };
