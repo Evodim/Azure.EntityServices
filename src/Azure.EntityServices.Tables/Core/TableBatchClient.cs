@@ -92,7 +92,7 @@ System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}", Interlocked.In
 #if DEBUG
                   System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
 #endif
-                  await client.SubmitTransactionAsync(operations);
+                       await _retryPolicy.ExecuteAsync(()=>client.SubmitTransactionAsync(operations));
 #if DEBUG
                    }
                    finally
