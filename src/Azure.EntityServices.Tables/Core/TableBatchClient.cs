@@ -71,25 +71,35 @@ namespace Azure.EntityServices.Tables.Core
             _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity));
         }
 
-        public Task SubmitToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default)
+        public async Task SubmitToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default)
         {
             if (_pipeline == null)
             {
-                _pipeline = CustomTplBlocks.CreatePipeline(transactions =>
+                _pipeline = CustomTplBlocks.CreatePipeline(async transactions =>
                {
 
-#if DEBUG
-                   System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}", Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
+#if DEBUG          
+                   try 
+                   {
+System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}", Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
 #endif
-                   var client = new TableClient(_connectionString, _tableName);
                    var operations = transactions.SelectMany(t => t.Actions);
+                   if (!operations.Any())
+                   {
+                       return;
+                   }
+                   var client = new TableClient(_connectionString, _tableName);
 #if DEBUG
-                   System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
+                  System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
 #endif
+                  await client.SubmitTransactionAsync(operations);
 #if DEBUG
-                   Interlocked.Decrement(ref _taskCount);
+                   }
+                   finally
+                   {
+                       Interlocked.Decrement(ref _taskCount);
+                   }
 #endif
-                   return _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations));
                },
             maxItemInBatch: _options.MaxItemInBatch,
             maxItemInTransaction: _options.MaxItemInTransaction,
@@ -100,7 +110,7 @@ namespace Azure.EntityServices.Tables.Core
             var entityTransactionGroup = new EntityTransactionGroup(partitionKey);
             entityTransactionGroup.Actions.AddRange(_pendingOperations);
             _pendingOperations.Clear(); 
-            return _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
+            await _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
         }
 
         public Task CommitTransactionAsync()

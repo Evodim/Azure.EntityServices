@@ -15,9 +15,9 @@ namespace Azure.EntityServices.Tables.Core
             _target = target;
         }
 
-        public Task SendAsync(EntityTransactionGroup entityTransactionGroup, CancellationToken cancellationToken = default)
+        public async Task SendAsync(EntityTransactionGroup entityTransactionGroup, CancellationToken cancellationToken = default)
         {
-            return _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
+            await _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
         }
 
         public Task CompleteAsync()

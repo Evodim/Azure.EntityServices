@@ -72,16 +72,19 @@ namespace Azure.EntityServices.Tables.Core
                         if (count + item.Actions.Count >= maxItemInGroup)
                         {
                             Interlocked.Exchange(ref count, 0);
+
                             await source.SendAsync(group.ToArray());
                             group.Clear();
                         }
                         group.Add(item);
                         Interlocked.Exchange(ref count, count + item.Actions.Count);
                     }
+
                     await source.SendAsync(group.ToArray());
                     group.Clear();
                 }
-            },new ExecutionDataflowBlockOptions{
+            }, new ExecutionDataflowBlockOptions
+            {
                 MaxDegreeOfParallelism = 1,
                 BoundedCapacity = 1
             });
