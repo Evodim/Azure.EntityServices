@@ -56,11 +56,13 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_On_InsertOrMerge()
+        public async Task Should_Bind_InsertOrMerge()
         {
             var partitionName = Guid.NewGuid().ToString();
 
             var person = Fakers.CreateFakePerson().Generate();
+            person.Enabled = true;
+
             var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
 
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
@@ -69,7 +71,17 @@ namespace Azure.EntityServices.Table.Tests
                 await client.CreateIfNotExistsAsync();
 
                 await UpsertAndGetEntity(client, binder.Bind());
-                binder = new TableEntityBinder<PersonEntity>(new PersonEntity() { PersonId = person.PersonId, FirstName = "John Do" }, partitionName, person.PersonId.ToString());
+                binder = new TableEntityBinder<PersonEntity>(new PersonEntity()
+                {
+                    PersonId = person.PersonId,
+                    FirstName = "John Do",
+                    LocalCreated = null,
+                    LocalUpdated = default,
+                    Updated = default,
+                    Enabled=false
+                }, partitionName,
+
+                person.PersonId.ToString()); 
 
                 var merged = await MergeThenRetrieveAsync(client, binder.Bind());
                 var binderResult = new TableEntityBinder<PersonEntity>(merged);
@@ -80,6 +92,11 @@ namespace Azure.EntityServices.Table.Tests
                 entity.Latitude.Should().Be(default);
                 entity.Longitude.Should().Be(default);
                 entity.Altitude.Should().Be(person.Altitude);
+                entity.Updated.Should().Be(default);
+                entity.Created.Should().Be(person.Created);
+                entity.LocalCreated.Should().Be(person.LocalCreated);
+                entity.LocalUpdated.Should().Be(default);
+                entity.Enabled.Should().Be(false);
                 entity.BankAmount.Should().Be(person.BankAmount);
                 entity.PersonId.Should().Be(person.PersonId.ToString());
                 entity.FirstName.Should().Be("John Do");

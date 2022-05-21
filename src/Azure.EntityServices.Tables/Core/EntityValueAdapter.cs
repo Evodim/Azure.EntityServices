@@ -41,8 +41,9 @@ namespace Azure.EntityServices.Tables.Core
                 double _ => value,
                 string _ => value,
                 bool _ => value,
-                DateTime _ => value,
-                DateTimeOffset _ => value,
+                //store default datetime values as string
+                DateTime v => v.ToInvariantString(),
+                DateTimeOffset v => v.ToInvariantString(),
                 BinaryData => value,
                 byte[] _ => value,
                 Guid _ => value,
@@ -90,6 +91,19 @@ namespace Azure.EntityServices.Tables.Core
                     entityProp.SetValue(entity, new BinaryData(byteValue), null);
                     return;
                 }
+                //Datetime was stored in azure sdk as datetimeoffset
+                if (tablePropValue is DateTimeOffset? && propertyType == typeof(DateTime))
+                {
+                 entityProp.SetValue(entity,(tablePropValue as DateTimeOffset?).Value.UtcDateTime , null);
+                  return;
+                }
+                //Datetime was stored in azure sdk as datetimeoffset
+                if (tablePropValue is DateTimeOffset && propertyType == typeof(DateTimeOffset))
+                {
+                    entityProp.SetValue(entity, (tablePropValue as DateTimeOffset?).Value, null);
+                    return;
+                }
+                //handle some string based interpolation for common types
                 if (tablePropValue is string strPropValue)
                 {
                     if (propertyType == typeof(string))
@@ -99,7 +113,19 @@ namespace Azure.EntityServices.Tables.Core
                     }
                     if (propertyType == typeof(DateTime))
                     {
-                        if (DateTime.TryParse(strPropValue, out var value))
+                        if (DateTime.TryParse(strPropValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
+                        {
+                            //prevent datetime to be adjusted with localtime
+                            entityProp.SetValue(entity, value.ToUniversalTime(), null);
+                            return;
+                        }
+
+                        return;
+                    }
+                    if (propertyType == typeof(DateTimeOffset))
+                    {
+
+                        if (DateTimeOffset.TryParse(strPropValue, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var value))
                         {
                             entityProp.SetValue(entity, value, null);
                             return;
@@ -127,24 +153,15 @@ namespace Azure.EntityServices.Tables.Core
 
                         return;
                     }
-                    if (propertyType == typeof(DateTimeOffset))
+                  
+                    if (propertyType == typeof(double))
                     {
-                        if (DateTimeOffset.TryParse(strPropValue, out var value))
+                        if (double.TryParse(strPropValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
                         {
                             entityProp.SetValue(entity, value, null);
                             return;
                         }
-
                         return;
-                    }
-                    if (propertyType == typeof(double))
-                    { 
-                            if (double.TryParse(strPropValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
-                            {
-                                entityProp.SetValue(entity, value, null);
-                                return;
-                            } 
-                            return; 
                     }
                     if (propertyType == typeof(decimal))
                     {
@@ -166,7 +183,7 @@ namespace Azure.EntityServices.Tables.Core
                     }
                     if (propertyType == typeof(bool))
                     {
-                        if (bool.TryParse(strPropValue,out var value))
+                        if (bool.TryParse(strPropValue, out var value))
                         {
                             entityProp.SetValue(entity, value, null);
                         }

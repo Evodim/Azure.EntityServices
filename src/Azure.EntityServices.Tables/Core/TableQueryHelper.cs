@@ -18,8 +18,8 @@ namespace Azure.EntityServices.Tables.Core
                 int => Convert.ToString(givenValue),
                 long => string.Format("{0}L", givenValue),
                 byte[] v => ByteArrayToString(v),
-                DateTime v => string.Format("datetime'{0}'", ((DateTimeOffset)v).UtcDateTime.ToString("o")),
-                DateTimeOffset v => string.Format("datetime'{0}'", v.UtcDateTime.ToString("o")),
+                DateTime v => string.Format("datetime'{0}'", (v==default)? new DateTime(1,1,1,0,0,0,DateTimeKind.Utc).ToString("o") :v.ToUniversalTime().ToString("o")),
+                DateTimeOffset v => string.Format("datetime'{0}'", (v == default) ? new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, DateTimeKind.Utc)).UtcDateTime.ToString("o") : v.UtcDateTime.ToString("o")),
                 Guid v => string.Format("guid'{0}'", v),
                 BinaryData v => string.Format("X'{0}'", v),
                 _ => givenValue == null ? "null" : $"'{givenValue}'"

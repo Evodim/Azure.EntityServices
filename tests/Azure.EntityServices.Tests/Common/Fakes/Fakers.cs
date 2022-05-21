@@ -70,6 +70,10 @@ namespace Azure.EntityServices.Table.Common.Fakes
             //The .OrNull extension is in the Bogus.Extensions namespace.
             .RuleFor(p => p.OtherAddress, f => FakedAddress().Generate(5))
             .RuleFor(p => p.Created, f => f.Date.BetweenOffset(DateTime.UtcNow.AddYears(-4), DateTime.UtcNow))
+            .RuleFor(p => p.LocalCreated, f => f.Date.Between(DateTime.UtcNow.AddYears(-4), DateTime.UtcNow))
+            .RuleFor(p => p.Updated, f => f.Date.BetweenOffset(DateTime.UtcNow.AddYears(-4), DateTime.UtcNow))
+            .RuleFor(p => p.LocalUpdated, f => f.Date.Between(DateTime.UtcNow.AddYears(-4), DateTime.UtcNow))
+
             .RuleFor(p => p.Enabled, f => f.Random.Bool())
             .RuleFor(p => p.FirstName, f => f.Person.FirstName)
             .RuleFor(p => p.LastName, f => f.Person.LastName)

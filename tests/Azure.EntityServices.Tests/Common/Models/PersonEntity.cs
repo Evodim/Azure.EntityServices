@@ -47,6 +47,9 @@ namespace Azure.EntityServices.Table.Common.Models
     {
         public string TenantId { get; set; }
         public DateTimeOffset? Created { get; set; }
+        public DateTime? LocalCreated { get; set; } 
+        public DateTimeOffset Updated { get; set; } 
+        public DateTime LocalUpdated { get; set; }
         public bool? Enabled { get; set; }
         public Address Address { get; set; }
         public List<Address> OtherAddress { get; set; }
