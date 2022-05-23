@@ -41,9 +41,8 @@ namespace Azure.EntityServices.Tables.Core
                 double _ => value,
                 string _ => value,
                 bool _ => value,
-                //store default datetime values as string
-                DateTime v => v.ToInvariantString(),
-                DateTimeOffset v => v.ToInvariantString(),
+                DateTime date =>  (date == default) ? TableConstants.DateTimeStorageDefault : value,
+                DateTimeOffset date => (date == default) ? new DateTimeOffset(TableConstants.DateTimeStorageDefault) : value,
                 BinaryData => value,
                 byte[] _ => value,
                 Guid _ => value,
@@ -91,18 +90,23 @@ namespace Azure.EntityServices.Tables.Core
                     entityProp.SetValue(entity, new BinaryData(byteValue), null);
                     return;
                 }
-                //Datetime was stored in azure sdk as datetimeoffset
-                if (tablePropValue is DateTimeOffset? && propertyType == typeof(DateTime))
+            
+                //Azure storage service limitation issue - handle default values for datetime 
+                if (tablePropValue is DateTimeOffset dateTime && propertyType == typeof(DateTime))
                 {
-                 entityProp.SetValue(entity,(tablePropValue as DateTimeOffset?).Value.UtcDateTime , null);
-                  return;
-                }
-                //Datetime was stored in azure sdk as datetimeoffset
-                if (tablePropValue is DateTimeOffset && propertyType == typeof(DateTimeOffset))
-                {
-                    entityProp.SetValue(entity, (tablePropValue as DateTimeOffset?).Value, null);
+
+                    //prevent not supported Azure storage service exception, datetime must be in UTC kind
+                    entityProp.SetValue(entity, (dateTime == TableConstants.DateTimeStorageDefault) ? default : dateTime.UtcDateTime, null);
                     return;
                 }
+                //Azure storage service limitation issue - handle default values for datetime 
+                if (tablePropValue is DateTimeOffset dateTimeOffset && propertyType == typeof(DateTimeOffset))
+                {
+                    entityProp.SetValue(entity, (dateTimeOffset == TableConstants.DateTimeStorageDefault)?default: dateTimeOffset, null);
+                    return;
+                }
+
+               
                 //handle some string based interpolation for common types
                 if (tablePropValue is string strPropValue)
                 {

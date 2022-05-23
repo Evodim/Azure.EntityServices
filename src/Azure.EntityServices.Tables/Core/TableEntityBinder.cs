@@ -19,8 +19,7 @@ namespace Azure.EntityServices.Tables.Core
         private readonly TableEntity _tableEntity;
         public T Entity { get; set; }
 
-        private readonly IEnumerable<string> _propsToIgnore = new List<string>();
-
+        private readonly IEnumerable<string> _propsToIgnore = new List<string>(); 
         public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
         public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>();
 
