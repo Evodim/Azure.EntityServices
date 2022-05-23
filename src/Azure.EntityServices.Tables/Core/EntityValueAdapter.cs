@@ -41,8 +41,8 @@ namespace Azure.EntityServices.Tables.Core
                 double _ => value,
                 string _ => value,
                 bool _ => value,
-                DateTime _ => value,
-                DateTimeOffset _ => value,
+                DateTime date =>  (date == default) ? TableConstants.DateTimeStorageDefault : value,
+                DateTimeOffset date => (date == default) ? new DateTimeOffset(TableConstants.DateTimeStorageDefault) : value,
                 BinaryData => value,
                 byte[] _ => value,
                 Guid _ => value,
@@ -90,6 +90,24 @@ namespace Azure.EntityServices.Tables.Core
                     entityProp.SetValue(entity, new BinaryData(byteValue), null);
                     return;
                 }
+            
+                //Azure storage service limitation issue - handle default values for datetime 
+                if (tablePropValue is DateTimeOffset dateTime && propertyType == typeof(DateTime))
+                {
+
+                    //prevent not supported Azure storage service exception, datetime must be in UTC kind
+                    entityProp.SetValue(entity, (dateTime == TableConstants.DateTimeStorageDefault) ? default : dateTime.UtcDateTime, null);
+                    return;
+                }
+                //Azure storage service limitation issue - handle default values for datetime 
+                if (tablePropValue is DateTimeOffset dateTimeOffset && propertyType == typeof(DateTimeOffset))
+                {
+                    entityProp.SetValue(entity, (dateTimeOffset == TableConstants.DateTimeStorageDefault)?default: dateTimeOffset, null);
+                    return;
+                }
+
+               
+                //handle some string based interpolation for common types
                 if (tablePropValue is string strPropValue)
                 {
                     if (propertyType == typeof(string))
@@ -99,7 +117,19 @@ namespace Azure.EntityServices.Tables.Core
                     }
                     if (propertyType == typeof(DateTime))
                     {
-                        if (DateTime.TryParse(strPropValue, out var value))
+                        if (DateTime.TryParse(strPropValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
+                        {
+                            //prevent datetime to be adjusted with localtime
+                            entityProp.SetValue(entity, value.ToUniversalTime(), null);
+                            return;
+                        }
+
+                        return;
+                    }
+                    if (propertyType == typeof(DateTimeOffset))
+                    {
+
+                        if (DateTimeOffset.TryParse(strPropValue, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var value))
                         {
                             entityProp.SetValue(entity, value, null);
                             return;
@@ -127,24 +157,15 @@ namespace Azure.EntityServices.Tables.Core
 
                         return;
                     }
-                    if (propertyType == typeof(DateTimeOffset))
+                  
+                    if (propertyType == typeof(double))
                     {
-                        if (DateTimeOffset.TryParse(strPropValue, out var value))
+                        if (double.TryParse(strPropValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
                         {
                             entityProp.SetValue(entity, value, null);
                             return;
                         }
-
                         return;
-                    }
-                    if (propertyType == typeof(double))
-                    { 
-                            if (double.TryParse(strPropValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
-                            {
-                                entityProp.SetValue(entity, value, null);
-                                return;
-                            } 
-                            return; 
                     }
                     if (propertyType == typeof(decimal))
                     {
@@ -166,7 +187,7 @@ namespace Azure.EntityServices.Tables.Core
                     }
                     if (propertyType == typeof(bool))
                     {
-                        if (bool.TryParse(strPropValue,out var value))
+                        if (bool.TryParse(strPropValue, out var value))
                         {
                             entityProp.SetValue(entity, value, null);
                         }

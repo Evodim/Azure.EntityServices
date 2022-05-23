@@ -23,6 +23,7 @@ namespace Azure.EntityServices.Tables.Core
         public const string TableServiceNextPartitionKey = "NextPartitionKey";
         public const string TableServicePrefixForTableContinuation = "x-ms-continuation-";
         public const string UserAgentProductVersion = "1.0.6";
-        public static readonly DateTimeOffset MinDateTime;
+        public static DateTime DateTimeStorageDefault => 
+            new DateTime(1601, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     }
 }

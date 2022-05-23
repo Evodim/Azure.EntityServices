@@ -935,5 +935,62 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.DropTableAsync();
             }
         }
+
+        [TestMethod]
+        public async Task Should_Store_Default_DateTime_Values()
+        {
+            var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
+
+            person.Created = default;
+            person.Updated = default;
+            person.LocalCreated = default;
+            person.LocalUpdated = default;
+             
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            { 
+                await entityTable.AddOrReplaceAsync(person);
+                var added = await entityTable.GetByIdAsync(person.TenantId,person.PersonId);
+                added.Should().BeEquivalentTo(person);
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+        [TestMethod]
+        public async Task Should_Store_Null_DateTime_Values()
+        {
+            var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
+
+            person.Created = null; 
+            person.LocalCreated = null; 
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await entityTable.AddOrReplaceAsync(person);
+                var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+                added.Should().BeEquivalentTo(person);
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
     }
 }

@@ -97,7 +97,7 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public void Should_Use_Nullable_Filter()
+        public void Should_Use_filter_with_null_values()
         {
             var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
 
@@ -113,6 +113,27 @@ namespace Azure.EntityServices.Table.Tests
             queryStr.Trim()
                 .Should()
                 .Be("RowKey gt 'Created-$' and RowKey lt 'Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Created eq null or Enabled eq null or Altitude eq null");
+        }
+
+        [TestMethod]
+        public void Should_Use_filter_with_default_values()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .WhereTag().Equal(default)
+           .And(p => p.TenantId).Equal("10")
+           .And(p => p.Updated).Equal(default)
+           .And(p => p.LocalUpdated).Equal(default)
+           .Or(p => p.Enabled).Equal(default)
+           .Or(p => p.Altitude).Equal(default);
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("RowKey gt 'Created-$' and RowKey lt 'Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Updated eq datetime'1601-01-01T00:00:00.0000000Z' and LocalUpdated eq datetime'1601-01-01T00:00:00.0000000Z' or Enabled eq null or Altitude eq null");
+                    
         }
     }
 }
