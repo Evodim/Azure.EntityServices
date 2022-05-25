@@ -19,6 +19,7 @@ namespace Azure.EntityServices.Tables.Core
 #if DEBUG
         private static int _taskCount = 0;
 #endif
+
         public TableBatchClient(
             TableBatchClientOptions options,
             AsyncRetryPolicy retryPolicy)
@@ -71,35 +72,33 @@ namespace Azure.EntityServices.Tables.Core
             _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity));
         }
 
-        public async Task SubmitToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default)
+        public Task SubmitToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default)
         {
             if (_pipeline == null)
             {
-                _pipeline = CustomTplBlocks.CreatePipeline(async transactions =>
+            _pipeline = CustomTplBlocks.CreatePipeline(transactions =>
                {
-
-#if DEBUG          
-                   try 
+                   try
                    {
-System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}", Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
-#endif
-                   var operations = transactions.SelectMany(t => t.Actions);
-                   if (!operations.Any())
-                   {
-                       return;
-                   }
-                   var client = new TableClient(_connectionString, _tableName);
 #if DEBUG
-                  System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
+                       System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}",
+                           Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
 #endif
-                       await _retryPolicy.ExecuteAsync(()=>client.SubmitTransactionAsync(operations));
+                       var operations = transactions.SelectMany(t => t.Actions);
+                       if (!operations.Any())
+                       {
+                           return Task.CompletedTask; 
+                       }
+                       var client = new TableClient(_connectionString, _tableName);
 #if DEBUG
+                       System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
+#endif
+                       return _retryPolicy.ExecuteAsync(async ()=> await client.SubmitTransactionAsync(operations)); 
                    }
                    finally
                    {
                        Interlocked.Decrement(ref _taskCount);
                    }
-#endif
                },
             maxItemInBatch: _options.MaxItemInBatch,
             maxItemInTransaction: _options.MaxItemInTransaction,
@@ -109,14 +108,13 @@ System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}", Interlocked.In
 
             var entityTransactionGroup = new EntityTransactionGroup(partitionKey);
             entityTransactionGroup.Actions.AddRange(_pendingOperations);
-            _pendingOperations.Clear(); 
-            await _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
+            _pendingOperations.Clear();
+            return _pipeline.SendAsync(entityTransactionGroup, cancellationToken);
         }
 
         public Task CommitTransactionAsync()
         {
-            return (_pipeline == null)? Task.CompletedTask: 
-            _pipeline.CompleteAsync();
+            return (_pipeline == null) ? Task.CompletedTask : _pipeline.CompleteAsync();
         }
 
         public async Task SubmitAllAsync(CancellationToken cancellationToken = default)

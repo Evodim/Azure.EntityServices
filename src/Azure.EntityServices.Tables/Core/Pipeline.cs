@@ -23,7 +23,7 @@ namespace Azure.EntityServices.Tables.Core
         public Task CompleteAsync()
         {
             _pipeline.Complete();
-            return _target.Completion;
+            return Task.WhenAll(_pipeline.Completion, _target.Completion);
         }
     }
 }
