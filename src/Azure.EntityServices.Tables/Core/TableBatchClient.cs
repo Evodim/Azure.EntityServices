@@ -78,13 +78,13 @@ namespace Azure.EntityServices.Tables.Core
             {
             _pipeline = CustomTplBlocks.CreatePipeline(transactions =>
                {
-                   try
-                   {
 #if DEBUG
-                       System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}",
-                           Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
+                try
+                   {
+                     System.Diagnostics.Debug.WriteLine("pipeline task count {0}/{1}",
+                     Interlocked.Increment(ref _taskCount), _options.MaxParallelTasks);
 #endif
-                       var operations = transactions.SelectMany(t => t.Actions);
+                     var operations = transactions.SelectMany(t => t.Actions);
                        if (!operations.Any())
                        {
                            return Task.CompletedTask; 
@@ -93,12 +93,14 @@ namespace Azure.EntityServices.Tables.Core
 #if DEBUG
                        System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
 #endif
-                       return _retryPolicy.ExecuteAsync(async ()=> await client.SubmitTransactionAsync(operations)); 
-                   }
+                       return _retryPolicy.ExecuteAsync(async ()=> await client.SubmitTransactionAsync(operations));
+#if DEBUG
+               }
                    finally
                    {
                        Interlocked.Decrement(ref _taskCount);
                    }
+#endif
                },
             maxItemInBatch: _options.MaxItemInBatch,
             maxItemInTransaction: _options.MaxItemInTransaction,
