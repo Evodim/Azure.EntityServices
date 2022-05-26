@@ -135,5 +135,26 @@ namespace Azure.EntityServices.Table.Tests
                 .Be("RowKey gt 'Created-$' and RowKey lt 'Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Updated eq datetime'1601-01-01T00:00:00.0000000Z' and LocalUpdated eq datetime'1601-01-01T00:00:00.0000000Z' or Enabled eq null or Altitude eq null");
                     
         }
+        [TestMethod]
+        public void Should_Use_Multi_PartitionKey_filter()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .WherePartitionKey()
+           .Equal("partition1")
+           .OrPartitionKey()
+           .Equal("partition2")
+           .OrPartitionKey()
+           .Equal("Partition3");
+           
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("PartitionKey eq 'partition1' or PartitionKey eq 'partition2' or PartitionKey eq 'Partition3'");
+
+        } 
+       
     }
 }
