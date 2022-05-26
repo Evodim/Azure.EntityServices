@@ -101,5 +101,42 @@ namespace Azure.EntityServices.Table.Tests
                 .Should()
                 .Be("TenantId Equal '10' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' And LastName Equal 'test' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00') Not Enabled Equal 'True' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00')");
         }
+
+        [TestMethod]
+        public void Should_BuildGroup_Dynamic_Query_Expression()
+        {
+            var builder = new MockedExpressionBuilder<PersonEntity>();
+
+            var dynamicQuery = builder.Query
+            .Where(p => p.TenantId).Equal("50");
+            for (var i = 0; i < 10; i++)
+            {
+                dynamicQuery = dynamicQuery.Or(p => p.FirstName).Equal($"do {i}");
+            }
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' Or FirstName Equal 'do 0' Or FirstName Equal 'do 1' Or FirstName Equal 'do 2' Or FirstName Equal 'do 3' Or FirstName Equal 'do 4' Or FirstName Equal 'do 5' Or FirstName Equal 'do 6' Or FirstName Equal 'do 7' Or FirstName Equal 'do 8' Or FirstName Equal 'do 9'");
+        }
+
+        [TestMethod]
+        public void Should_BuildGroup_Dynamic_Query_Expression_With_Extension_Helper()
+        {
+            var builder = new MockedExpressionBuilder<PersonEntity>();
+
+            var dynamicQuery = builder.Query
+              .Where(p => p.TenantId).Equal("50");
+
+            dynamicQuery.WithEach(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, (item, q) =>
+                        q.Or(p => p.FirstName).Equal($"do {item}"));
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' Or FirstName Equal 'do 0' Or FirstName Equal 'do 1' Or FirstName Equal 'do 2' Or FirstName Equal 'do 3' Or FirstName Equal 'do 4' Or FirstName Equal 'do 5' Or FirstName Equal 'do 6' Or FirstName Equal 'do 7' Or FirstName Equal 'do 8' Or FirstName Equal 'do 9'");
+        }
     }
 }
