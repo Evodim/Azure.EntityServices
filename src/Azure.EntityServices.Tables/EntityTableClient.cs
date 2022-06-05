@@ -170,10 +170,28 @@ namespace Azure.EntityServices.Tables
             return UpdateEntity(entity, EntityOperation.Merge, cancellationToken);
         }
 
-        public async Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        public Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            return AddOrReplaceOrMergeManyAsync(EntityOperation.Add, entities, cancellationToken);
+        }
+        public Task AddOrReplaceManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            return AddOrReplaceOrMergeManyAsync(EntityOperation.AddOrReplace, entities, cancellationToken);
+        }
+        public Task AddOrMergeManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            return AddOrReplaceOrMergeManyAsync(EntityOperation.AddOrMerge, entities, cancellationToken);
+        }
+
+        private async Task AddOrReplaceOrMergeManyAsync(EntityOperation operation,IEnumerable<T> entities, CancellationToken cancellationToken)
         {
             var batchedClient = CreateTableBatchClient();
             var cleaner = CreateTableBatchClient();
+
+            if (_options.EnableIndexedTagSupport && operation != EntityOperation.Add)
+            {
+                throw new NotSupportedException($"Operation {operation} not supported when indexed tag support was enabled, please check EntityTableClientOptions");
+            }
 
             foreach (var entity in entities)
             {
@@ -184,11 +202,26 @@ namespace Azure.EntityServices.Tables
                 //system metada required to cleanup old tags
                 binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
                 binder.BindDynamicProps(_config.DynamicProps);
+                
                 UpdateTags(batchedClient, cleaner, binder);
+                 
                 tableEntities.Add(binder);
-                batchedClient.Insert(binder.Bind());
+                switch(operation)
+                {
+                    case EntityOperation.Add:
+                        batchedClient.Insert(binder.Bind());
+                        break;
+                    case EntityOperation.AddOrMerge:
+                        batchedClient.Insert(binder.Bind());
+                        break; 
+                    case EntityOperation.AddOrReplace:
+                        batchedClient.Insert(binder.Bind());
+                        break;
+
+                }
+                
                 await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
-                NotifyChange(binder, EntityOperation.Add);
+                NotifyChange(binder, operation);
             }
             await batchedClient.CommitTransactionAsync();
         }
@@ -354,7 +387,6 @@ namespace Azure.EntityServices.Tables
                 var existingMetadatas = (operation != EntityOperation.Add) ?
                         await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
                         : null;
-
                 UpdateTags(client, cleaner, entityBinder, existingMetadatas);
                 switch (operation)
                 {
