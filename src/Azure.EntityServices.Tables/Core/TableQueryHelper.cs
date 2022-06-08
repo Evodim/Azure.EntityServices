@@ -14,8 +14,10 @@ namespace Azure.EntityServices.Tables.Core
             return givenValue switch
             {
                 bool v => v ? "true" : "false",
-                double => Convert.ToString(givenValue),
-                int => Convert.ToString(givenValue),
+                float => Convert.ToString(givenValue, CultureInfo.InvariantCulture),
+                decimal => Convert.ToString(givenValue, CultureInfo.InvariantCulture),
+                double => Convert.ToString(givenValue,CultureInfo.InvariantCulture),
+                int => Convert.ToString(givenValue, CultureInfo.InvariantCulture),
                 long => string.Format("{0}L", givenValue),
                 byte[] v => ByteArrayToString(v),
                 DateTime v => string.Format("datetime'{0}'", (v==default)? TableConstants.DateTimeStorageDefault.ToString("o") :v.ToUniversalTime().ToString("o")),
