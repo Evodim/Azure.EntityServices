@@ -36,28 +36,33 @@ namespace Azure.EntityServices.Tables.Core
 
             var transactionGroupBlock = CreatePartitionedBlock(maxItemInTransaction, maxParallelTasks);
 
-            var target = new ActionBlock<EntityTransactionGroup[]>(async (p)=> 
+            var target = new ActionBlock<EntityTransactionGroup[]>(async (p) =>
             {
                 try
                 {
-                 await asyncProcessor(p);
+                    await asyncProcessor(p);
                 }
                 catch (Exception ex)
                 {
-                 (pipeline as IDataflowBlock).Fault(ex);
+                    if (pipeline.Completion.IsCompleted)
+                    {
+                        throw;
+                    }
+                    //to prevent pipeline to be blocked, the pipeline must be completed manually with a faulted state
+                     (pipeline as IDataflowBlock).Fault(ex);
                 }
             },
                 new ExecutionDataflowBlockOptions()
-                { 
+                {
                     BoundedCapacity = maxParallelTasks,
-                    MaxDegreeOfParallelism = maxParallelTasks  
+                    MaxDegreeOfParallelism = maxParallelTasks
                 });
 
             //link blocks together
             pipeline.LinkTo(groupPerPartitionsBlock, new DataflowLinkOptions() { PropagateCompletion = true });
             groupPerPartitionsBlock.LinkTo(transactionGroupBlock, new DataflowLinkOptions() { PropagateCompletion = true });
-            transactionGroupBlock.LinkTo(target, new DataflowLinkOptions() {  PropagateCompletion = true }); 
-         
+            transactionGroupBlock.LinkTo(target, new DataflowLinkOptions() { PropagateCompletion = true });
+
             return new Pipeline(pipeline, target);
         }
 
