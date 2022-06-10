@@ -135,5 +135,25 @@ namespace Azure.EntityServices.Table.Tests
                 .Be("RowKey gt 'Created-$' and RowKey lt 'Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Updated eq datetime'1601-01-01T00:00:00.0000000Z' and LocalUpdated eq datetime'1601-01-01T00:00:00.0000000Z' or Enabled eq null or Altitude eq null");
                     
         }
+
+        [TestMethod]
+        public void Should_Build_Table_Filter_Expression_With_Invariant_Floating_Point_Value_Filter()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
+            builder
+            .Query
+                .WherePartitionKey()
+                .Equal("tenantId")
+                .And(p => p.Latitude)
+                .Equal(48.77309806265856)
+                 .And(p => p.Distance)
+                .Equal(148.45648566856M)
+                 .And(p => p.BankAmount)
+                .Equal(1248.7731F);
+
+            var result = builder.Build();
+            result.Should()
+            .Be("PartitionKey eq 'tenantId' and Latitude eq 48.77309806265856 and Distance eq '148.45648566856' and BankAmount eq '1248.7731'");
+        }
     }
 }

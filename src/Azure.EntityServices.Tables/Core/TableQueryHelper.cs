@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Azure.EntityServices.Tables.Extensions;
+using System;
 using System.Globalization;
 using System.Text;
 
@@ -14,8 +15,10 @@ namespace Azure.EntityServices.Tables.Core
             return givenValue switch
             {
                 bool v => v ? "true" : "false",
-                double => Convert.ToString(givenValue),
-                int => Convert.ToString(givenValue),
+                float => $"'{givenValue.ToInvariantString()}'",
+                decimal =>$"'{givenValue.ToInvariantString()}'" ,
+                double => givenValue.ToInvariantString(),
+                int => givenValue.ToInvariantString(),
                 long => string.Format("{0}L", givenValue),
                 byte[] v => ByteArrayToString(v),
                 DateTime v => string.Format("datetime'{0}'", (v==default)? TableConstants.DateTimeStorageDefault.ToString("o") :v.ToUniversalTime().ToString("o")),
@@ -30,17 +33,13 @@ namespace Azure.EntityServices.Tables.Core
         {
             return givenValue switch
             {
-                DateTime v => ((DateTimeOffset)v).UtcDateTime.ToString("o"),
-                DateTimeOffset v => v.UtcDateTime.ToString("o"),
-                bool v => v ? "true" : "false",
-                double => Convert.ToString(givenValue),
-                int => Convert.ToString(givenValue),
+                bool v => v ? "true" : "false",  
                 long => string.Format("{0}L", givenValue),
-                byte[] v => ByteArrayToString(v),
+                byte[] v => ByteArrayToString(v), 
                 Guid v => string.Format("{0}", v),
                 BinaryData v => string.Format("X{0}", v),
-                decimal v => Convert.ToString(v, CultureInfo.InvariantCulture),
-                _ => givenValue == null ? "" : $"{givenValue}"
+              
+                _ => givenValue == null ? "" : $"{givenValue.ToInvariantString()}"
             };
         }
 
