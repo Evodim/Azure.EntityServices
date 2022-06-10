@@ -93,7 +93,7 @@ namespace Azure.EntityServices.Tables.Core
 #if DEBUG
                            System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
 #endif
-                           return _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations));
+                           return _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(operations));
 #if DEBUG
                        }
                        finally
@@ -126,7 +126,7 @@ namespace Azure.EntityServices.Tables.Core
                 try
                 {
                     var client = new TableClient(_connectionString, _tableName);
-                    return _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(_pendingOperations.ToList(), cancellationToken));
+                    return _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(_pendingOperations.ToList(), cancellationToken));
                 }
                 finally
                 {
