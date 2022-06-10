@@ -22,7 +22,6 @@ namespace Azure.EntityServices.Tables
         public static EntityTableClientConfig<T> AddTag<T, P>(this EntityTableClientConfig<T> config, Expression<Func<T, P>> selector)
         {
             var property = selector.GetPropertyInfo();
-
             config.Tags.Add(property.Name, property);
             return config;
         }

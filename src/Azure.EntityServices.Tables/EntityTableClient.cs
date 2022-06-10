@@ -61,6 +61,13 @@ namespace Azure.EntityServices.Tables
             //PrimaryKey required
             _ = _config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
 
+            //If tag was added, you must enable indexed tag feature in config
+            if (!_options.EnableIndexedTagSupport && (_config.Tags.Any() || _config.ComputedTags.Any()))
+            {
+                throw new InvalidOperationException($"You must set EnableIndexedTagSupport option in order to use indexed Tags");
+            }
+
+
             _retryPolicy = Policy
                             .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
                             .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
@@ -212,10 +219,10 @@ namespace Azure.EntityServices.Tables
                         batchedClient.Insert(binder.Bind());
                         break;
                     case EntityOperation.AddOrMerge:
-                        batchedClient.Insert(binder.Bind());
+                        batchedClient.InsertOrMerge(binder.Bind());
                         break; 
                     case EntityOperation.AddOrReplace:
-                        batchedClient.Insert(binder.Bind());
+                        batchedClient.InsertOrReplace(binder.Bind());
                         break;
 
                 }
