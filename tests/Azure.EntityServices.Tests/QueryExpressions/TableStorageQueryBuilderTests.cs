@@ -153,7 +153,7 @@ namespace Azure.EntityServices.Table.Tests
 
             var result = builder.Build();
             result.Should()
-            .Be("PartitionKey eq 'tenantId' and Latitude eq 48.77309806265856 and Distance eq 148.45648566856 and BankAmount eq 1248.7731");
+            .Be("PartitionKey eq 'tenantId' and Latitude eq 48.77309806265856 and Distance eq '148.45648566856' and BankAmount eq 1248.7731");
         }
     }
 }
