@@ -23,7 +23,8 @@ namespace Azure.EntityServices.Table.Tests
             {
                 ConnectionString = TestEnvironment.ConnectionString,
                 CreateTableIfNotExists = true,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}"
+                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}", 
+                EnableIndexedTagSupport=true
             };
         }
 
@@ -359,13 +360,8 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
             var observer = new DummyObserver();
-            var options = new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                CreateTableIfNotExists = true,
-            };
-            var tableEntity = new EntityTableClient<PersonEntity>(options, c =>
+           
+            var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId)
                 .SetPrimaryKeyProp(p => p.PersonId)
@@ -396,13 +392,8 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-            var options = new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                CreateTableIfNotExists = true,
-            };
-            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+            
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -437,13 +428,8 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-            var options = new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                CreateTableIfNotExists = true,
-            };
-            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+           
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -484,13 +470,8 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-            var options = new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                CreateTableIfNotExists = true,
-            };
-            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+          
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -521,13 +502,8 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-            var options = new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                CreateTableIfNotExists = true,
-            };
-            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+           
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -567,13 +543,8 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-            var options = new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                CreateTableIfNotExists = true,
-            };
-            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(options, config =>
+           
+            IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
