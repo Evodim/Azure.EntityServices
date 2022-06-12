@@ -17,7 +17,11 @@ namespace Azure.EntityServices.Tables
 
         Task AddOrReplaceAsync(T entity, CancellationToken cancellationToken = default);
 
+        Task AddOrReplaceManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+
         Task AddOrMergeAsync(T entity, CancellationToken cancellationToken = default);
+
+        Task AddOrMergeManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
         Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
