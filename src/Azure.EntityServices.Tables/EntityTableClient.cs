@@ -179,18 +179,18 @@ namespace Azure.EntityServices.Tables
 
         public Task AddManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
-            return AddOrReplaceOrMergeManyAsync(EntityOperation.Add, entities, cancellationToken);
+            return ApplyBatchOperations(EntityOperation.Add, entities, cancellationToken);
         }
         public Task AddOrReplaceManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
-            return AddOrReplaceOrMergeManyAsync(EntityOperation.AddOrReplace, entities, cancellationToken);
+            return ApplyBatchOperations(EntityOperation.AddOrReplace, entities, cancellationToken);
         }
         public Task AddOrMergeManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
-            return AddOrReplaceOrMergeManyAsync(EntityOperation.AddOrMerge, entities, cancellationToken);
+            return ApplyBatchOperations(EntityOperation.AddOrMerge, entities, cancellationToken);
         }
 
-        private async Task AddOrReplaceOrMergeManyAsync(EntityOperation operation,IEnumerable<T> entities, CancellationToken cancellationToken)
+        private async Task ApplyBatchOperations(EntityOperation operation,IEnumerable<T> entities, CancellationToken cancellationToken)
         {
             var batchedClient = CreateTableBatchClient();
             var cleaner = CreateTableBatchClient();
@@ -543,6 +543,11 @@ namespace Azure.EntityServices.Tables
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
             return _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken);
+        }
+
+        public Task DeleteManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            return ApplyBatchOperations(EntityOperation.Delete, entities, cancellationToken);
         }
     }
 
