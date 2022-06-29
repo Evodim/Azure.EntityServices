@@ -391,7 +391,7 @@ namespace Azure.EntityServices.Tables
                 entityBinder.BindDynamicProps(_config.DynamicProps);
 
                 //we don't need to retrieve existing entity metadata for add operation
-                var existingMetadatas = (operation != EntityOperation.Add) ?
+                var existingMetadatas = (operation != EntityOperation.Add && _options.EnableIndexedTagSupport) ?
                         await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
                         : null;
                 UpdateTags(client, cleaner, entityBinder, existingMetadatas);
