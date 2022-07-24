@@ -21,16 +21,15 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>
     where T : class, new()
     {
-       
         protected const string IndexedTagSuffix = "_indexed_tag_";
         protected readonly Func<string, string> TagName = (tagName) => $"{tagName}{IndexedTagSuffix}";
 
         private EntityTableClientConfig<T> _config;
         private EntityTableClientOptions _options;
-        private AsyncRetryPolicy _retryPolicy;
+        private RetryPolicy _retryPolicy;
+        private AsyncRetryPolicy _asyncRetryPolicy;
         private TableClient _client;
         private TableServiceClient _tableService;
-      
 
         public EntityTableClient(EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator)
         {
@@ -45,18 +44,18 @@ namespace Azure.EntityServices.Tables
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = config ?? throw new ArgumentNullException(nameof(config));
 
-            Configure(options,config);
+            Configure(options, config);
         }
+
         private void Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
             _options = options;
-            _config= config;
+            _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _client = new TableClient(options.ConnectionString, options.TableName);
             _tableService = new TableServiceClient(options.ConnectionString)
             {
             };
-        
 
             //PrimaryKey required
             _ = _config.PrimaryKeyProp ?? throw new InvalidOperationException($"Primary property is required and must be set");
@@ -66,13 +65,13 @@ namespace Azure.EntityServices.Tables
             {
                 throw new InvalidOperationException($"You must set EnableIndexedTagSupport option in order to use indexed Tags");
             }
-
-
-            _retryPolicy = Policy
+            _retryPolicy =  Policy
+                            .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
+                            .WaitAndRetry(5, i => TimeSpan.FromSeconds(1));
+            _asyncRetryPolicy = Policy
                             .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
                             .WaitAndRetryAsync(5, i => TimeSpan.FromSeconds(1));
             _config = config;
-
         }
 
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
@@ -80,7 +79,7 @@ namespace Azure.EntityServices.Tables
             var rowKey = ResolvePrimaryKey(id);
             try
             {
-                var response = await _client.GetEntityAsync<TableEntity>(partition, rowKey, select: new string[] { }, cancellationToken);
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition, rowKey, select: new string[] { }, cancellationToken));
 
                 return CreateEntityBinderFromTableEntity(response.Value).UnBind();
             }
@@ -137,13 +136,12 @@ namespace Azure.EntityServices.Tables
             string nextPageToken = null,
             CancellationToken cancellationToken = default)
         {
-            
-                var pageEnumerator =
-                    QueryEntityAsync(filter, maxPerPage, nextPageToken, cancellationToken)
-                             .GetAsyncEnumerator(cancellationToken);
+            var pageEnumerator =
+                QueryEntityAsync(filter, maxPerPage, nextPageToken, cancellationToken)
+                         .GetAsyncEnumerator(cancellationToken);
             try
             {
-                await pageEnumerator.MoveNextAsync(); 
+                await pageEnumerator.MoveNextAsync();
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
             }
             finally
@@ -181,16 +179,18 @@ namespace Azure.EntityServices.Tables
         {
             return ApplyBatchOperations(EntityOperation.Add, entities, cancellationToken);
         }
+
         public Task AddOrReplaceManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             return ApplyBatchOperations(EntityOperation.AddOrReplace, entities, cancellationToken);
         }
+
         public Task AddOrMergeManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
         {
             return ApplyBatchOperations(EntityOperation.AddOrMerge, entities, cancellationToken);
         }
 
-        private async Task ApplyBatchOperations(EntityOperation operation,IEnumerable<T> entities, CancellationToken cancellationToken)
+        private async Task ApplyBatchOperations(EntityOperation operation, IEnumerable<T> entities, CancellationToken cancellationToken)
         {
             var batchedClient = CreateTableBatchClient();
             var cleaner = CreateTableBatchClient();
@@ -209,24 +209,25 @@ namespace Azure.EntityServices.Tables
                 //system metada required to cleanup old tags
                 binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
                 binder.BindDynamicProps(_config.DynamicProps);
-                
+
                 UpdateTags(batchedClient, cleaner, binder);
-                 
+
                 tableEntities.Add(binder);
-                switch(operation)
+                switch (operation)
                 {
                     case EntityOperation.Add:
                         batchedClient.Insert(binder.Bind());
                         break;
+
                     case EntityOperation.AddOrMerge:
                         batchedClient.InsertOrMerge(binder.Bind());
-                        break; 
+                        break;
+
                     case EntityOperation.AddOrReplace:
                         batchedClient.InsertOrReplace(binder.Bind());
                         break;
-
                 }
-                
+
                 await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                 NotifyChange(binder, operation);
             }
@@ -243,7 +244,6 @@ namespace Azure.EntityServices.Tables
             {
                 foreach (var tableEntity in page.Values)
                 {
-
                     if (cancellationToken.IsCancellationRequested) break;
 
                     var binder = CreateEntityBinderFromTableEntity(tableEntity);
@@ -257,7 +257,7 @@ namespace Azure.EntityServices.Tables
 
                     UpdateTags(batchedClient, cleaner, binder, existingMetadata);
                     batchedClient.InsertOrMerge(binder.Bind());
-                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken); 
+                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                     await cleaner.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                     count++;
                 }
@@ -300,7 +300,7 @@ namespace Azure.EntityServices.Tables
 
             try
             {
-                var response = await _retryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
                 var entityBinder = CreateEntityBinderFromTableEntity(response.Value);
                 entityBinder.UnBind();
                 return entityBinder?.Metadata ?? new Dictionary<string, object>();
@@ -346,10 +346,12 @@ namespace Azure.EntityServices.Tables
         {
             return _client.DeleteAsync(cancellationToken);
         }
+
         public Task CreateTableAsync(CancellationToken cancellationToken = default)
         {
             return _client.CreateIfNotExistsAsync(cancellationToken);
         }
+
         protected enum BatchOperation
         {
             Insert,
@@ -495,25 +497,23 @@ namespace Azure.EntityServices.Tables
                     MaxItemInBatch = _options.MaxItemToGroup,
                     MaxItemInTransaction = _options.MaxOperationPerTransaction,
                     MaxParallelTasks = _options.MaxParallelTransactions == -1 ? Environment.ProcessorCount : _options.MaxParallelTransactions
-                }, _retryPolicy
+                }, _asyncRetryPolicy
                 )
             { };
         }
 
         private static bool HandleStorageException(string tableName, TableServiceClient tableService, bool createTableIfNotExists, RequestFailedException requestFailedException)
         {
-           
-                if (createTableIfNotExists && (requestFailedException?.ErrorCode == "TableNotFound"))
-                {
-                 
-                    tableService.CreateTableIfNotExists(tableName); 
-                    return true;
-                }
+            if (createTableIfNotExists && (requestFailedException?.ErrorCode == "TableNotFound"))
+            {
+                tableService.CreateTableIfNotExists(tableName);
+                return true;
+            }
 
-                if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
-                {
-                    return true;
-                } 
+            if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
+            {
+                return true;
+            }
             return false;
         }
 
@@ -532,8 +532,8 @@ namespace Azure.EntityServices.Tables
                   .And(filter);
 
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
-
-            return _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken);
+            
+            return _retryPolicy.Execute(() => _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken));
         }
 
         private IAsyncEnumerable<Page<TableEntity>> QueryEntityByTagAsync(Action<ITagQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
@@ -542,7 +542,7 @@ namespace Azure.EntityServices.Tables
             filter.Invoke(query);
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
-            return _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken);
+            return _retryPolicy.Execute(() => _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken));
         }
 
         public Task DeleteManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
