@@ -70,7 +70,7 @@ namespace Azure.EntityServices.Tables
 
             _retryPolicy = Policy
                             .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
-                            .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
+                            .WaitAndRetryAsync(5, i => TimeSpan.FromSeconds(1));
             _config = config;
 
         }
