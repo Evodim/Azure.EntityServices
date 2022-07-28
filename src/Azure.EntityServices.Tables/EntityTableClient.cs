@@ -510,7 +510,10 @@ namespace Azure.EntityServices.Tables
                 return true;
             }
 
-            if (requestFailedException?.ErrorCode == "TableBeingDeleted" || requestFailedException?.ErrorCode == "OperationTimedOut")
+            if (requestFailedException?.ErrorCode == "TableBeingDeleted" || 
+                requestFailedException?.ErrorCode == "OperationTimedOut" ||
+                requestFailedException?.ErrorCode == "TooManyRequests"
+                )
             {
                 return true;
             }
