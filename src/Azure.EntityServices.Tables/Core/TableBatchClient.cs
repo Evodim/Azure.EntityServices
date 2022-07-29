@@ -119,21 +119,14 @@ namespace Azure.EntityServices.Tables.Core
             return (_pipeline == null) ? Task.CompletedTask : _pipeline.CompleteAsync();
         }
 
-        public Task SubmitAllAsync(CancellationToken cancellationToken = default)
+        public async Task SubmitAllAsync(CancellationToken cancellationToken = default)
         {
             if (_pendingOperations.Count != 0)
             {
-                try
-                {
                     var client = new TableClient(_connectionString, _tableName);
-                    return _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(_pendingOperations.ToList(), cancellationToken));
-                }
-                finally
-                {
+                    await _retryPolicy.ExecuteAsync(async () => await client.SubmitTransactionAsync(_pendingOperations.ToList(), cancellationToken));
                     _pendingOperations.Clear();
-                }
-            }
-            return Task.CompletedTask;
-        }
+               }
+             }
     }
 }
