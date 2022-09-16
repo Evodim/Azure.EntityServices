@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Samples
 {
     public static class TableSample
     {
-        private const int ENTITY_COUNT = 1000;
+        private const int ENTITY_COUNT = 100;
 
         public static async Task Run()
         {
@@ -20,8 +20,11 @@ namespace Azure.EntityServices.Samples
             var tenants = new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" };
 
             //default options with up to 10 parallel transactions to be processed by the pipeline
-            var options = new EntityTableClientOptions(TestEnvironment.ConnectionString,
-                $"{nameof(PersonEntity)}");
+            var options = new EntityTableClientOptions(
+                TestEnvironment.ConnectionString,
+                $"{nameof(PersonEntity)}",
+                createTableIfNotExists: true,
+                enableIndexedTagSupport:true);
             //Configure entity binding in the table storage
             //partition key as TenantId property
             //primary key as PersonId property
