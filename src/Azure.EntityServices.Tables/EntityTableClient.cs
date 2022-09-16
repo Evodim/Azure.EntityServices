@@ -5,7 +5,7 @@ using Azure.EntityServices.Tables.Extensions;
 using Polly;
 using Polly.Retry;
 using System;
-using System.Collections.Generic;
+using System.Collections.Generic; 
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -66,8 +66,8 @@ namespace Azure.EntityServices.Tables
                 throw new InvalidOperationException($"You must set EnableIndexedTagSupport option in order to use indexed Tags");
             }
             _retryPolicy =  Policy
-                            .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
-                            .WaitAndRetry(5, i => TimeSpan.FromSeconds(1));
+                              .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
+                              .WaitAndRetry(5, i => TimeSpan.FromSeconds(1));
             _asyncRetryPolicy = Policy
                             .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
                             .WaitAndRetryAsync(5, i => TimeSpan.FromSeconds(1));
@@ -205,7 +205,7 @@ namespace Azure.EntityServices.Tables
                 var tableEntities = new List<IEntityBinder<T>>();
                 if (cancellationToken.IsCancellationRequested) break;
 
-                var binder = CreateEntityBinderFromEntity(entity);
+                var binder = CreatePrimaryEntityBinderFromEntity(entity);
                 //system metada required to cleanup old tags
                 binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
                 binder.BindDynamicProps(_config.DynamicProps);
@@ -272,7 +272,7 @@ namespace Azure.EntityServices.Tables
 
         public async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
         {
-            var entityBinder = CreateEntityBinderFromEntity(entity);
+            var entityBinder = CreatePrimaryEntityBinderFromEntity(entity);
             var batchedClient = CreateTableBatchClient();
             try
             {
@@ -282,7 +282,7 @@ namespace Azure.EntityServices.Tables
                 batchedClient.Delete(entityBinder.Bind());
                 foreach (var tag in metadatas.Where(m => m.Key.EndsWith(IndexedTagSuffix)))
                 {
-                    var entityTagBinder = CreateEntityBinderFromEntity(entity, tag.Value.ToString());
+                    var entityTagBinder = CreateTaggedEntityBinderFromEntity(entity, tag.Value.ToString());
                     batchedClient.Delete(entityTagBinder.Bind());
                 }
                 await batchedClient.SubmitAllAsync(cancellationToken);
@@ -324,12 +324,12 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return $"${TableQueryHelper.ToRowKey(_config.PrimaryKeyProp.Name, _config.PrimaryKeyProp.GetValue(entity))}";
+            return TableQueryHelper.ToPrimaryRowKey(_config.PrimaryKeyProp.GetValue(entity));
         }
 
         public string ResolvePrimaryKey(object value)
         {
-            return $"${TableQueryHelper.ToRowKey(_config.PrimaryKeyProp.Name, value)}";
+            return TableQueryHelper.ToPrimaryRowKey(value);
         }
 
         public void AddObserver(string name, IEntityObserver<T> observer)
@@ -385,7 +385,7 @@ namespace Azure.EntityServices.Tables
             var client = CreateTableBatchClient();
             var cleaner = CreateTableBatchClient();
 
-            var entityBinder = CreateEntityBinderFromEntity(entity);
+            var entityBinder = CreatePrimaryEntityBinderFromEntity(entity);
             try
             {
                 //system metada required to cleanup old tags
@@ -436,25 +436,25 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        private string CreateRowKey(PropertyInfo property, T entity) => $"{TableQueryHelper.ToRowKey(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
+        private string CreateTagRowKey(PropertyInfo property, T entity) => $"{TableQueryHelper.ToTagRowKeyPrefix(property.Name, property.GetValue(entity))}{ResolvePrimaryKey(entity)}";
 
-        private string CreateRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToRowKey(key, value)}{ResolvePrimaryKey(entity)}";
+        private string CreateTagRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToTagRowKeyPrefix(key, value)}{ResolvePrimaryKey(entity)}";
 
         private void UpdateTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
         {
             var tags = new Dictionary<string, object>();
             foreach (var propInfo in _config.Tags)
             {
-                var tagValue = CreateRowKey(propInfo.Value, tableEntity.Entity);
-                var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
+                var tagValue = CreateTagRowKey(propInfo.Value, tableEntity.Entity);
+                var entityBinder = CreateTaggedEntityBinderFromEntity(tableEntity.Entity, tagValue);
                 tableEntity.CopyMetadataTo(entityBinder);
                 client.InsertOrReplace(entityBinder.Bind());
                 tags.AddOrUpdate(TagName(propInfo.Key), tagValue);
             }
             foreach (var tagPrefix in _config.ComputedTags)
             {
-                var tagValue = CreateRowKey(tagPrefix, tableEntity.Metadata[$"{tagPrefix}"], tableEntity.Entity);
-                var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
+                var tagValue = CreateTagRowKey(tagPrefix, tableEntity.Metadata[$"{tagPrefix}"], tableEntity.Entity);
+                var entityBinder = CreateTaggedEntityBinderFromEntity(tableEntity.Entity, tagValue);
                 tableEntity.CopyMetadataTo(entityBinder);
                 client.InsertOrReplace(entityBinder.Bind());
                 tags.AddOrUpdate(TagName(tagPrefix), tagValue);
@@ -465,7 +465,7 @@ namespace Azure.EntityServices.Tables
                 foreach (var metadata in existingMetadatas.Where(m => !tags.ContainsValue(m.Value) && m.Key.EndsWith(IndexedTagSuffix)))
                 {
                     var tagValue = metadata.Value.ToString();
-                    var entityBinder = CreateEntityBinderFromEntity(tableEntity.Entity, tagValue);
+                    var entityBinder = CreateTaggedEntityBinderFromEntity(tableEntity.Entity, tagValue);
                     //mark tag deleted
                     var table = entityBinder.Bind();
                     entityBinder.Metadata.Add(EntitytableConstants.DeletedTag, true);
@@ -481,8 +481,11 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        private IEntityBinder<T> CreateEntityBinderFromEntity(T entity, string customRowKey = null)
-          => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), customRowKey ?? ResolvePrimaryKey(entity), _config.IgnoredProps);
+        private IEntityBinder<T> CreateTaggedEntityBinderFromEntity(T entity, string tagRowKey)
+      => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), tagRowKey, _config.IgnoredProps);
+
+        private IEntityBinder<T> CreatePrimaryEntityBinderFromEntity(T entity)
+          => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps);
 
         private IEntityBinder<T> CreateEntityBinderFromTableEntity(TableEntity tableEntity)
             => new TableEntityBinder<T>(tableEntity, _config.IgnoredProps);
@@ -510,33 +513,31 @@ namespace Azure.EntityServices.Tables
                 return true;
             }
 
-            if (requestFailedException?.ErrorCode == "TableBeingDeleted" || 
+            if (requestFailedException?.ErrorCode == "TableBeingDeleted" ||
                 requestFailedException?.ErrorCode == "OperationTimedOut" ||
                 requestFailedException?.ErrorCode == "TooManyRequests"
                 )
             {
-                return true;
+                 return true;
             }
-            return false;
+             return false;
         }
 
         private IAsyncEnumerable<Page<TableEntity>> QueryEntityAsync(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
         {
             var query = new FilterExpression<T>();
-            //build primaryKey prefix
-            var primaryKeyName = ResolvePrimaryKey("");
 
-            //add group expression to scope the filter with non tagged rows
+            //add global filter ignore entity tag rows
             query
                   .WhereRowKey()
-                  .GreaterThanOrEqual(primaryKeyName)
-                  .AndRowKey()
-                  .LessThan($"{primaryKeyName}~")
+                  .LessThan($"~")
                   .And(filter);
 
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
-            
-            return _retryPolicy.Execute(() => _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken));
+
+            return _retryPolicy.Execute(() => _client
+            .QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage)
+            .AsPages(nextPageToken));
         }
 
         private IAsyncEnumerable<Page<TableEntity>> QueryEntityByTagAsync(Action<ITagQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
@@ -545,7 +546,9 @@ namespace Azure.EntityServices.Tables
             filter.Invoke(query);
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
-            return _retryPolicy.Execute(() => _client.QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage).AsPages(nextPageToken));
+            return _retryPolicy.Execute(() => _client
+            .QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage)
+            .AsPages(nextPageToken));
         }
 
         public Task DeleteManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
