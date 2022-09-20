@@ -226,6 +226,9 @@ namespace Azure.EntityServices.Tables
                     case EntityOperation.AddOrReplace:
                         batchedClient.InsertOrReplace(binder.Bind());
                         break;
+                    case EntityOperation.Delete:
+                        batchedClient.Delete(binder.Bind());
+                        break;
                 }
 
                 await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
