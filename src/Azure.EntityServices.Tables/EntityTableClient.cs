@@ -5,7 +5,7 @@ using Azure.EntityServices.Tables.Extensions;
 using Polly;
 using Polly.Retry;
 using System;
-using System.Collections.Generic; 
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -65,7 +65,7 @@ namespace Azure.EntityServices.Tables
             {
                 throw new InvalidOperationException($"You must set EnableIndexedTagSupport option in order to use indexed Tags");
             }
-            _retryPolicy =  Policy
+            _retryPolicy = Policy
                               .Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex))
                               .WaitAndRetry(5, i => TimeSpan.FromSeconds(1));
             _asyncRetryPolicy = Policy
@@ -206,8 +206,7 @@ namespace Azure.EntityServices.Tables
                 if (cancellationToken.IsCancellationRequested) break;
 
                 var binder = CreatePrimaryEntityBinderFromEntity(entity);
-                //system metada required to cleanup old tags
-                binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
+
                 binder.BindDynamicProps(_config.DynamicProps);
 
                 UpdateTags(batchedClient, cleaner, binder);
@@ -226,6 +225,7 @@ namespace Azure.EntityServices.Tables
                     case EntityOperation.AddOrReplace:
                         batchedClient.InsertOrReplace(binder.Bind());
                         break;
+
                     case EntityOperation.Delete:
                         batchedClient.Delete(binder.Bind());
                         break;
@@ -254,10 +254,7 @@ namespace Azure.EntityServices.Tables
                     updateAction.Invoke(entity);
                     var existingMetadata = binder.Metadata.ToDictionary(d => d.Key, d => d.Value);
                     binder.Metadata.Clear();
-                    //system metada required to cleanup old tags
-                    binder.Metadata.Add(EntitytableConstants.DeletedTag, false);
                     binder.BindDynamicProps(_config.DynamicProps);
-
                     UpdateTags(batchedClient, cleaner, binder, existingMetadata);
                     batchedClient.InsertOrMerge(binder.Bind());
                     await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
@@ -391,8 +388,6 @@ namespace Azure.EntityServices.Tables
             var entityBinder = CreatePrimaryEntityBinderFromEntity(entity);
             try
             {
-                //system metada required to cleanup old tags
-                entityBinder.Metadata.Add(EntitytableConstants.DeletedTag, false);
                 entityBinder.BindDynamicProps(_config.DynamicProps);
 
                 //we don't need to retrieve existing entity metadata for add operation
@@ -445,7 +440,14 @@ namespace Azure.EntityServices.Tables
 
         private void UpdateTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
         {
+            if (!_options.EnableIndexedTagSupport)
+            {
+                return;
+            }
             var tags = new Dictionary<string, object>();
+            //system metada required to cleanup old tags
+            tableEntity.Metadata.Add(EntitytableConstants.DeletedTag, false);
+
             foreach (var propInfo in _config.Tags)
             {
                 var tagValue = CreateTagRowKey(propInfo.Value, tableEntity.Entity);
@@ -521,9 +523,9 @@ namespace Azure.EntityServices.Tables
                 requestFailedException?.ErrorCode == "TooManyRequests"
                 )
             {
-                 return true;
+                return true;
             }
-             return false;
+            return false;
         }
 
         private IAsyncEnumerable<Page<TableEntity>> QueryEntityAsync(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
