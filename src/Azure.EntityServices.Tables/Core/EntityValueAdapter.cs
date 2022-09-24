@@ -117,10 +117,10 @@ namespace Azure.EntityServices.Tables.Core
                     }
                     if (propertyType == typeof(DateTime))
                     {
-                        if (DateTime.TryParse(strPropValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out var value))
+                        if (DateTime.TryParse(strPropValue, CultureInfo.InvariantCulture,DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var value))
                         {
                             //prevent datetime to be adjusted with localtime
-                            entityProp.SetValue(entity, value.ToUniversalTime(), null);
+                            entityProp.SetValue(entity, value, null);
                             return;
                         }
 

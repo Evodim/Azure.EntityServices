@@ -78,6 +78,10 @@ namespace Azure.EntityServices.Tables.Core
             {
                 _tableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
             }
+            foreach (var property in Properties)
+            {
+                _tableEntity.AddOrUpdate(property.Key, EntityValueAdapter.WriteValue(property.Value));
+            }
             return _tableEntity;
         }
 

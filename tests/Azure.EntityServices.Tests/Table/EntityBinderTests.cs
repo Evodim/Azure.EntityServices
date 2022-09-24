@@ -10,6 +10,7 @@ using System;
 using System.Threading.Tasks;
 using Azure.EntityServices.Tests.Common;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Azure.EntityServices.Table.Tests
 {
@@ -232,6 +233,41 @@ namespace Azure.EntityServices.Table.Tests
 
                 replaced.Should().ContainKey("_distance_less_than_500m");
                 (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();  
+            }
+            finally
+            {
+                await client.DeleteAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Interpolate_String_Entity_Types()
+        {
+            var partitionName = Guid.NewGuid().ToString();
+            var person = new PersonEntity();
+
+            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            try
+            {
+                await client.CreateIfNotExistsAsync();
+                var localDate = DateTime.Now;
+                var utcDate = DateTime.UtcNow;
+                var localOffsetDate = DateTimeOffset.Now;
+                var utcOffsetDate = DateTimeOffset.UtcNow;
+
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());                
+                binder.Properties.Add("LocalCreated", localDate.ToString("O",CultureInfo.InvariantCulture));
+                binder.Properties.Add("LocalUpdated", utcDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Properties.Add("Created", localOffsetDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Properties.Add("Updated", utcOffsetDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Bind();
+               var result= binder.UnBind();
+
+                result.LocalCreated.Should().Be(localDate.ToUniversalTime(),because: "Only UTC date could be stored properly without local offset mismatch");
+                result.LocalUpdated.Should().Be(utcDate);
+                result.Created.Should().Be(localOffsetDate);
+                result.Updated.Should().Be(utcOffsetDate);
+
             }
             finally
             {
