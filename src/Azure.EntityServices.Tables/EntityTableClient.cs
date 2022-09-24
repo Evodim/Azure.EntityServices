@@ -252,7 +252,7 @@ namespace Azure.EntityServices.Tables
                     var binder = CreateEntityBinderFromTableEntity(tableEntity);
                     var entity = binder.UnBind();
                     updateAction.Invoke(entity);
-                    var existingMetadata = binder.Metadata.ToDictionary(d => d.Key, d => d.Value);
+                    var existingMetadata = _options.EnableIndexedTagSupport? binder.Metadata.ToDictionary(d => d.Key, d => d.Value):null;
                     binder.Metadata.Clear();
                     binder.BindDynamicProps(_config.DynamicProps);
                     UpdateTags(batchedClient, cleaner, binder, existingMetadata);
