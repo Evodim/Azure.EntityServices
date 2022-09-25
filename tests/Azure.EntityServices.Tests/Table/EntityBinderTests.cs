@@ -1,15 +1,15 @@
 ﻿using Azure.Data.Tables;
-using Azure.EntityServices.Tables.Core;
-using Azure.EntityServices.Tables.Extensions;
-using Azure.EntityServices.Table.Common;
 using Azure.EntityServices.Table.Common.Fakes;
 using Azure.EntityServices.Table.Common.Models;
+using Azure.EntityServices.Tables.Core;
+using Azure.EntityServices.Tables.Extensions;
+using Azure.EntityServices.Tests.Common;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Threading.Tasks;
-using Azure.EntityServices.Tests.Common;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Table.Tests
 {
@@ -78,10 +78,10 @@ namespace Azure.EntityServices.Table.Tests
                     LocalCreated = null,
                     LocalUpdated = default,
                     Updated = default,
-                    Enabled=false
+                    Enabled = false
                 }, partitionName,
 
-                person.PersonId.ToString()); 
+                person.PersonId.ToString());
 
                 var merged = await MergeThenRetrieveAsync(client, binder.Bind());
                 var binderResult = new TableEntityBinder<PersonEntity>(merged);
@@ -133,7 +133,7 @@ namespace Azure.EntityServices.Table.Tests
                 await client.DeleteAsync();
             }
         }
-         
+
         [TestMethod]
         public async Task Should_Bind_Metadatas_On_Update()
         {
@@ -166,6 +166,7 @@ namespace Azure.EntityServices.Table.Tests
                 await client.DeleteAsync();
             }
         }
+
         [TestMethod]
         public async Task Should_Bind_Metadatas_On_Merge()
         {
@@ -203,35 +204,69 @@ namespace Azure.EntityServices.Table.Tests
                 await client.DeleteAsync();
             }
         }
+
         [TestMethod]
         public async Task Should_Bind_DynamicProps()
         {
             var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
-              
                 var dynamicProps = new Dictionary<string, Func<PersonEntity, object>>() { ["_distance_less_than_500m"] = (e) => e.Distance < 500 };
                 await client.CreateIfNotExistsAsync();
 
                 var partitionName = Guid.NewGuid().ToString();
                 var person = Fakers.CreateFakePerson().Generate();
-                
+
                 person.Distance = 250;
                 var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binder.BindDynamicProps(dynamicProps);
 
-                var added=await UpsertAndGetEntity(client, binder.Bind()); 
+                var added = await UpsertAndGetEntity(client, binder.Bind());
                 added.Should().ContainKey("_distance_less_than_500m");
                 (added["_distance_less_than_500m"] as bool?)?.Should().BeTrue();
 
                 person.Distance = 501;
-                 var binderToUpdate = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                var binderToUpdate = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
                 binderToUpdate.BindDynamicProps(dynamicProps);
-                
+
                 var replaced = await UpsertAndGetEntity(client, binderToUpdate.Bind());
 
                 replaced.Should().ContainKey("_distance_less_than_500m");
-                (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();  
+                (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();
+            }
+            finally
+            {
+                await client.DeleteAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Interpolate_String_Entity_Types()
+        {
+            var partitionName = Guid.NewGuid().ToString();
+            var person = new PersonEntity();
+
+            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            try
+            {
+                await client.CreateIfNotExistsAsync();
+                var localDate = DateTime.Now;
+                var utcDate = DateTime.UtcNow;
+                var localOffsetDate = DateTimeOffset.Now;
+                var utcOffsetDate = DateTimeOffset.UtcNow;
+
+                var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
+                binder.Properties.Add("LocalCreated", localDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Properties.Add("LocalUpdated", utcDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Properties.Add("Created", localOffsetDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Properties.Add("Updated", utcOffsetDate.ToString("O", CultureInfo.InvariantCulture));
+                binder.Bind();
+                var result = binder.UnBind();
+
+                result.LocalCreated.Should().Be(localDate.ToUniversalTime(), because: "Only UTC date could be stored properly without local offset mismatch");
+                result.LocalUpdated.Should().Be(utcDate);
+                result.Created.Should().Be(localOffsetDate);
+                result.Updated.Should().Be(utcOffsetDate);
             }
             finally
             {
