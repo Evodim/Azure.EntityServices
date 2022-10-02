@@ -155,5 +155,25 @@ namespace Azure.EntityServices.Table.Tests
             result.Should()
             .Be("PartitionKey eq 'tenantId' and Latitude eq 48.77309806265856 and Distance eq '148.45648566856' and BankAmount eq '1248.7731'");
         }
+
+        [TestMethod]
+        public void Should_Build_TableStorage_Query_Expression_With_Grouped_Filter_Inside_Not_Operator()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
+
+            builder.Query
+           .Where("PartitionKey").Equal("Tenant-1")
+           .And(p => p.TenantId).Equal("10")
+           .AndNot(p => p
+              .Where(p => p.Created).GreaterThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z"))
+              .Or(p => p.Created).LessThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z")))
+           .OrNot(p => p.Enabled).Equal(true);
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("PartitionKey eq 'Tenant-1' and TenantId eq '10' and not (Created gt datetime'2012-04-21T18:25:43.0000000Z' or Created lt datetime'2012-04-21T18:25:43.0000000Z') or not Enabled eq true");
+        }
     }
 }

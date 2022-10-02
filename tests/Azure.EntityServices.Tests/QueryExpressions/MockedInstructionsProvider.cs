@@ -21,5 +21,7 @@ namespace Azure.EntityServices.Table.Tests
         public string LessThan => "LessThan";
 
         public string LessThanOrEqual => "LessThanOrEqual";
+
+        public string OrNot => "Or Not";
     }
 }
