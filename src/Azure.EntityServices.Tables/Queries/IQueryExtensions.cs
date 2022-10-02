@@ -16,19 +16,13 @@ public static class IQueryExtensions
 
         public static IQueryFilter<T> AndRowKey<T>(this IFilterOperator<T> query) 
             => query.AddOperator(nameof(IQueryInstructions.And), "RowKey");
-
-        public static IQueryFilter<T> NotRowKey<T>(this IFilterOperator<T> query) 
-            => query.AddOperator(nameof(IQueryInstructions.Not), "RowKey");
-
+         
         public static IQueryFilter<T> OrRowKey<T>(this IFilterOperator<T> query)
             => query.AddOperator(nameof(IQueryInstructions.Or), "RowKey");
 
         public static IQueryFilter<T> AndPartitionKey<T>(this IFilterOperator<T> query) 
             => query.AddOperator(nameof(IQueryInstructions.And), "PartitionKey");
-
-        public static IQueryFilter<T> NotPartitionKey<T>(this IFilterOperator<T> query) 
-            => query.AddOperator(nameof(IQueryInstructions.Not), "PartitionKey");
-
+         
         public static IQueryFilter<T> OrPartitionKey<T>(this IFilterOperator<T> query) 
             => query.AddOperator(nameof(IQueryInstructions.Or), "PartitionKey");
     }
