@@ -6,9 +6,10 @@
 
     public interface IOperatorInstructions
     {
-        string And { get; }
-        string Not { get; }
+        string And { get; }        
         string Or { get; }
+        string AndNot { get; }
+        string OrNot { get; }
     }
 
     public interface IComparatorInstructions

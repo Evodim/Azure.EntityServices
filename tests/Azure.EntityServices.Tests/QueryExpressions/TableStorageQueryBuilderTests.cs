@@ -22,13 +22,13 @@ namespace Azure.EntityServices.Table.Tests
            .And(p => p
               .Where(p => p.Created).GreaterThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z"))
               .Or(p => p.Created).LessThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z")))
-           .Not(p => p.Enabled).Equal(true);
+           .And(p => p.Enabled).Equal(true);
 
             var queryStr = builder.Build();
 
             queryStr.Trim()
                 .Should()
-                .Be("PartitionKey eq 'Tenant-1' and TenantId eq '10' and (Created gt datetime'2012-04-21T18:25:43.0000000Z' or Created lt datetime'2012-04-21T18:25:43.0000000Z') not Enabled eq true");
+                .Be("PartitionKey eq 'Tenant-1' and TenantId eq '10' and (Created gt datetime'2012-04-21T18:25:43.0000000Z' or Created lt datetime'2012-04-21T18:25:43.0000000Z') and Enabled eq true");
         }
 
         [TestMethod]

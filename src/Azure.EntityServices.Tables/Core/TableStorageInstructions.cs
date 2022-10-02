@@ -6,7 +6,7 @@ namespace Azure.EntityServices.Tables.Core
     {
         public string And => "and";
 
-        public string Not => "not";
+        public string AndNot => "and not";
 
         public string Or => "or";
 
@@ -21,5 +21,7 @@ namespace Azure.EntityServices.Tables.Core
         public string LessThan => "lt";
 
         public string LessThanOrEqual => "le";
+
+        public string OrNot => "or not";
     }
 }

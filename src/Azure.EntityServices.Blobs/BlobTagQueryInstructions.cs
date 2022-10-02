@@ -7,7 +7,9 @@ namespace Azure.EntityServices.Blobs
     {
         public string And => "AND";
 
-        public string Not => throw new NotSupportedException("Blob tag 'Not' instruction not supported");
+        public string AndNot => throw new NotSupportedException("Blob tag 'Not' instruction not supported");
+
+        public string OrNot => throw new NotSupportedException("Blob tag 'Not' instruction not supported");
 
         public string Or => "OR";
 
