@@ -37,7 +37,7 @@ namespace Azure.EntityServices.Blob.Tests
              .Where(p => p.Address.City)
              .Equal("Tokyo")
              //Invalid expression Blob TaG Query doesn't handler Not statement
-             .Not(p => p.Enabled).Equal(true);
+             .AndNot(p => p.Enabled).Equal(true);
             Action builderAction = () => builder.Build();
 
             builderAction.Should().Throw<NotSupportedException>();

@@ -6,7 +6,7 @@ namespace Azure.EntityServices.Table.Tests
     {
         public string And => "And";
 
-        public string Not => "Not";
+        public string AndNot => "And Not";
 
         public string Or => "Or";
 

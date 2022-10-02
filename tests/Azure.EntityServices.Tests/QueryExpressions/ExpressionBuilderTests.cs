@@ -91,7 +91,7 @@ namespace Azure.EntityServices.Table.Tests
                 .Where(p => p.Created).GreaterThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z"))
                 .And(p => p.LastName).Equal("test")
                 .Or(p => p.Created).LessThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z")))
-            .Not(p => p.Enabled).Equal(true)
+            .AndNot(p => p.Enabled).Equal(true)
             .And(p => p
                     .Where(p => p.Created).GreaterThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z"))
                     .Or(p => p.Created).LessThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z")));
@@ -99,7 +99,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("TenantId Equal '10' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' And LastName Equal 'test' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00') Not Enabled Equal 'True' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00')");
+                .Be("TenantId Equal '10' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' And LastName Equal 'test' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00') And Not Enabled Equal 'True' And (Created GreaterThan '2012-04-21T18:25:43.0000000+00:00' Or Created LessThan '2012-04-21T18:25:43.0000000+00:00')");
         }
     }
 }
