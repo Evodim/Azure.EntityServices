@@ -79,7 +79,7 @@ namespace Azure.EntityServices.Tables
             var rowKey = ResolvePrimaryKey(id);
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition, rowKey, select: new string[] { }, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition.CleanupStorageKey(), rowKey, select: new string[] { }, cancellationToken));
 
                 return CreateEntityBinderFromTableEntity(response.Value).UnBind();
             }
@@ -209,7 +209,7 @@ namespace Azure.EntityServices.Tables
 
                 binder.BindDynamicProps(_config.DynamicProps);
 
-                UpdateTags(batchedClient, cleaner, binder);
+                CreateTaggedEntity(batchedClient, cleaner, binder);
 
                 tableEntities.Add(binder);
                 switch (operation)
@@ -255,7 +255,7 @@ namespace Azure.EntityServices.Tables
                     var existingMetadata = _options.EnableIndexedTagSupport? binder.Metadata.ToDictionary(d => d.Key, d => d.Value):null;
                     binder.Metadata.Clear();
                     binder.BindDynamicProps(_config.DynamicProps);
-                    UpdateTags(batchedClient, cleaner, binder, existingMetadata);
+                    CreateTaggedEntity(batchedClient, cleaner, binder, existingMetadata);
                     batchedClient.InsertOrMerge(binder.Bind());
                     await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                     await cleaner.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
@@ -320,7 +320,7 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public string ResolvePartitionKey(T entity) => _config.PartitionKeyResolver(entity);
+        public string ResolvePartitionKey(T entity) => TableQueryHelper.ToPartitionKey(_config.PartitionKeyResolver(entity));
 
         public string ResolvePrimaryKey(T entity)
         {
@@ -394,7 +394,7 @@ namespace Azure.EntityServices.Tables
                 var existingMetadatas = (operation != EntityOperation.Add && _options.EnableIndexedTagSupport) ?
                         await GetEntityMetadatasAsync(entityBinder.PartitionKey, entityBinder.RowKey, cancellationToken)
                         : null;
-                UpdateTags(client, cleaner, entityBinder, existingMetadatas);
+                CreateTaggedEntity(client, cleaner, entityBinder, existingMetadatas);
                 switch (operation)
                 {
                     case EntityOperation.Add:
@@ -438,7 +438,7 @@ namespace Azure.EntityServices.Tables
 
         private string CreateTagRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToTagRowKeyPrefix(key, value)}{ResolvePrimaryKey(entity)}";
 
-        private void UpdateTags(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
+        private void CreateTaggedEntity(TableBatchClient client, TableBatchClient cleaner, IEntityBinder<T> tableEntity, IDictionary<string, object> existingMetadatas = null)
         {
             if (!_options.EnableIndexedTagSupport)
             {

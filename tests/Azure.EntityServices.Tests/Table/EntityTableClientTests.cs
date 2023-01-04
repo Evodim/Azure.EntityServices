@@ -963,5 +963,55 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.DropTableAsync();
             }
         }
+
+        /// <summary>
+        ///The forward slash(/) character
+
+        //The backslash(\) character
+
+        //The number sign(#) character
+
+        //The question mark (?) character
+
+        //Control characters from U+0000 to U+001F, including:
+
+        //The horizontal tab(\t) character
+
+        //The linefeed(\n) character
+
+        //The carriage return (\r) character
+
+        //Control characters from U+007F to U+009F
+
+        /// </summary>
+        /// <returns></returns>
+        [TestMethod]
+        public async Task Should_Escape_Not_Supported_Car_In_Storage_Key()
+        {
+            var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
+
+            person.TenantId = "#tenant?0";
+            person.Created = null;
+            person.LocalCreated = null;
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await entityTable.AddOrReplaceAsync(person);
+                var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+                added.Should().BeEquivalentTo(person);
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
     }
 }

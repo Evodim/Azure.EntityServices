@@ -1,16 +1,36 @@
 ﻿using Azure.EntityServices.Tables.Extensions;
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Azure.EntityServices.Tables.Core
 {
     public static class TableQueryHelper
     {
+        internal static string CleanupStorageKey(this string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input;
+            }
+
+            var exp = new Regex(@"([\/\\#\?\t\n\r]+)", RegexOptions.CultureInvariant);
+
+            var matches = exp.Matches(input);
+            foreach (var match in matches)
+            {
+                input = input.Replace((match as Match).Value, " ");
+            }
+            return input;
+        }
+        public static string ToPartitionKey(string value) =>
+          value.CleanupStorageKey();
+
         public static string ToPrimaryRowKey<P>(P value) =>
-            KeyValueToString(value);
+           KeyValueToString(value).CleanupStorageKey();
 
         public static string ToTagRowKeyPrefix<P>(string tagName, P value) =>
-            $"~{tagName}-{KeyValueToString(value)}$";
+            $"~{tagName}-{KeyValueToString(value)}$".CleanupStorageKey();
 
         public static string ValueToString<P>(P givenValue)
         {
