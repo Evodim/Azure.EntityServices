@@ -81,6 +81,7 @@ namespace Azure.EntityServices.Samples
                 _ = await entityClient.GetByIdAsync(person.TenantId, person.PersonId);
                 Console.WriteLine($"{mesure.Name}");
             }
+
             using (var mesure = counters.Mesure("2.1 Get by prop"))
             {
                 var count = 0;
