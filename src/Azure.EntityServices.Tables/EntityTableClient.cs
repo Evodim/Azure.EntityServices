@@ -79,7 +79,7 @@ namespace Azure.EntityServices.Tables
             var rowKey = ResolvePrimaryKey(id);
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition.EscapeDisallowedCharKey(), rowKey, select: new string[] { }, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition.EscapeDisallowedChars(), rowKey, select: new string[] { }, cancellationToken));
 
                 return CreateEntityBinderFromTableEntity(response.Value).UnBind();
             }

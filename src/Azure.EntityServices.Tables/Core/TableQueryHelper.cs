@@ -22,7 +22,7 @@ namespace Azure.EntityServices.Tables.Core
         /// <summary>
 
         /// <returns></returns>
-        internal static string EscapeDisallowedCharKey(this string input)
+        internal static string EscapeDisallowedChars(this string input)
         {
             if (string.IsNullOrWhiteSpace(input))
             {
@@ -40,13 +40,13 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public static string ToPartitionKey(string value) =>
-          value.EscapeDisallowedCharKey();
+          value.EscapeDisallowedChars();
 
         public static string ToPrimaryRowKey<P>(P value) =>
-           KeyValueToString(value).EscapeDisallowedCharKey();
+           KeyValueToString(value).EscapeDisallowedChars();
 
         public static string ToTagRowKeyPrefix<P>(string tagName, P value) =>
-            $"~{tagName}-{KeyValueToString(value)}$".EscapeDisallowedCharKey();
+            $"~{tagName}-{KeyValueToString(value)}$".EscapeDisallowedChars();
 
         public static string ValueToString<P>(P givenValue)
         {
