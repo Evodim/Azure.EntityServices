@@ -79,7 +79,7 @@ namespace Azure.EntityServices.Tables
             var rowKey = ResolvePrimaryKey(id);
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition.CleanupStorageKey(), rowKey, select: new string[] { }, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partition.EscapeDisallowedCharKey(), rowKey, select: new string[] { }, cancellationToken));
 
                 return CreateEntityBinderFromTableEntity(response.Value).UnBind();
             }
@@ -252,7 +252,7 @@ namespace Azure.EntityServices.Tables
                     var binder = CreateEntityBinderFromTableEntity(tableEntity);
                     var entity = binder.UnBind();
                     updateAction.Invoke(entity);
-                    var existingMetadata = _options.EnableIndexedTagSupport? binder.Metadata.ToDictionary(d => d.Key, d => d.Value):null;
+                    var existingMetadata = _options.EnableIndexedTagSupport ? binder.Metadata.ToDictionary(d => d.Key, d => d.Value) : null;
                     binder.Metadata.Clear();
                     binder.BindDynamicProps(_config.DynamicProps);
                     CreateTaggedEntity(batchedClient, cleaner, binder, existingMetadata);

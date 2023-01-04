@@ -23,8 +23,8 @@ namespace Azure.EntityServices.Table.Tests
             {
                 ConnectionString = TestEnvironment.ConnectionString,
                 CreateTableIfNotExists = true,
-                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}", 
-                EnableIndexedTagSupport=true
+                TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
+                EnableIndexedTagSupport = true
             };
         }
 
@@ -360,7 +360,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
             var observer = new DummyObserver();
-           
+
             var tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId)
@@ -392,7 +392,7 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-            
+
             IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
@@ -428,7 +428,7 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-           
+
             IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
@@ -470,7 +470,7 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-          
+
             IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
@@ -502,7 +502,7 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-           
+
             IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
@@ -543,7 +543,7 @@ namespace Azure.EntityServices.Table.Tests
             //force entities to have same partition (tenantId)
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
-           
+
             IEntityTableClient<PersonEntity> tableEntity = new EntityTableClient<PersonEntity>(_commonOptions(), config =>
             {
                 config
@@ -916,33 +916,6 @@ namespace Azure.EntityServices.Table.Tests
             person.Updated = default;
             person.LocalCreated = default;
             person.LocalUpdated = default;
-             
-            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
-            {
-                c
-                .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
-                .AddTag(p => p.LastName)
-                .AddTag(p => p.Created);
-            });
-            try
-            { 
-                await entityTable.AddOrReplaceAsync(person);
-                var added = await entityTable.GetByIdAsync(person.TenantId,person.PersonId);
-                added.Should().BeEquivalentTo(person);
-            }
-            finally
-            {
-                await entityTable.DropTableAsync();
-            }
-        }
-        [TestMethod]
-        public async Task Should_Store_Null_DateTime_Values()
-        {
-            var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
-
-            person.Created = null; 
-            person.LocalCreated = null; 
 
             var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
             {
@@ -964,33 +937,11 @@ namespace Azure.EntityServices.Table.Tests
             }
         }
 
-        /// <summary>
-        ///The forward slash(/) character
-
-        //The backslash(\) character
-
-        //The number sign(#) character
-
-        //The question mark (?) character
-
-        //Control characters from U+0000 to U+001F, including:
-
-        //The horizontal tab(\t) character
-
-        //The linefeed(\n) character
-
-        //The carriage return (\r) character
-
-        //Control characters from U+007F to U+009F
-
-        /// </summary>
-        /// <returns></returns>
         [TestMethod]
-        public async Task Should_Escape_Not_Supported_Car_In_Storage_Key()
+        public async Task Should_Store_Null_DateTime_Values()
         {
             var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
 
-            person.TenantId = "#tenant?0";
             person.Created = null;
             person.LocalCreated = null;
 
@@ -1013,5 +964,75 @@ namespace Azure.EntityServices.Table.Tests
                 await entityTable.DropTableAsync();
             }
         }
+
+        [TestMethod]
+        public async Task Should_Escape_Not_Supported_Char_For_PartitionKeys()
+        {
+            var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
+
+            person.TenantId = "/\\#?Tenant123!\n\t\r\0\u0007\u009f4"; ;
+            person.Created = null;
+            person.LocalCreated = null;
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await entityTable.AddOrReplaceAsync(person);
+                var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+                added.Should().BeEquivalentTo(person);
+
+                var direct = await entityTable.GetAsync(f => f.WherePartitionKey().Equal("*Tenant123!*4")).FirstAsync();
+                direct.Should().BeEquivalentTo(person);
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Escape_Not_Supported_Char_For_RowKeys()
+        {
+            var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
+
+            person.LastName = "/\\#?Person123!\n\t\r\0\u0007\u009f4";
+            person.Created = null;
+            person.LocalCreated = null;
+
+            var entityTable = new EntityTableClient<PersonEntity>(_commonOptions(), c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.LastName)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await entityTable.AddOrReplaceAsync(person);
+                var added = await entityTable.GetByIdAsync(person.TenantId, person.LastName);
+                added.Should().BeEquivalentTo(person);
+                var mainRow = await entityTable.GetAsync(f => f.WhereRowKey().Equal("*Person123!*4")).FirstOrDefaultAsync();
+                mainRow.Should().BeEquivalentTo(person);
+
+                var createdRow = await entityTable.GetByTagAsync(f => f.WhereTag("LastName").Equal(person.LastName)).FirstOrDefaultAsync();
+                createdRow.Should().BeEquivalentTo(person);
+
+                var lastNameRow = await entityTable.GetByTagAsync(f => f.WhereTag("Created").Equal(person.Created)).FirstOrDefaultAsync();
+                lastNameRow.Should().BeEquivalentTo(person);
+            }
+            finally
+            {
+                await entityTable.DropTableAsync();
+            }
+        }
+
     }
 }

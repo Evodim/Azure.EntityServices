@@ -7,30 +7,46 @@ namespace Azure.EntityServices.Tables.Core
 {
     public static class TableQueryHelper
     {
-        internal static string CleanupStorageKey(this string input)
+        /// <summary>
+        /// Escape characters disallowed in Azure Storage key fields
+        /// https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
+        /// The forward slash(/) character
+        /// The backslash(\) character
+        /// The number sign(#) character
+        /// The question mark (?) character
+        /// Control characters from U+0000 to U+001F, including:
+        /// The horizontal tab(\t) character
+        /// The linefeed(\n) character
+        /// The carriage return (\r) character
+        /// Control characters from U+007F to U+009F
+        /// <summary>
+
+        /// <returns></returns>
+        internal static string EscapeDisallowedCharKey(this string input)
         {
             if (string.IsNullOrWhiteSpace(input))
             {
                 return input;
             }
 
-            var exp = new Regex(@"([\/\\#\?\t\n\r]+)", RegexOptions.CultureInvariant);
+            var exp = new Regex(@"([\/\\#\?\t\n\r\u0000-\u001f\u007f-\u009f]+)", RegexOptions.CultureInvariant);
 
             var matches = exp.Matches(input);
             foreach (var match in matches)
             {
-                input = input.Replace((match as Match).Value, " ");
+                input = input.Replace((match as Match).Value, "*");
             }
             return input;
         }
+
         public static string ToPartitionKey(string value) =>
-          value.CleanupStorageKey();
+          value.EscapeDisallowedCharKey();
 
         public static string ToPrimaryRowKey<P>(P value) =>
-           KeyValueToString(value).CleanupStorageKey();
+           KeyValueToString(value).EscapeDisallowedCharKey();
 
         public static string ToTagRowKeyPrefix<P>(string tagName, P value) =>
-            $"~{tagName}-{KeyValueToString(value)}$".CleanupStorageKey();
+            $"~{tagName}-{KeyValueToString(value)}$".EscapeDisallowedCharKey();
 
         public static string ValueToString<P>(P givenValue)
         {
