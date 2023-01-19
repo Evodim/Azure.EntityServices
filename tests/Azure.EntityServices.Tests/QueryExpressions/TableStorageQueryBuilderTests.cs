@@ -61,7 +61,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt '~Created-2022-10-22$' and RowKey lt '~Created-2022-10-22$~' and _deleted_tag_ eq false and TenantId eq '10'");
+                .Be("RowKey gt '~Created-2022-10-22$' and RowKey lt '~Created-2022-10-22$~' and TenantId eq '10'");
         }
 
         [TestMethod]
@@ -77,7 +77,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt '~Created-2022-10-22$' and RowKey lt '~Created-~' and _deleted_tag_ eq false and TenantId eq '10'");
+                .Be("RowKey gt '~Created-2022-10-22$' and RowKey lt '~Created-~' and TenantId eq '10'");
         }
 
         [TestMethod]
@@ -93,7 +93,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt '~Created-' and RowKey lt '~Created-2022-10-22$~' and _deleted_tag_ eq false and TenantId eq '10'");
+                .Be("RowKey gt '~Created-' and RowKey lt '~Created-2022-10-22$~' and TenantId eq '10'");
         }
 
         [TestMethod]
@@ -112,7 +112,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt '~Created-$' and RowKey lt '~Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Created eq null or Enabled eq null or Altitude eq null");
+                .Be("RowKey gt '~Created-$' and RowKey lt '~Created-$~' and TenantId eq '10' and Created eq null or Enabled eq null or Altitude eq null");
         }
 
         [TestMethod]
@@ -132,7 +132,7 @@ namespace Azure.EntityServices.Table.Tests
 
             queryStr.Trim()
                 .Should()
-                .Be("RowKey gt '~Created-$' and RowKey lt '~Created-$~' and _deleted_tag_ eq false and TenantId eq '10' and Updated eq datetime'1601-01-01T00:00:00.0000000Z' and LocalUpdated eq datetime'1601-01-01T00:00:00.0000000Z' or Enabled eq null or Altitude eq null");
+                .Be("RowKey gt '~Created-$' and RowKey lt '~Created-$~' and TenantId eq '10' and Updated eq datetime'1601-01-01T00:00:00.0000000Z' and LocalUpdated eq datetime'1601-01-01T00:00:00.0000000Z' or Enabled eq null or Altitude eq null");
                     
         }
 
