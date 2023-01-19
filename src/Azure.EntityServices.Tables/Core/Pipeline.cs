@@ -4,12 +4,12 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Azure.EntityServices.Tables.Core
 {
-    public class Pipeline : IPipeline
+    public class Pipeline : IEntityTransactionGroupPipeline
     {
-        private readonly IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup[]> _pipeline;
+        private readonly IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup> _pipeline;
         private readonly ITargetBlock<EntityTransactionGroup[]> _target;
 
-        public Pipeline(IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup[]> pipeline, ITargetBlock<EntityTransactionGroup[]> target)
+        public Pipeline(IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup> pipeline, ITargetBlock<EntityTransactionGroup[]> target)
         {
             _pipeline = pipeline;
             _target = target;

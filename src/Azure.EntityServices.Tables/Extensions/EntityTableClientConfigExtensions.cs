@@ -16,6 +16,14 @@ namespace Azure.EntityServices.Tables
         {
             var property = selector.GetPropertyInfo();
             config.PrimaryKeyProp = property;
+            config.PrimaryKeyResolver = null;
+            return config;
+        }
+
+        public static EntityTableClientConfig<T> SetPrimaryKey<T>(this EntityTableClientConfig<T> config, Func<T, string> primaryKeyResolver)
+        {
+            config.PrimaryKeyProp = null;
+            config.PrimaryKeyResolver = primaryKeyResolver;
             return config;
         }
 

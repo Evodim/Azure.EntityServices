@@ -1,7 +1,10 @@
-﻿namespace Azure.EntityServices.Tables.Core
+﻿using Azure.Data.Tables;
+
+namespace Azure.EntityServices.Tables.Core
 {
     internal static class EntityBinderExtensions
     {
+        
         public static IEntityBinder<T> CopyMetadataTo<T>(this IEntityBinder<T> binderSource, IEntityBinder<T> binderDestination)
             where T : class, new()
         {

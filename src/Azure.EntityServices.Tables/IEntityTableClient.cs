@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables
 {
-
     public interface IEntityTableClient<T> : IEntityTableClientRuntimeConfig<T>
     {
         Task AddAsync(T entity, CancellationToken cancellationToken = default);

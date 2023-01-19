@@ -20,18 +20,13 @@ namespace Azure.EntityServices.Tables
     {
         public string TagName { get; set; }
 
-       
-
         public TagFilterExpression()
         {
-          
-           
         }
-        
+
         public TagFilterExpression(string tagName)
         {
             TagName = tagName;
-          
         }
 
         public ITagQueryFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property)

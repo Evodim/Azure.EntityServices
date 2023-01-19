@@ -8,58 +8,53 @@ namespace Azure.EntityServices.Tables
     /// </summary>
     public static class ITagQueryFilterExtensions
     {
-        public static IFilterOperator<T> Between<T, P>(this ITagQueryFilter<T, P> query, P minValue,P maxValue)
+        public static IFilterOperator<T> Between<T, P>(this ITagQueryFilter<T, P> query, P minValue, P maxValue)
         {
             return (query as IQueryFilter<T>)
                   .GreaterThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, minValue)}")
-                  .And($"RowKey")
-                  .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, maxValue)}~")
-                  .And(EntitytableConstants.DeletedTag).Equal(false);
+                  .AndRowKey()
+                  .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, maxValue)}~");
         }
+
         public static IFilterOperator<T> Equal<T, P>(this ITagQueryFilter<T, P> query, P value)
         {
             return (query as IQueryFilter<T>)
                   .GreaterThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}")
-                  .And($"RowKey")
-                  .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}~")
-                  .And(EntitytableConstants.DeletedTag).Equal(false);
+                  .AndRowKey()
+                  .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}~");
         }
-     
 
         public static IFilterOperator<T> GreaterThan<T, P>(this ITagQueryFilter<T, P> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}~")
-               .And($"RowKey")
-               .LessThan($"~{query.TagName}-~")
-               .And(EntitytableConstants.DeletedTag).Equal(false);
+               .AndRowKey()
+               .LessThan($"~{query.TagName}-~");
         }
 
         public static IFilterOperator<T> GreaterThanOrEqual<T, P>(this ITagQueryFilter<T> query, P value)
         {
             return (query as IQueryFilter<T>)
-               .GreaterThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName,value)}")
-               .And($"RowKey")
+               .GreaterThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}")
+               .AndRowKey()
                .LessThan($"~{query.TagName}-~")
-               .And(EntitytableConstants.DeletedTag).Equal(false);
+               ;
         }
+
         public static IFilterOperator<T> LessThan<T, P>(this ITagQueryFilter<T> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"~{query.TagName}-")
-               .And($"RowKey")
-               .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}")
-               .And(EntitytableConstants.DeletedTag).Equal(false);
+               .AndRowKey()
+               .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}");
         }
 
         public static IFilterOperator<T> LessThanOrEqual<T, P>(this ITagQueryFilter<T> query, P value)
         {
             return (query as IQueryFilter<T>)
                .GreaterThan($"~{query.TagName}-")
-               .And($"RowKey")
-               .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}~")
-               .And(EntitytableConstants.DeletedTag).Equal(false);
+               .AndRowKey()
+               .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}~");
         }
-     
     }
 }
