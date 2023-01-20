@@ -68,7 +68,7 @@ Upcoming:
 ![image](https://user-images.githubusercontent.com/4396827/213818315-bf0370d3-82f2-4908-b969-761bd0b3b9de.png)
 
 
-### Same table with 10K entities to add parallelization setted up to 64 concurrent batch operations
+### Same table with added 10K entities and parallelization setted up to 64 concurrent batch operations
 
 ![image](https://user-images.githubusercontent.com/4396827/213819426-3c9d2896-07db-4601-8355-b36c22440235.png)
 
