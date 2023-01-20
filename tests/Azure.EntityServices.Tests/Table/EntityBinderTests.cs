@@ -49,6 +49,7 @@ namespace Azure.EntityServices.Table.Tests
                 entity.BankAmount.Should().Be(person.BankAmount);
                 entity.Situation.Should().Be(person.Situation);
             }
+            catch { throw; }
             finally
             {
                 await client.DeleteAsync();
@@ -101,6 +102,7 @@ namespace Azure.EntityServices.Table.Tests
                 entity.PersonId.Should().Be(person.PersonId.ToString());
                 entity.FirstName.Should().Be("John Do");
             }
+            catch { throw; }
             finally
             {
                 await client.DeleteAsync();
@@ -128,6 +130,7 @@ namespace Azure.EntityServices.Table.Tests
                 binderResult.RowKey.Should().Be(person.PersonId.ToString());
                 binderResult.Entity.Should().BeEquivalentTo(person);
             }
+            catch { throw; }
             finally
             {
                 await client.DeleteAsync();
@@ -161,6 +164,7 @@ namespace Azure.EntityServices.Table.Tests
                 binderResult.Metadata.Should().Contain("_HasChildren", false);
                 binderResult.Metadata.Should().NotContainKey("_Deleted", because: "InsertOrReplace replace all entity props and it's metadatas");
             }
+            catch { throw; }
             finally
             {
                 await client.DeleteAsync();
@@ -199,6 +203,7 @@ namespace Azure.EntityServices.Table.Tests
                 binderResult.Metadata.Should().ContainKey("_Deleted");
                 binderResult.Metadata.Should().Contain("_Deleted", true);
             }
+            catch { throw; }
             finally
             {
                 await client.DeleteAsync();
@@ -234,6 +239,10 @@ namespace Azure.EntityServices.Table.Tests
                 replaced.Should().ContainKey("_distance_less_than_500m");
                 (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();
             }
+            catch 
+            { 
+             throw;
+            }
             finally
             {
                 await client.DeleteAsync();
@@ -268,6 +277,10 @@ namespace Azure.EntityServices.Table.Tests
                 result.Created.Should().Be(localOffsetDate);
                 result.Updated.Should().Be(utcOffsetDate);
             }
+            catch
+            {
+                throw;
+            }
             finally
             {
                 await client.DeleteAsync();
@@ -300,6 +313,7 @@ namespace Azure.EntityServices.Table.Tests
                 createdEntity.Altitude.Should().Be(person.Altitude);
                 createdEntity?.Distance.Should().Be(person.Distance);
             }
+            catch { throw; }
             finally
             {
                 await client.DeleteAsync();

@@ -14,7 +14,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Build_TableStorage_Query_Expression()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             builder.Query
            .Where("PartitionKey").Equal("Tenant-1")
@@ -34,7 +34,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Build_Table_Storage_Advanced_Query_Expression()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             builder.Query
            .Where("PartitionKey").Equal("Tenant-1")
@@ -133,7 +133,6 @@ namespace Azure.EntityServices.Table.Tests
             queryStr.Trim()
                 .Should()
                 .Be("RowKey gt '~Created-$' and RowKey lt '~Created-$~' and TenantId eq '10' and Updated eq datetime'1601-01-01T00:00:00.0000000Z' and LocalUpdated eq datetime'1601-01-01T00:00:00.0000000Z' or Enabled eq null or Altitude eq null");
-                    
         }
 
         [TestMethod]
