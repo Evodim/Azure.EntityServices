@@ -72,3 +72,7 @@ Upcoming:
 
 ![image](https://user-images.githubusercontent.com/4396827/213819426-3c9d2896-07db-4601-8355-b36c22440235.png)
 
+
+### Added implementation of entity observer
+
+![image](https://user-images.githubusercontent.com/4396827/213823101-c36917fe-93a1-4fef-bf14-6b363e9eb32b.png)
