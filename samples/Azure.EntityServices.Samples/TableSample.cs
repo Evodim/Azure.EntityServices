@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Samples
 {
     public static class TableSample
     {
-        private const int ENTITY_COUNT = 1000;
+        private const int ENTITY_COUNT = 10000;
 
         public static async Task Run()
         {
@@ -171,8 +171,30 @@ namespace Azure.EntityServices.Samples
                 }
                 while (!string.IsNullOrEmpty(token));
                 Console.WriteLine();
-            } 
-            
+            }
+
+            using (var mesure = counters.Mesure("Update all entities for one partition"))
+            {
+                var count = 0;
+                string token = null;
+                do
+                {
+                    var result = await entityClient
+                        .UpdateManyAsync(u => { 
+                            count++;
+                            Console.WriteLine($"{mesure.Name} {count} updated ");
+                            Console.CursorTop--;
+                        },
+                           filter => filter
+                           .WherePartitionKey()
+                           .Equal("tenant1"));
+
+                   
+                }
+                while (!string.IsNullOrEmpty(token));
+                Console.WriteLine();
+            }
+
             Console.WriteLine("====================================");
             counters.WriteToConsole();
         }
