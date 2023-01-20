@@ -6,8 +6,9 @@ namespace Azure.EntityServices.Tables
     /// <summary>
     /// Extend table query capabilities to use it for tag filters
     /// </summary>
-    public static class ITagQueryFilterExtensions
-    {
+    public static class TableTagQueryFilterExtensions
+    { 
+
         public static IFilterOperator<T> Between<T, P>(this ITagQueryFilter<T, P> query, P minValue, P maxValue)
         {
             return (query as IQueryFilter<T>)

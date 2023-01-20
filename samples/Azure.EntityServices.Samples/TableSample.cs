@@ -95,8 +95,9 @@ namespace Azure.EntityServices.Samples
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
                        filter => filter
-                        .Where(p => p.LastName)
-                        .Equal(onePerson.LastName) 
+                        .IgnoreTags()
+                        .And(p => p.LastName)
+                        .Equal(onePerson.LastName)
                         ))
                 {
                     count += _.Count();
@@ -109,7 +110,7 @@ namespace Azure.EntityServices.Samples
             using (var mesure = counters.Mesure("Get with filter indexed"))
             {
                 var count = 0;
-                await foreach (var _ in entityClient.GetByTagAsync(
+                await foreach (var _ in entityClient.GetAsync(
                     filter => filter
                     .WhereTag(p => p.LastName)
                     .Equal(onePerson.LastName)))
@@ -127,7 +128,8 @@ namespace Azure.EntityServices.Samples
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
                         filter => filter
-                        .Where("_FirstLastName3Chars")
+                        .IgnoreTags()
+                        .And("_FirstLastName3Chars")
                         .Equal("arm")))
                 {
                     count += _.Count();
@@ -140,7 +142,7 @@ namespace Azure.EntityServices.Samples
             using (var mesure = counters.Mesure("Get by dynamic prop indexed"))
             {
                 var count = 0;
-                await foreach (var _ in entityClient.GetByTagAsync(
+                await foreach (var _ in entityClient.GetAsync(
                     filter => filter
                     .WhereTag("_FirstLastName3Chars")
                     .Equal("arm")))

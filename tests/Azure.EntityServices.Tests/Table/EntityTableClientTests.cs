@@ -72,14 +72,14 @@ namespace Azure.EntityServices.Table.Tests
 
             created.LastName.Should().BeEquivalentTo(person.LastName);
 
-            var tagResult = await entityTable.GetByTagAsync(f => f.WhereTag(p => p.LastName)
+            var tagResult = await entityTable.GetAsync(f => f.WhereTag(p => p.LastName)
             .Equal(person.LastName)).ToListAsync();
 
             tagResult.Count.Should().Be(1);
             tagResult.First().Should().BeEquivalentTo(person);
 
             var anyResult = await entityTable
-                .GetByTagAsync(f => f.WhereTag(p => p.LastName)
+                .GetAsync(f => f.WhereTag(p => p.LastName)
                 .Equal(oldLastName))
                 .AnyAsync();
             anyResult.Should().BeFalse();
@@ -148,7 +148,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 var person = persons.First();
                 //get all entities both primary and projected
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                     filter => filter
                     .WhereTag(p => p.Created)
                     .Equal(person.Created)
@@ -185,7 +185,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 var person = persons.First();
                 //get all entities both primary and projected
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                     filter => filter
                     .WhereTag(p => p.Created)
                     .Equal(person.Created)
@@ -237,7 +237,7 @@ namespace Azure.EntityServices.Table.Tests
             try
             {
                 await tableEntity.AddOrReplaceAsync(person);
-                await foreach (var resultPage in tableEntity.GetByTagAsync(
+                await foreach (var resultPage in tableEntity.GetAsync(
                        filter => filter
                     .WhereTag(p => p.LastName)
                     .Equal(person.LastName).AndPartitionKey().Equal(person.TenantId)))
@@ -291,7 +291,7 @@ namespace Azure.EntityServices.Table.Tests
             try
             {
                 await tableEntity.AddOrReplaceAsync(person);
-                await foreach (var resultPage in tableEntity.GetByTagAsync(
+                await foreach (var resultPage in tableEntity.GetAsync(
                      filter => filter
                     .WhereTag("_FirstLastName3Chars")
                     .Equal(First3Char(person.LastName))
@@ -329,7 +329,7 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.DeleteAsync(created);
 
                 (await tableEntity.GetByIdAsync(person.TenantId, person.PersonId)).Should().BeNull();
-                await foreach (var resultPage in tableEntity.GetByTagAsync(
+                await foreach (var resultPage in tableEntity.GetAsync(
                     filter => filter
                     .WhereTag("_FirstLastName3Chars")
                     .Equal(First3Char(person.LastName))
@@ -339,7 +339,7 @@ namespace Azure.EntityServices.Table.Tests
                     resultPage.Should().BeEmpty();
                 }
 
-                await foreach (var resultPage in tableEntity.GetByTagAsync(
+                await foreach (var resultPage in tableEntity.GetAsync(
                     filter => filter
                      .WhereTag(p => p.LastName)
                     .Equal(person.LastName)
@@ -604,7 +604,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 var person = persons.Last();
 
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                 filter => filter
                 .WhereTag(p => p.Created)
                 .Equal(person.Created)))
@@ -639,7 +639,7 @@ namespace Azure.EntityServices.Table.Tests
                 persons.Add(olderPerson);
                 await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetByTagAsync(filter => filter.WhereTag("Created").GreaterThanOrEqual(oldestDate)))
+                await foreach (var resultPage in entityTable.GetAsync(filter => filter.WhereTag("Created").GreaterThanOrEqual(oldestDate)))
                 {
                     resultPage.Should().BeEquivalentTo(persons.Where(p => p != olderPerson));
                 }
@@ -671,7 +671,7 @@ namespace Azure.EntityServices.Table.Tests
                 persons.Add(olderPerson);
                 await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                     filter => filter
                     .WhereTag("Created").GreaterThan(oldestDate)))
                 {
@@ -706,7 +706,7 @@ namespace Azure.EntityServices.Table.Tests
                 persons.Add(lastestPerson);
                 await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                     filter => filter
                     .WhereTag(p => p.Created)
                     .LessThan(latestDate)))
@@ -741,7 +741,7 @@ namespace Azure.EntityServices.Table.Tests
                 lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
                 persons.Add(lastestPerson);
                 await entityTable.AddManyAsync(persons);
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
 
                     filter => filter
                     .WhereTag("Created")
@@ -782,7 +782,7 @@ namespace Azure.EntityServices.Table.Tests
                 persons.Add(olderPerson);
 
                 await entityTable.AddManyAsync(persons);
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                     filter =>
                     filter
                     .WhereTag(p => p.Created)
@@ -820,7 +820,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 await entityTable.AddManyAsync(persons);
                 //Query by Created Tag
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                     filter =>
                         filter
                         .WhereTag(p => p.Created)
@@ -860,7 +860,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                 filter => filter
                 .WhereTag(p => p.Created)
                 .Equal(null)))
@@ -893,7 +893,7 @@ namespace Azure.EntityServices.Table.Tests
                 person.LastName = string.Empty;
 
                 await entityTable.AddManyAsync(persons);
-                await foreach (var resultPage in entityTable.GetByTagAsync(
+                await foreach (var resultPage in entityTable.GetAsync(
                 filter => filter
                 .WhereTag(p => p.LastName)
                 .Equal("")))
@@ -1022,10 +1022,10 @@ namespace Azure.EntityServices.Table.Tests
                 var mainRow = await entityTable.GetAsync(f => f.WhereRowKey().Equal("*Person123!*4")).FirstOrDefaultAsync();
                 mainRow.Should().BeEquivalentTo(person);
 
-                var createdRow = await entityTable.GetByTagAsync(f => f.WhereTag("LastName").Equal(person.LastName)).FirstOrDefaultAsync();
+                var createdRow = await entityTable.GetAsync(f => f.WhereTag("LastName").Equal(person.LastName)).FirstOrDefaultAsync();
                 createdRow.Should().BeEquivalentTo(person);
 
-                var lastNameRow = await entityTable.GetByTagAsync(f => f.WhereTag("Created").Equal(person.Created)).FirstOrDefaultAsync();
+                var lastNameRow = await entityTable.GetAsync(f => f.WhereTag("Created").Equal(person.Created)).FirstOrDefaultAsync();
                 lastNameRow.Should().BeEquivalentTo(person);
             }
             finally

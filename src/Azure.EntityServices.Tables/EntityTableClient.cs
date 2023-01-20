@@ -111,30 +111,14 @@ namespace Azure.EntityServices.Tables
                    ex?.ErrorCode == "TooManyRequests"
                    )
                 {
-                    return true;
+                    return true; 
                 }
             }
             return false;
         }
 
-        private IAsyncEnumerable<Page<TableEntity>> QueryEntityAsync(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
-        {
-            var query = new FilterExpression<T>();
 
-            //add global filter ignore entity tag rows
-            query
-                  .WhereRowKey()
-                  .LessThan($"~")
-                  .And(filter);
-
-            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
-
-            return _retryPolicy.Execute(() => _client
-            .QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage)
-            .AsPages(nextPageToken));
-        }
-
-        private IAsyncEnumerable<Page<TableEntity>> QueryEntityByTagAsync(Action<ITagQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
+        private IAsyncEnumerable<Page<TableEntity>> QueryEntityWithTagAsync(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
         {
             var query = new TagFilterExpression<T>();
             filter.Invoke(query);
@@ -311,36 +295,11 @@ namespace Azure.EntityServices.Tables
             {
                 throw new EntityTableClientException($"An error occured during the request, partition:{partition} rowkey:{rowKey}", ex);
             }
-        }
-
-        public async IAsyncEnumerable<IEnumerable<T>> GetByTagAsync(Action<ITagQuery<T>> filter, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-
-        {
-            await foreach (var page in QueryEntityByTagAsync(filter, null, null, cancellationToken))
-            {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
-            }
-        }
-
-        public async Task<EntityPage<T>> GetByTagPagedAsync(Action<ITagQuery<T>> filter, int? maxPerPage = null, string nextPageToken = null, CancellationToken cancellationToken = default)
-        {
-            var pageEnumerator =
-              QueryEntityByTagAsync(filter, maxPerPage, nextPageToken, cancellationToken)
-                       .GetAsyncEnumerator(cancellationToken);
-            try
-            {
-                await pageEnumerator.MoveNextAsync();
-                return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
-            }
-            finally
-            {
-                await pageEnumerator.DisposeAsync();
-            }
-        }
+        } 
 
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await foreach (var page in QueryEntityAsync(filter, null, null, cancellationToken))
+            await foreach (var page in QueryEntityWithTagAsync(filter, null, null, cancellationToken))
             {
                 yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
             }
@@ -353,7 +312,7 @@ namespace Azure.EntityServices.Tables
             CancellationToken cancellationToken = default)
         {
             var pageEnumerator =
-                QueryEntityAsync(filter, maxPerPage, nextPageToken, cancellationToken)
+                QueryEntityWithTagAsync(filter, maxPerPage, nextPageToken, cancellationToken)
                          .GetAsyncEnumerator(cancellationToken);
             try
             {
@@ -449,7 +408,7 @@ namespace Azure.EntityServices.Tables
             long count = 0;
             var batchedClient = CreateTableBatchClient();
 
-            await foreach (var page in QueryEntityAsync(filter, null, null, cancellationToken))
+            await foreach (var page in QueryEntityWithTagAsync(filter, null, null, cancellationToken))
             {
                 foreach (var tableEntity in page.Values)
                 {
