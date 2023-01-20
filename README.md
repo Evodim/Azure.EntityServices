@@ -40,31 +40,57 @@ Upcoming:
 ### EntityTableClient configuration example
 
 ```csharp
-  
- var entityClient = new EntityTableClient<PersonEntity>(options, config =>
+            //==============Entity options and configuratin section====================================================
+            //set here for your technical stuff: table name, connection, parallelization
+            var entityClient = EntityTableClient.Create<PersonEntity>(
+             options =>
+            {
+                options.ConnectionString = TestEnvironment.ConnectionString;
+                options.TableName = $"{nameof(PersonEntity)}";
+                options.CreateTableIfNotExists = true;
+            }
+
+            //set here your entity behavior dynamic fields, tags, observers
+            , config =>
             {
                 config
-                .SetPartitionKey(p => p.TentantId)
-                .SetPrimaryProp(p => p.PersonId)
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .IgnoreProp(p => p.OtherAddress)
+
+                //add tag to generate indexed and sorted entities through rowKey
                 .AddTag(p => p.Created)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Distance)
                 .AddTag(p => p.Enabled)
-                .AddTag(p => p.Latitude)
-                .AddTag(p => p.Longitude)
 
-                .AddComputedProp("_IsInFrance", p => p.Address.State == "France")
-                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress.Count > 1)
-                .AddComputedProp("_FirstLastName3Chars", p => p.LastName.ToLower()[..3])
+                //add computed props to store and compute dynamically additional fields of the entity
+                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
+                .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
+                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
 
-                .AddTag("_FirstLastName3Chars");
+                //computed props could also be tagged 
+                .AddTag("_FirstLastName3Chars")
+
+                //add an entity oberver to track entity changes and apply any action (projection, logging, etc.)
+                .AddObserver("EntityLoggerObserver", new EntityLoggerObserver<PersonEntity>());
             });
+            //===============================================================================================
 
 ```
 
 
-### Output of sample console projet based on a table with 3 billions of entities (standard storageV2)
+### Output of sample console projet based on a table with 1.5 million of entities and only 5 partitions (standard storageV2)
  
-![image](https://user-images.githubusercontent.com/4396827/169525865-b060cee9-9d0b-4cf6-870f-7076f0374d7c.png)
+![image](https://user-images.githubusercontent.com/4396827/213818315-bf0370d3-82f2-4908-b969-761bd0b3b9de.png)
 
-*You should use a real azure table storage connection with more than 100K entities to highlight performance improvment with indexed tags*
+
+### Same table with added 10K entities and parallelization setted up to 64 concurrent batch operations
+
+![image](https://user-images.githubusercontent.com/4396827/213819426-3c9d2896-07db-4601-8355-b36c22440235.png)
+
+
+### Added an implementation of entity observer
+
+![image](https://user-images.githubusercontent.com/4396827/213823101-c36917fe-93a1-4fef-bf14-6b363e9eb32b.png)
