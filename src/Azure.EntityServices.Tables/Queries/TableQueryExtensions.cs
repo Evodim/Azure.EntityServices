@@ -10,11 +10,11 @@ namespace Azure.EntityServices.Tables
     {
         public static IFilterOperator<T> IgnoreTags<T>(this IQuery<T> query)
 
-              => (query as IQueryCompose<T>)
-                    .AddQuery("PartitionKey")
-                    .LessThan("~")
-                    .AndRowKey()
-                    .LessThan("~");
+           => (query as IQueryCompose<T>)
+                 .AddQuery("PartitionKey")
+                 .LessThan("~")
+                 .AndRowKey()
+                 .LessThan("~");
 
         public static IQueryFilter<T> WherePartitionKey<T>(this IQuery<T> query)
             => (query as IQueryCompose<T>).AddQuery("PartitionKey");

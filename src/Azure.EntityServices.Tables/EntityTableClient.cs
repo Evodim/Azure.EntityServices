@@ -119,7 +119,7 @@ namespace Azure.EntityServices.Tables
         }
 
 
-        private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken , bool withTags = false)
+        private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
         {
            
             var query = new TagFilterExpression<T>();

@@ -53,20 +53,20 @@ namespace Azure.EntityServices.Samples
 
 
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
-            var entities = fakePersons.GenerateForever();
+            var entities = fakePersons.Generate(ENTITY_COUNT);
             Console.WriteLine("OK");
 
             var counters = new PerfCounters(nameof(EntityTableClient<PersonEntity>));
-            Console.Write($"Insert {ENTITY_COUNT} entities...");
+        
 
             using (var mesure = counters.Mesure($"Add many entities {ENTITY_COUNT} items"))
-            {
-                await entityClient.AddManyAsync(entities);
+            { 
+                await entityClient.AddManyAsync(entities); 
             }
 
             using (var mesure = counters.Mesure($"Add or replace many entities {ENTITY_COUNT} items"))
-            {
-                await entityClient.AddOrReplaceManyAsync(entities);
+            { 
+                await entityClient.AddOrReplaceManyAsync(entities); 
             } 
 
             using (var mesure = counters.Mesure($"Add one entity"))
@@ -94,7 +94,9 @@ namespace Azure.EntityServices.Samples
                        filter => filter 
                         .Where(p => p.LastName)
                         .Equal(onePerson.LastName)
-                        ))
+                        .AndPartitionKey()
+                        .Equal("tenant1"))
+                        )
                 {
                     count += _.Count();
                     Console.WriteLine($"{mesure.Name} {count} iterated ");
@@ -102,29 +104,34 @@ namespace Azure.EntityServices.Samples
                 }
                 Console.WriteLine();
             }
-       
+
             using (var mesure = counters.Mesure("Get with filter indexed"))
             {
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
                     filter => filter
                     .WhereTag(p => p.LastName)
-                    .Equal(onePerson.LastName)))
+                    .Equal(onePerson.LastName)
+                    .AndPartitionKey()
+                    .Equal("tenant1"))
+                    )
 
                 {
                     count += _.Count();
-                    Console.WriteLine($"{mesure.Name} { count} iterated");
+                    Console.WriteLine($"{mesure.Name} {count} iterated");
                     Console.CursorTop--;
                 }
                 Console.WriteLine();
-            } 
-          
+            }
+
             using (var mesure = counters.Mesure("Get By dynamic prop"))
             {
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
-                        filter => filter 
-                        .Where("_FirstLastName3Chars")
+                        filter => filter
+                        .WherePartitionKey()
+                        .Equal("tenant1")
+                        .And("_FirstLastName3Chars")
                         .Equal("arm")))
                 {
                     count += _.Count();
@@ -140,59 +147,16 @@ namespace Azure.EntityServices.Samples
                 await foreach (var _ in entityClient.GetAsync(
                     filter => filter
                     .WhereTag("_FirstLastName3Chars")
-                    .Equal("arm")))
+                    .Equal("arm")
+                    .AndPartitionKey()
+                    .Equal("tenant1")))
                 {
                     count += _.Count();
                     Console.WriteLine($"{mesure.Name} iterated");
                     Console.CursorTop--;
                 }
                 Console.WriteLine();
-            }
-
-            using (var mesure = counters.Mesure("Get paged last entities for one partition"))
-            {
-                var count = 0;
-                string token = null;
-                do
-                {
-                    var result = await entityClient
-                        .GetPagedAsync(
-                           filter => filter
-                           .WherePartitionKey()
-                           .Equal("tenant1"),
-                           maxPerPage: 1000,
-                           nextPageToken: token);
-
-                    count += result.Entities.Count(); 
-                    Console.WriteLine($"{mesure.Name} {count} iterated ");
-                    Console.CursorTop--;
-                    token = result.ContinuationToken;
-                }
-                while (!string.IsNullOrEmpty(token));
-                Console.WriteLine();
-            }
-
-            using (var mesure = counters.Mesure("Update all entities for one partition"))
-            {
-                var count = 0;
-                string token = null;
-                do
-                {
-                    var result = await entityClient
-                        .UpdateManyAsync(u => {
-                            count++;
-                            Console.WriteLine($"{mesure.Name} {count} updated ");
-                            Console.CursorTop--;
-                        },
-                           filter => filter
-                           .WherePartitionKey()
-                           .Equal("tenant1"));
-                           
-                }
-                while (!string.IsNullOrEmpty(token));
-                Console.WriteLine();
-            }
-
+            } 
             Console.WriteLine("====================================");
             counters.WriteToConsole();
         }

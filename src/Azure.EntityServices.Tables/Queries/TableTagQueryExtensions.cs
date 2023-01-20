@@ -9,12 +9,7 @@ namespace Azure.EntityServices.Tables
     /// Extend filter expression with partition key et row key filters abstraction
     /// </summary>
     public static class TableTagQueryExtensions
-    {
-
-        public static ITagQueryFilter<T> WhereTag<T>(this IQuery<T> query) =>
-
-            (query as ITagQueryCompose<T>).AddQuery("RowKey");
-
+    {  
         public static ITagQueryFilter<T> WhereTag<T>(this IQuery<T> query, string tagName)
         {
             (query as ITagQueryCompose<T>).TagName = tagName;
