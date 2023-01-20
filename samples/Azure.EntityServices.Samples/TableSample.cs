@@ -46,9 +46,7 @@ namespace Azure.EntityServices.Samples
                 .AddTag("_FirstLastName3Chars");
             });
             //===============================================================================================
-
-
-
+             
 
 
             var fakePersons = Fakers.CreateFakePerson(new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" });
@@ -94,9 +92,8 @@ namespace Azure.EntityServices.Samples
             {
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
-                       filter => filter
-                        .IgnoreTags()
-                        .And(p => p.LastName)
+                       filter => filter 
+                        .Where(p => p.LastName)
                         .Equal(onePerson.LastName)
                         ))
                 {
@@ -127,9 +124,8 @@ namespace Azure.EntityServices.Samples
             {
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
-                        filter => filter
-                        .IgnoreTags()
-                        .And("_FirstLastName3Chars")
+                        filter => filter 
+                        .Where("_FirstLastName3Chars")
                         .Equal("arm")))
                 {
                     count += _.Count();
