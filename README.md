@@ -42,7 +42,8 @@ Upcoming:
 ```csharp
             //==============Entity options and configuratin section====================================================
             //set here for your technical stuff: table name, connection, parallelization
-            var entityClient = EntityTableClient.Create<PersonEntity>(options =>
+            var entityClient = EntityTableClient.Create<PersonEntity>(
+             options =>
             {
                 options.ConnectionString = TestEnvironment.ConnectionString;
                 options.TableName = $"{nameof(PersonEntity)}";
