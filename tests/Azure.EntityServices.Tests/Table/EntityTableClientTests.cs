@@ -24,7 +24,7 @@ namespace Azure.EntityServices.Table.Tests
                 ConnectionString = TestEnvironment.ConnectionString,
                 CreateTableIfNotExists = true,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
-                EnableIndexedTagSupport = true
+                HandleTagMutation = true
             };
         }
 

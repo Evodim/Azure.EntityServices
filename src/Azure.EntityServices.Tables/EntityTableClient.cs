@@ -216,13 +216,8 @@ namespace Azure.EntityServices.Tables
             if (_config.PrimaryKeyResolver == null && _config.PrimaryKeyProp == null)
             {
                 throw new InvalidOperationException($"One of PrimaryKeyProp or PrimaryKeyResolver was required and must be set");
-            }
-
-            //If tag was added, you must enable indexed tag feature in config
-            if (!_options.EnableIndexedTagSupport && (_config.Tags.Any() || _config.ComputedTags.Any()))
-            {
-                throw new InvalidOperationException($"You must set EnableIndexedTagSupport option in order to use indexed Tags");
-            }
+            } 
+             
             var basePolicy = Policy.Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex));
 
             _retryPolicy = basePolicy
@@ -250,7 +245,7 @@ namespace Azure.EntityServices.Tables
                 props.AddRange(new List<string>() { "PartitionKey", "RowKey" });
                 var existingEntity = default(NullableResponse<TableEntity>);
                 var entityAction = transaction.Actions.First().ActionType;
-                if (entityAction != TableTransactionActionType.Add || _options.EnableIndexedTagSupport)
+                if (entityAction != TableTransactionActionType.Add && _options.HandleTagMutation)
                 {
                     existingEntity = await _client.GetEntityIfExistsAsync<TableEntity>(newEntity.PartitionKey, newEntity.RowKey, props);
                 }

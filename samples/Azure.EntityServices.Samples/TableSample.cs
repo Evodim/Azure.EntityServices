@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Samples
 {
     public static class TableSample
     {
-        private const int ENTITY_COUNT = 10000;
+        private const int ENTITY_COUNT = 1000;
 
         public static async Task Run()
         {
@@ -22,8 +22,7 @@ namespace Azure.EntityServices.Samples
             {
                 options.ConnectionString = TestEnvironment.ConnectionString;
                 options.TableName = $"{nameof(PersonEntity)}";
-                options.CreateTableIfNotExists = true;
-                options.EnableIndexedTagSupport = true;
+                options.CreateTableIfNotExists = true; 
             }
 
             //set here your entity behavior dynamic fields, tags, observers
@@ -54,7 +53,7 @@ namespace Azure.EntityServices.Samples
 
 
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
-            var entities = fakePersons.Generate(ENTITY_COUNT);
+            var entities = fakePersons.GenerateForever();
             Console.WriteLine("OK");
 
             var counters = new PerfCounters(nameof(EntityTableClient<PersonEntity>));
@@ -150,7 +149,7 @@ namespace Azure.EntityServices.Samples
                 Console.WriteLine();
             }
 
-            using (var mesure = counters.Mesure("Get paged all entities for one partition"))
+            using (var mesure = counters.Mesure("Get paged last entities for one partition"))
             {
                 var count = 0;
                 string token = null;
@@ -180,7 +179,7 @@ namespace Azure.EntityServices.Samples
                 do
                 {
                     var result = await entityClient
-                        .UpdateManyAsync(u => { 
+                        .UpdateManyAsync(u => {
                             count++;
                             Console.WriteLine($"{mesure.Name} {count} updated ");
                             Console.CursorTop--;
@@ -188,8 +187,7 @@ namespace Azure.EntityServices.Samples
                            filter => filter
                            .WherePartitionKey()
                            .Equal("tenant1"));
-
-                   
+                           
                 }
                 while (!string.IsNullOrEmpty(token));
                 Console.WriteLine();

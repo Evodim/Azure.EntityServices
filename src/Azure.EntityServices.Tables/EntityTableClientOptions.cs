@@ -12,7 +12,7 @@
             int maxItemToGroup = 1000,
             int maxItemInTransaction = 100,
             bool createTableIfNotExists = false,
-            bool enableIndexedTagSupport = false
+            bool handleTagMutation = false
             )
         {
             ConnectionString = connectionString;
@@ -21,7 +21,7 @@
             MaxOperationPerTransaction = maxItemInTransaction;
             MaxItemToGroup = maxItemToGroup;
             CreateTableIfNotExists = createTableIfNotExists;
-            EnableIndexedTagSupport = enableIndexedTagSupport;
+            HandleTagMutation = handleTagMutation;
         }
 
         public bool CreateTableIfNotExists { get; set; }
@@ -30,6 +30,6 @@
         public int MaxParallelTransactions { get; set; } = -1;
         public int MaxOperationPerTransaction { get; set; } = 100;
         public int MaxItemToGroup { get; set; } = 1000;
-        public bool EnableIndexedTagSupport { get; set; }
+        public bool HandleTagMutation { get; set; }
     }
 }
