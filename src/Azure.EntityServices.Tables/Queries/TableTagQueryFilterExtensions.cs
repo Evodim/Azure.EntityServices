@@ -38,8 +38,7 @@ namespace Azure.EntityServices.Tables
             return (query as IQueryFilter<T>)
                .GreaterThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}")
                .AndRowKey()
-               .LessThan($"~{query.TagName}-~")
-               ;
+               .LessThan($"~{query.TagName}-~");
         }
 
         public static IFilterOperator<T> LessThan<T, P>(this ITagQueryFilter<T> query, P value)

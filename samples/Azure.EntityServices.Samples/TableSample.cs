@@ -12,17 +12,17 @@ namespace Azure.EntityServices.Samples
 {
     public static class TableSample
     {
-        private const int ENTITY_COUNT = 1000;
+        private const int ENTITY_COUNT = 200;
 
         public static async Task Run()
         {
             //==============Entity options and configuratin section====================================================
-            //set here for your technical stuff: table name, connection, parallelization 
+            //set here for your technical stuff: table name, connection, parallelization
             var entityClient = EntityTableClient.Create<PersonEntity>(options =>
             {
                 options.ConnectionString = TestEnvironment.ConnectionString;
                 options.TableName = $"{nameof(PersonEntity)}";
-                options.CreateTableIfNotExists = true; 
+                options.CreateTableIfNotExists = true;
             }
 
             //set here your entity behavior dynamic fields, tags, observers
@@ -32,42 +32,45 @@ namespace Azure.EntityServices.Samples
                 .SetPartitionKey(p => p.TenantId)
                 .SetPrimaryKeyProp(p => p.PersonId)
                 .IgnoreProp(p => p.OtherAddress)
+
+                //add tag to generate indexed and sorted entities through rowKey
                 .AddTag(p => p.Created)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Distance)
                 .AddTag(p => p.Enabled)
 
+                //add computed props to store and compute dynamically additional fields of the entity
                 .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
                 .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
                 .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
                 .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
 
-                .AddTag("_FirstLastName3Chars");
+                //computed props could also be tagged 
+                .AddTag("_FirstLastName3Chars")
+
+                //add an entity oberver to track entity changes and apply any action (projection, logging, etc.)
+                .AddObserver("EntityLoggerObserver", new EntityLoggerObserver<PersonEntity>());
             });
             //===============================================================================================
-             
-
 
             var fakePersons = Fakers.CreateFakePerson(new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" });
             var onePerson = fakePersons.Generate(1).FirstOrDefault();
-
 
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
             var entities = fakePersons.Generate(ENTITY_COUNT);
             Console.WriteLine("OK");
 
             var counters = new PerfCounters(nameof(EntityTableClient<PersonEntity>));
-        
 
             using (var mesure = counters.Mesure($"Add many entities {ENTITY_COUNT} items"))
-            { 
-                await entityClient.AddManyAsync(entities); 
+            {
+                await entityClient.AddManyAsync(entities);
             }
 
             using (var mesure = counters.Mesure($"Add or replace many entities {ENTITY_COUNT} items"))
-            { 
-                await entityClient.AddOrReplaceManyAsync(entities); 
-            } 
+            {
+                await entityClient.AddOrReplaceManyAsync(entities);
+            }
 
             using (var mesure = counters.Mesure($"Add one entity"))
             {
@@ -77,9 +80,9 @@ namespace Azure.EntityServices.Samples
             using (var mesure = counters.Mesure($"Add or replace one entity"))
             {
                 await entityClient.AddOrReplaceAsync(onePerson);
-            } 
+            }
 
-            Console.WriteLine($"Querying entities ..."); 
+            Console.WriteLine($"Querying entities ...");
 
             using (var mesure = counters.Mesure("Get By Id"))
             {
@@ -91,7 +94,7 @@ namespace Azure.EntityServices.Samples
             {
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
-                       filter => filter 
+                       filter => filter
                         .Where(p => p.LastName)
                         .Equal(onePerson.LastName)
                         .AndPartitionKey()
@@ -152,11 +155,11 @@ namespace Azure.EntityServices.Samples
                     .Equal("tenant1")))
                 {
                     count += _.Count();
-                    Console.WriteLine($"{mesure.Name} iterated");
+                    Console.WriteLine($"{mesure.Name} {count} iterated");
                     Console.CursorTop--;
                 }
                 Console.WriteLine();
-            } 
+            }
             Console.WriteLine("====================================");
             counters.WriteToConsole();
         }

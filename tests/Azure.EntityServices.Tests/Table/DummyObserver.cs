@@ -20,12 +20,14 @@ namespace Azure.EntityServices.Table.Tests
         public Task OnCompletedAsync()
         {
             Console.WriteLine($"Upserted: {_upserted} Deleted: {_deleted}");
+            Console.CursorTop--;
             return Task.CompletedTask;
         }
 
-        public Task OnErrorAsync(Exception error)
+        public Task OnErrorAsync(Exception ex)
         {
-            throw error;
+            Console.WriteLine(ex.Message);
+            throw ex;
         }
 
         public Task OnNextAsync(IEnumerable<IEntityBinderContext<PersonEntity>> contextBatch)
