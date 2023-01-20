@@ -63,8 +63,8 @@ Upcoming:
 ```
 
 
-### Output of sample console projet based on a table with 3 billions of entities (standard storageV2)
+### Output of sample console projet based on a table with 1.5 million of entities and only 5 partitions (standard storageV2)
  
-![image](https://user-images.githubusercontent.com/4396827/169525865-b060cee9-9d0b-4cf6-870f-7076f0374d7c.png)
+![image](https://user-images.githubusercontent.com/4396827/213818315-bf0370d3-82f2-4908-b969-761bd0b3b9de.png)
 
 *You should use a real azure table storage connection with more than 100K entities to highlight performance improvment with indexed tags*
