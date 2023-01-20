@@ -40,25 +40,42 @@ Upcoming:
 ### EntityTableClient configuration example
 
 ```csharp
-  
- var entityClient = new EntityTableClient<PersonEntity>(options, config =>
+            //==============Entity options and configuratin section====================================================
+            //set here for your technical stuff: table name, connection, parallelization
+            var entityClient = EntityTableClient.Create<PersonEntity>(options =>
+            {
+                options.ConnectionString = TestEnvironment.ConnectionString;
+                options.TableName = $"{nameof(PersonEntity)}";
+                options.CreateTableIfNotExists = true;
+            }
+
+            //set here your entity behavior dynamic fields, tags, observers
+            , config =>
             {
                 config
-                .SetPartitionKey(p => p.TentantId)
-                .SetPrimaryProp(p => p.PersonId)
+                .SetPartitionKey(p => p.TenantId)
+                .SetPrimaryKeyProp(p => p.PersonId)
+                .IgnoreProp(p => p.OtherAddress)
+
+                //add tag to generate indexed and sorted entities through rowKey
                 .AddTag(p => p.Created)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Distance)
                 .AddTag(p => p.Enabled)
-                .AddTag(p => p.Latitude)
-                .AddTag(p => p.Longitude)
 
-                .AddComputedProp("_IsInFrance", p => p.Address.State == "France")
-                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress.Count > 1)
-                .AddComputedProp("_FirstLastName3Chars", p => p.LastName.ToLower()[..3])
+                //add computed props to store and compute dynamically additional fields of the entity
+                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
+                .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
+                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
 
-                .AddTag("_FirstLastName3Chars");
+                //computed props could also be tagged 
+                .AddTag("_FirstLastName3Chars")
+
+                //add an entity oberver to track entity changes and apply any action (projection, logging, etc.)
+                .AddObserver("EntityLoggerObserver", new EntityLoggerObserver<PersonEntity>());
             });
+            //===============================================================================================
 
 ```
 
