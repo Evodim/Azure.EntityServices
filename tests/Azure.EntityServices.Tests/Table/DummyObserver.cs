@@ -18,9 +18,7 @@ namespace Azure.EntityServices.Table.Tests
         public ConcurrentDictionary<string, PersonEntity> Persons = new();
 
         public Task OnCompletedAsync()
-        {
-            Console.WriteLine($"Upserted: {_upserted} Deleted: {_deleted}");
-            Console.CursorTop--;
+        { 
             return Task.CompletedTask;
         }
 
