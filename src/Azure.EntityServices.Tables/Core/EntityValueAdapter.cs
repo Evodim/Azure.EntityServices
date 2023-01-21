@@ -156,8 +156,7 @@ namespace Azure.EntityServices.Tables.Core
                         }
 
                         return;
-                    }
-                  
+                    }                  
                     if (propertyType == typeof(double))
                     {
                         if (double.TryParse(strPropValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var value))
@@ -217,7 +216,7 @@ namespace Azure.EntityServices.Tables.Core
                         entityProp.SetValue(entity, JsonSerializer.Deserialize(strPropValue, propertyType), null);
                         return;
                     }
-                    entityProp.SetValue(entity, strPropValue, null);
+                    entityProp.SetValue(entity, JsonSerializer.Deserialize(strPropValue, propertyType), null);
                     return;
                 }
 

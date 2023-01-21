@@ -10,7 +10,7 @@ env:
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
   MinVerMinimumMajorMinor: '1.0'
   MinVerTagPrefix: 'v'
-  MinVerDefaultPreReleasePhase: 'pr-${{ github.event.pull_request.head.ref }}-${{ github.run_number }}'
+  MinVerDefaultPreReleasePhase: 'alpha-${{ github.run_number }}'
 
 jobs: 
   az-artifacts-build-and-deploy-private: 

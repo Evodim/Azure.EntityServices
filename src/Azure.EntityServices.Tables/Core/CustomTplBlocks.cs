@@ -16,10 +16,26 @@ namespace Azure.EntityServices.Tables.Core
         /// <param name="maxItemInTransaction"></param>
         /// <param name="maxParallelTasks"></param>
         /// <returns></returns>
-        public static IPipeline CreatePipeline(Func<EntityTransactionGroup[], Task> asyncProcessor, int maxItemInBatch, int maxItemInTransaction, int maxParallelTasks)
+        public static IEntityTransactionGroupPipeline CreatePipeline(
+            Func<EntityTransactionGroup, Task<EntityTransactionGroup>> asyncPreProcessor,
+            Func<EntityTransactionGroup[],
+            Task> asyncProcessor,
+            int maxItemInBatch,
+            int maxItemInTransaction,
+            int maxParallelTasks)
         {
+            var preProcessorBlock = new TransformBlock<EntityTransactionGroup, EntityTransactionGroup>(transactions =>
+            {
+                return asyncPreProcessor(transactions);
+
+            },
+              new ExecutionDataflowBlockOptions()
+              {
+                  BoundedCapacity = maxParallelTasks,
+                  MaxDegreeOfParallelism = maxParallelTasks
+              });
             //Create en configure transaction entity group flow pipepline
-            var pipeline = new BatchBlock<EntityTransactionGroup>(maxItemInBatch, new GroupingDataflowBlockOptions()
+            var batchingBlock = new BatchBlock<EntityTransactionGroup>(maxItemInBatch, new GroupingDataflowBlockOptions()
             {
                 Greedy = true,
                 BoundedCapacity = maxItemInBatch
@@ -36,7 +52,7 @@ namespace Azure.EntityServices.Tables.Core
 
             var transactionGroupBlock = CreatePartitionedBlock(maxItemInTransaction, maxParallelTasks);
 
-            var target = new ActionBlock<EntityTransactionGroup[]>(async (p) =>
+            var processorBlock = new ActionBlock<EntityTransactionGroup[]>(async (p) =>
             {
                 try
                 {
@@ -44,12 +60,12 @@ namespace Azure.EntityServices.Tables.Core
                 }
                 catch (Exception ex)
                 {
-                    if (pipeline.Completion.IsCompleted)
+                    if (preProcessorBlock.Completion.IsCompleted)
                     {
                         throw;
                     }
                     //to prevent pipeline to be blocked, the pipeline must be completed manually with a faulted state
-                     (pipeline as IDataflowBlock).Fault(ex);
+                     (preProcessorBlock as IDataflowBlock)?.Fault(ex);
                 }
             },
                 new ExecutionDataflowBlockOptions()
@@ -59,11 +75,12 @@ namespace Azure.EntityServices.Tables.Core
                 });
 
             //link blocks together
-            pipeline.LinkTo(groupPerPartitionsBlock, new DataflowLinkOptions() { PropagateCompletion = true });
+            preProcessorBlock.LinkTo(batchingBlock, new DataflowLinkOptions() { PropagateCompletion = true });
+            batchingBlock.LinkTo(groupPerPartitionsBlock, new DataflowLinkOptions() { PropagateCompletion = true });
             groupPerPartitionsBlock.LinkTo(transactionGroupBlock, new DataflowLinkOptions() { PropagateCompletion = true });
-            transactionGroupBlock.LinkTo(target, new DataflowLinkOptions() { PropagateCompletion = true });
+            transactionGroupBlock.LinkTo(processorBlock, new DataflowLinkOptions() { PropagateCompletion = true });
 
-            return new Pipeline(pipeline, target);
+            return new Pipeline(preProcessorBlock, processorBlock);
         }
 
         /// <summary>

@@ -20,28 +20,23 @@ namespace Azure.EntityServices.Tables
     {
         public string TagName { get; set; }
 
-       
-
         public TagFilterExpression()
         {
-          
-           
         }
-        
+
         public TagFilterExpression(string tagName)
         {
             TagName = tagName;
-          
         }
 
-        public ITagQueryFilter<T, P> AddTagQuery<P>(Expression<Func<T, P>> property)
+        public new ITagQueryFilter<T, P> AddQuery<P>(Expression<Func<T, P>> property)
         {
-            return AddQuery(property) as ITagQueryFilter<T, P>;
+            return base.AddQuery(property) as ITagQueryFilter<T, P>;
         }
 
-        public ITagQueryFilter<T> AddTagQuery(string property)
+        public new ITagQueryFilter<T> AddQuery(string property)
         {
-            return AddQuery(property) as ITagQueryFilter<T>;
+            return base.AddQuery(property) as ITagQueryFilter<T>;
         }
 
         public override IFilterExpression<T> Factory()

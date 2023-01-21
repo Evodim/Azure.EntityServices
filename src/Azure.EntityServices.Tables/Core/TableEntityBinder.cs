@@ -2,6 +2,7 @@
 using Azure.EntityServices.Tables.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 
@@ -13,84 +14,106 @@ namespace Azure.EntityServices.Tables.Core
     /// <typeparam name="T"></typeparam>
     public sealed class TableEntityBinder<T> : IEntityBinder<T> where T : class, new()
     {
-        public string PartitionKey => _tableEntity.PartitionKey;
-        public string RowKey => _tableEntity.RowKey;
+        public string PartitionKey => TableEntity.PartitionKey;
+        public string RowKey => TableEntity.RowKey;
 
-        private readonly TableEntity _tableEntity;
+        public TableEntity TableEntity { get; }
 
-        public T Entity { get; set; }
+        public T Entity { get; private set; }
         public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
         public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>();
 
-        public static readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties();
-        private readonly IEnumerable<PropertyInfo> _filteredEntityProperties = EntityProperties.ToList();
+        public static readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties(
+            BindingFlags.Public |
+            BindingFlags.Instance |
+            BindingFlags.SetProperty);
 
-        private List<PropertyInfo> FilterEntityProperties(IEnumerable<string> propsToIgnore) => EntityProperties.Where(p => !propsToIgnore.Contains(p.Name)).ToList();
+
+        private readonly IEnumerable<PropertyInfo> _filteredEntityProperties = EntityProperties.ToList();
+        private readonly EntityTagBuilder<T> _entityTagBuilder;
+        private readonly IEnumerable<string> _propsToIgnore= Enumerable.Empty<string>();
+
+        private List<PropertyInfo> FilterEntityProperties() => EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
 
         public TableEntityBinder(T entity)
         {
             Entity = entity;
-            _tableEntity = new TableEntity();
+            TableEntity = new TableEntity();
         }
 
         public TableEntityBinder(T entity, IEnumerable<string> propsToIgnore)
         {
             Entity = entity;
-            _tableEntity = new TableEntity();
-            _filteredEntityProperties = FilterEntityProperties(propsToIgnore);
+            TableEntity = new TableEntity();
+            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
+            _filteredEntityProperties = FilterEntityProperties();
+            _propsToIgnore = propsToIgnore.ToList();
         }
 
         public TableEntityBinder(TableEntity tableEntity)
         {
-            _tableEntity = tableEntity;
+            TableEntity = tableEntity;
         }
 
-        public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore)
+        public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore, EntityTagBuilder<T> entityTagBuilder)
         {
-            _tableEntity = tableEntity;
-            _filteredEntityProperties = FilterEntityProperties(propsToIgnore);
+            TableEntity = tableEntity; 
+            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
+            _filteredEntityProperties = FilterEntityProperties();
+            _entityTagBuilder = entityTagBuilder;
         }
 
-        public TableEntityBinder(string partitionKey, string rowKey)
-        {
-            _tableEntity = new TableEntity(partitionKey, rowKey);
-        }
 
-        public TableEntityBinder(T entity, string partitionKey, string rowKey)
+        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore=null, EntityTagBuilder<T> entityTagBuilder=null)
         {
             Entity = entity;
-            _tableEntity = new TableEntity(partitionKey, rowKey);
-        }
-
-        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore)
-        {
-            Entity = entity;
-            _tableEntity = new TableEntity(partitionKey, rowKey);
-            _filteredEntityProperties = FilterEntityProperties(propsToIgnore);
+            TableEntity = new TableEntity(partitionKey, rowKey);
+            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>() ;
+            _filteredEntityProperties =  FilterEntityProperties();
+            _entityTagBuilder = entityTagBuilder;
         }
 
         public TableEntity Bind()
         {
+
             foreach (var metadata in Metadata)
             {
-                _tableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value));
+                TableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value));
             }
-            foreach (var property in _filteredEntityProperties)
+            if (Entity is TableEntity tbe)
             {
-                _tableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
+                foreach (var property in tbe.Where(e=> !_propsToIgnore.Contains(e.Key)))
+                {
+                    if (property.Key == "PartitionKey" ||
+                        property.Key == "RowKey" ||
+                        property.Key == "Etag" ||
+                        property.Key == "TimeStamp")
+                    {
+                        continue;
+                    }
+                    TableEntity.AddOrUpdate(property.Key,property.Value);
+                }
+            }
+            else
+            {
+                foreach (var property in _filteredEntityProperties)
+                {
+
+                    TableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
+                }
             }
             foreach (var property in Properties)
             {
-                _tableEntity.AddOrUpdate(property.Key, EntityValueAdapter.WriteValue(property.Value));
+              TableEntity.AddOrUpdate(property.Key, EntityValueAdapter.WriteValue(property.Value));
             }
-            return _tableEntity;
+            return TableEntity;
         }
 
         public T UnBind()
         {
             Entity = new T();
             Metadata.Clear();
-            foreach (var tableProp in _tableEntity)
+            foreach (var tableProp in TableEntity)
             {
                 //ignore entity properties
                 if (EntityProperties.Any(p => p.Name == tableProp.Key)) continue;
@@ -101,9 +124,19 @@ namespace Azure.EntityServices.Tables.Core
 
                 Metadata.Add(tableProp.Key, tableProp.Value);
             }
+            if (Entity is TableEntity tbe)
+            {
+                foreach (var property in TableEntity.Keys)
+                {
+
+                    tbe.AddOrUpdate(property, TableEntity[property]);
+                }
+
+            }
+            else 
             foreach (var property in _filteredEntityProperties)
             {
-                if (_tableEntity.TryGetValue(property.Name, out var tablePropValue))
+                if (TableEntity.TryGetValue(property.Name, out var tablePropValue))
                 {
                     EntityValueAdapter.ReadValue(Entity, property, tablePropValue);
                 }
@@ -111,7 +144,7 @@ namespace Azure.EntityServices.Tables.Core
 
             return Entity;
         }
-
+         
         public void BindDynamicProps(IDictionary<string, Func<T, object>> props, bool toDelete = false)
         {
             foreach (var prop in props)
@@ -122,6 +155,19 @@ namespace Azure.EntityServices.Tables.Core
                     continue;
                 }
                 Metadata.AddOrUpdate(prop.Key, prop.Value.Invoke(Entity));
+            }
+        }
+
+        public void BindTags(Dictionary<string, PropertyInfo> tags, IList<string> computedTags)
+        { 
+
+            foreach (var propInfo in tags)
+            {
+                Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(propInfo.Key), _entityTagBuilder.CreateTagRowKey(propInfo.Value, Entity));
+            }
+            foreach (var tagPrefix in computedTags)
+            {
+               Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(tagPrefix), _entityTagBuilder.CreateTagRowKey(tagPrefix, Metadata[$"{tagPrefix}"], Entity));
             }
         }
     }

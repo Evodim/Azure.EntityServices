@@ -8,6 +8,7 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClientConfig<T>
     { 
         public Func<T, string> PartitionKeyResolver { get; set; }
+        public Func<T, string> PrimaryKeyResolver { get; set; }
         public IDictionary<string, Func<T, object>> DynamicProps { get; } = new Dictionary<string, Func<T, object>>();
         public IList<string> ComputedTags { get; } = new List<string>();
         public Dictionary<string, PropertyInfo> Tags { get; } = new Dictionary<string, PropertyInfo>();

@@ -4,50 +4,66 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Table.Tests
 {
     public class DummyObserver : IEntityObserver<PersonEntity>
     {
-        private long _created = 0;
+        private long _upserted = 0;
         private long _deleted = 0;
-        public long CreatedCount => _created;
+        public long CreatedCount => _upserted;
         public long DeletedCount => _deleted;
 
         public ConcurrentDictionary<string, PersonEntity> Persons = new();
 
-        public void OnCompleted()
+        public Task OnCompletedAsync()
         {
-            throw new NotImplementedException();
+            Console.WriteLine($"Upserted: {_upserted} Deleted: {_deleted}");
+            Console.CursorTop--;
+            return Task.CompletedTask;
         }
 
-        public void OnError(Exception error)
+        public Task OnErrorAsync(Exception ex)
         {
-            throw new NotSupportedException();
+            Console.WriteLine(ex.Message);
+            throw ex;
         }
 
-        public void OnNext(IEntityOperationContext<PersonEntity> operation)
+        public Task OnNextAsync(IEnumerable<IEntityBinderContext<PersonEntity>> contextBatch)
         {
-            switch(operation.TableOperation)
-
+           
+            foreach (var context in contextBatch)
             {
-                case EntityOperation.Delete:
-                    Persons.Remove(operation.Partition + operation.Entity.PersonId, out var _);
-                    Interlocked.Increment(ref _deleted);
-                    break;
-                case EntityOperation.Add:
-                case EntityOperation.AddOrMerge:
-                case EntityOperation.AddOrReplace:
-                    Persons.TryAdd(operation.Partition + operation.Entity.PersonId, operation.Entity);
-                    Interlocked.Increment(ref _created);
-                    break;
-                case EntityOperation.Merge:
-                case EntityOperation.Replace:
-                    
-                default:break;
+                //ignore indexed tags changes 
+                if (context.EntityBinder.RowKey.StartsWith("~") ||
+                    context.EntityBinder.PartitionKey.StartsWith("~"))
+                {
+                    continue;
+                }    
+                var entity = context.EntityBinder.UnBind();
 
+                switch (context.EntityOperation)
+
+                {
+                    case EntityOperation.Delete:
+                        Persons.Remove(context.EntityBinder.PartitionKey + entity.PersonId, out var _);
+                        Interlocked.Increment(ref _deleted);
+                        break;
+                    case EntityOperation.Add:
+                    case EntityOperation.AddOrMerge:
+                    case EntityOperation.AddOrReplace:
+                        Persons.TryAdd(context.EntityBinder.PartitionKey + entity.PersonId, entity);
+                        Interlocked.Increment(ref _upserted);
+                        break;
+                    case EntityOperation.Merge:
+                    case EntityOperation.Replace:
+
+                    default: break;
+                }
             }
-       
+
+            return Task.CompletedTask;
         }
     }
 }

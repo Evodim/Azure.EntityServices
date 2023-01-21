@@ -12,7 +12,7 @@
 		<Company>Evodim</Company>
 		<Product>Azure.EntityServices</Product>
 		<Authors>Evodim</Authors>
-		<Copyright>Evodim Solutions - 2022</Copyright>
+		<Copyright>Evodim Solutions - 2023</Copyright>
 		<PackageId>AzureEntityServices.Queries</PackageId>
 		<PackageLicenseExpression></PackageLicenseExpression>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

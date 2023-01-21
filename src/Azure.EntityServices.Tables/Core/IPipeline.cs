@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core
 {
-    internal interface IPipeline
+    internal interface IEntityTransactionGroupPipeline
     {
         Task CompleteAsync();
 
