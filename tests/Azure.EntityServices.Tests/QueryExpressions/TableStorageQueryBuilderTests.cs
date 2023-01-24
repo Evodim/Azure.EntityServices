@@ -1,5 +1,5 @@
 ﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Table.Common.Models;
+using Common.Samples.Models;
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Core;
 using FluentAssertions;

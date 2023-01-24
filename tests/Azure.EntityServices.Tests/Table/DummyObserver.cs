@@ -1,10 +1,10 @@
-﻿using Azure.EntityServices.Tables;
-using Azure.EntityServices.Table.Common.Models;
+﻿using Azure.EntityServices.Tables; 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
+using System.Threading.Tasks; 
+using Common.Samples.Models;
 
 namespace Azure.EntityServices.Table.Tests
 {

@@ -1,4 +1,4 @@
-﻿namespace Azure.EntityServices.Table.Common.Models
+﻿namespace Common.Samples.Models
 {
     public class Address
     {

@@ -1,9 +1,9 @@
-﻿using Azure.EntityServices.Samples.Diagnostics;
+﻿using Common.Samples.Diagnostics;
 using System;
 using System.Linq;
  
 
-namespace Azure.EntityServices.Samples
+namespace Common.Samples.Tools
 {
     public static class PerfCountersExtensions
     {

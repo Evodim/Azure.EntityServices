@@ -1,12 +1,13 @@
 ﻿using Azure.EntityServices.Blobs;
-using Azure.EntityServices.Samples.Diagnostics;
 using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Table.Common.Models;
 using Azure.EntityServices.Tests.Common;
+using Common.Samples.Diagnostics;
+using Common.Samples.Models;
+using Common.Samples.Tools;
 using System;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Samples
+namespace TableClient.Performance.Sample
 {
     public static class BlobSample
     {

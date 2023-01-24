@@ -1,8 +1,8 @@
-﻿using Azure.EntityServices.Samples.Diagnostics;
+﻿using Common.Samples.Diagnostics;
 using System;
 using System.Threading;
 
-namespace Azure.EntityServices.SamplesDiagnostics
+namespace TableClient.Performance.SampleDiagnostics
 {
  
     
@@ -56,13 +56,13 @@ namespace Azure.EntityServices.SamplesDiagnostics
             return Interlocked.Increment(ref _outCount);
         }
 
-        public TimeSpan TotalDuration => new(_outTicks - _inTicks);
+        public TimeSpan TotalDuration => new TimeSpan(_outTicks - _inTicks);
 
-        public TimeSpan AverageDuration => new(_averageDuration);
+        public TimeSpan AverageDuration => new TimeSpan(_averageDuration);
 
-        public TimeSpan MinDuration => new(_minDuration);
+        public TimeSpan MinDuration => new TimeSpan(_minDuration);
 
-        public TimeSpan MaxDuration => new(_maxDuration);
+        public TimeSpan MaxDuration => new TimeSpan(_maxDuration);
 
         public string Context => _topic;
 

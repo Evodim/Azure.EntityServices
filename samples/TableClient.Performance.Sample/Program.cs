@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Samples
+namespace TableClient.Performance.Sample
 {
     public static class Program
     {

@@ -1,5 +1,6 @@
-﻿using Azure.EntityServices.Table.Common.Models;
+﻿ 
 using Bogus;
+using Common.Samples.Models;
 using System;
 using System.Linq;
 using System.Net;

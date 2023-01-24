@@ -1,12 +1,13 @@
-﻿using Azure.EntityServices.SamplesDiagnostics;
+﻿using TableClient.Performance.SampleDiagnostics;
 using System.Collections.Concurrent;
+ 
 
-namespace Azure.EntityServices.Samples.Diagnostics
+namespace Common.Samples.Diagnostics
 {
     public class PerfCounters : IPerfCounters
     {
         private readonly string _context;
-        private readonly ConcurrentDictionary<string, IPerfCounter> _blockCounters = new();
+        private readonly ConcurrentDictionary<string, IPerfCounter> _blockCounters = new ConcurrentDictionary<string, IPerfCounter>();
 
         public PerfCounters(string context)
         {

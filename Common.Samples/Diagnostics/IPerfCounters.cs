@@ -1,4 +1,4 @@
-﻿namespace Azure.EntityServices.Samples.Diagnostics
+﻿namespace Common.Samples.Diagnostics
 {
     using System.Collections.Concurrent;
 

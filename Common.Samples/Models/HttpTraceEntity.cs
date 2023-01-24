@@ -1,8 +1,7 @@
 ﻿using System;
 
-namespace Azure.EntityServices.Table.Common.Models
+namespace Common.Samples.Models
 {
-     
     public class HttpTraceEntity
     {
         public OperationType OperationType { get; set; }
@@ -15,6 +14,5 @@ namespace Azure.EntityServices.Table.Common.Models
         public BinaryData Body { get; set; }
         public string BodyString { get; set; }
         public object BodyObject { get; set; }
-       
     }
 }

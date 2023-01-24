@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Azure.EntityServices.Samples.Diagnostics
+namespace Common.Samples.Diagnostics
 {
     public interface IPerfCounter
     {

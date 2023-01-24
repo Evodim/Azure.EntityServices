@@ -1,6 +1,6 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Table.Common.Models;
+using Common.Samples.Models;
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tests.Common;

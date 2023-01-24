@@ -1,13 +1,12 @@
-﻿using Azure.EntityServices.Table.Common.Models;
-using Azure.EntityServices.Tables;
+﻿using Azure.EntityServices.Tables;
 using System;
+using System.Threading.Tasks;
+using Common.Samples.Models;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
-using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Samples.Diagnostics
+namespace TableClient.Performance.Sample
 {
     public class EntityLoggerObserver<T> : IEntityObserver<T>
         where T : class
@@ -20,7 +19,7 @@ namespace Azure.EntityServices.Samples.Diagnostics
         {
 
         }
-        public ConcurrentDictionary<string, PersonEntity> Persons = new();
+        public ConcurrentDictionary<string, PersonEntity> Persons = new ConcurrentDictionary<string, PersonEntity>();
 
         protected virtual void LogToConsole()
         {
@@ -79,7 +78,7 @@ namespace Azure.EntityServices.Samples.Diagnostics
                     default: break;
                 }
             }
-            if (_added % 1000 ==0 ||
+            if (_added % 1000 == 0 ||
                 _deleted % 1000 == 0 ||
                 _upserted % 1000 == 0)
             {

@@ -1,6 +1,7 @@
-﻿using System;
+﻿using Common.Samples.Diagnostics;
+using System;
 
-namespace Azure.EntityServices.Samples.Diagnostics
+namespace Common.Samples.Diagnostics
 {
     public class PerfMesure : IDisposable
     {

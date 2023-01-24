@@ -1,14 +1,15 @@
 ﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Samples.Diagnostics;
-using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Table.Common.Models;
+using Azure.EntityServices.Table.Common.Fakes; 
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tests.Common;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Common.Samples.Models;
+using Common.Samples.Diagnostics;
+using Common.Samples.Tools;
 
-namespace Azure.EntityServices.Samples
+namespace TableClient.Performance.Sample
 {
     public static class TableSample
     {
