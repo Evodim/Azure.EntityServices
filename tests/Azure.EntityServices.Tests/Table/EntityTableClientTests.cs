@@ -1,9 +1,9 @@
 ﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Table.Common.Fakes;
-using Common.Samples.Models;
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Extensions;
-using Azure.EntityServices.Tests.Common;
+using Common.Samples;
+using Common.Samples.Models;
+using Common.Samples.Tools.Fakes;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -415,7 +415,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter 
+                filter => filter
                 .WherePartitionKey()
                 .Equal(persons.First().TenantId)))
                 {
@@ -530,7 +530,7 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.AddManyAsync(persons);
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter 
+                filter => filter
                 .WherePartitionKey()
                 .Equal(persons.First().TenantId)
                 .And(p => p.Altitude)

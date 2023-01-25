@@ -1,15 +1,15 @@
-﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Table.Common.Fakes;
+﻿using Azure.EntityServices.Queries; 
 using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tests.Common;
+using Common.Samples;
 using Common.Samples.Models;
+using Common.Samples.Tools.Fakes;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace TableClient.Basic.Sample
 {
-    public static class TableSample
+    public static class BasicSample
     {
         private const int ENTITY_COUNT = 200;
 

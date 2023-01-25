@@ -1,9 +1,9 @@
 ﻿using Azure.EntityServices.Blobs;
-using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Tests.Common;
+using Common.Samples;
 using Common.Samples.Diagnostics;
 using Common.Samples.Models;
 using Common.Samples.Tools;
+using Common.Samples.Tools.Fakes;
 using System;
 using System.Threading.Tasks;
 

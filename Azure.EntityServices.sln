@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlobClient.Sample", "sample
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.Basic.Sample", "samples\TableClient.Basic.Sample\TableClient.Basic.Sample.csproj", "{5CEB65EF-0D90-493C-9A81-270B3914F3C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TableClient.Legacy.Sample", "TableClient.Legacy.Sample\TableClient.Legacy.Sample.csproj", "{9DF46286-6193-4A5D-A127-866C76252419}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,10 @@ Global
 		{5CEB65EF-0D90-493C-9A81-270B3914F3C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CEB65EF-0D90-493C-9A81-270B3914F3C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CEB65EF-0D90-493C-9A81-270B3914F3C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DF46286-6193-4A5D-A127-866C76252419}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DF46286-6193-4A5D-A127-866C76252419}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DF46286-6193-4A5D-A127-866C76252419}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DF46286-6193-4A5D-A127-866C76252419}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -89,6 +95,7 @@ Global
 		{ADAFA655-104A-4375-BA08-3A8007860B5A} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 		{61ED3E91-9ED3-4D09-A51C-83ABA1F83D75} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 		{5CEB65EF-0D90-493C-9A81-270B3914F3C4} = {12E4FDA9-194D-4758-BB02-1619C2956738}
+		{9DF46286-6193-4A5D-A127-866C76252419} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {92B5DB88-8C8E-4300-8891-C52633DDF5D9}

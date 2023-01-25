@@ -1,6 +1,6 @@
-﻿using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Tables;
+﻿using Azure.EntityServices.Tables;
 using Common.Samples.Models;
+using Common.Samples.Tools.Fakes;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;

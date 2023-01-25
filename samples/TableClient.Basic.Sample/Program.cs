@@ -6,7 +6,7 @@ namespace TableClient.Basic.Sample
     {
         private static async Task Main()
         {
-            await TableSample.Run();
+            await BasicSample.Run();
             System.Console.ReadLine();
         }
     }

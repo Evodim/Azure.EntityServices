@@ -6,7 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Table.Common.Fakes
+namespace Common.Samples.Tools.Fakes
 {
     public static class Fakers
     {

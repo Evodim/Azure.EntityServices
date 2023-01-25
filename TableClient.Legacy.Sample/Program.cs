@@ -1,19 +1,20 @@
-﻿using Azure.EntityServices.Tables;
+﻿using System; 
+using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Extensions;
 using Common.Samples;
 using Common.Samples.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 
-namespace TableClient.DependencyInjection.Sample
+
+namespace TableClient.Legacy.Sample
 {
     public static class Program
     {
         public static void Main()
         {
-          
-          CreateHostBuilder(null).Build().Run();
+
+            CreateHostBuilder(null).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -27,7 +28,7 @@ namespace TableClient.DependencyInjection.Sample
              TestEnvironment.ConnectionString,
              $"{nameof(PersonEntity)}",
              createTableIfNotExists: true);
-             
+
 
                var projectionClientOptions = new EntityTableClientOptions(
                 tableClientOptions.ConnectionString,
@@ -48,11 +49,10 @@ namespace TableClient.DependencyInjection.Sample
 
                       .AddTag(p => p.Created)
                       .AddTag(p => p.LastName)
-                      .AddTag("_FirstLastName3Chars")
-                      .AddObserver("LastNameProjection", new SampleProjectionObserver(projectionClientOptions));
-               });
+                      .AddTag("_FirstLastName3Chars");
+                });
 
-               services.AddHostedService<EntityTableClientSampleConsole>();
+               services.AddHostedService<LegacySample>();
            });
     }
 }

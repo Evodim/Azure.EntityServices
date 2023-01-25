@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Azure.EntityServices.Tests.Common
+namespace Common.Samples
 {
     public static class TestEnvironment
     {

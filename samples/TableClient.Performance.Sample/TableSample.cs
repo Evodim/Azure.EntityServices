@@ -1,13 +1,13 @@
-﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Table.Common.Fakes; 
-using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tests.Common;
+﻿using Azure.EntityServices.Queries; 
+using Azure.EntityServices.Tables; 
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Samples.Models;
 using Common.Samples.Diagnostics;
 using Common.Samples.Tools;
+using Common.Samples;
+using Common.Samples.Tools.Fakes;
 
 namespace TableClient.Performance.Sample
 {

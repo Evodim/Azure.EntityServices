@@ -1,9 +1,9 @@
 ﻿using Azure.Data.Tables;
-using Azure.EntityServices.Table.Common.Fakes;
-using Common.Samples.Models;
 using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Extensions;
-using Azure.EntityServices.Tests.Common;
+using Common.Samples;
+using Common.Samples.Models;
+using Common.Samples.Tools.Fakes;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -239,9 +239,9 @@ namespace Azure.EntityServices.Table.Tests
                 replaced.Should().ContainKey("_distance_less_than_500m");
                 (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();
             }
-            catch 
-            { 
-             throw;
+            catch
+            {
+                throw;
             }
             finally
             {
