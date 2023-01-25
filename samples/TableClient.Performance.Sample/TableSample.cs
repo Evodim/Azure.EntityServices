@@ -31,7 +31,7 @@ namespace TableClient.Performance.Sample
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .IgnoreProp(p => p.OtherAddress)
 
                 //add tag to generate indexed and sorted entities through rowKey

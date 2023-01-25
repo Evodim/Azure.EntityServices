@@ -34,7 +34,7 @@ namespace TableClient.DependencyInjection.Sample
                     config
                         .AddComputedProp("PersonId", p => $"{p.LastName}~{p.PersonId}")
                         .SetPartitionKey(e => $"~LastName-{e.LastName[..2]}")
-                        .SetPrimaryKey(p => $"{p.LastName}~{p.PersonId}");
+                        .SetRowKey(p => $"{p.LastName}~{p.PersonId}");
                 });
 
             _clientFactory = () =>
@@ -45,7 +45,7 @@ namespace TableClient.DependencyInjection.Sample
                     config
                      .AddComputedProp("PersonId", p => $"{p.LastName}~{p.PersonId}")
                      .SetPartitionKey(e => $"~LastName-{e.LastName[..2]}")
-                     .SetPrimaryKey(p => $"{p.LastName}~{p.PersonId}");
+                     .SetRowKey(p => $"{p.LastName}~{p.PersonId}");
                 });
         }
 

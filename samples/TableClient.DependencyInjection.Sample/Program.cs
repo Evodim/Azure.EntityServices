@@ -37,7 +37,7 @@ namespace TableClient.DependencyInjection.Sample
                {
                    config
                       .SetPartitionKey(p => p.TenantId)
-                      .SetPrimaryKeyProp(p => p.PersonId)
+                      .SetRowKeyProp(p => p.PersonId)
 
                       .IgnoreProp(p => p.OtherAddress)
 

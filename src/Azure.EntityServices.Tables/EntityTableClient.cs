@@ -213,7 +213,7 @@ namespace Azure.EntityServices.Tables
             _tableService ??= new TableServiceClient(options.ConnectionString) { };
             _entityTagBuilder = new EntityTagBuilder<T>(ResolvePrimaryKey);
             //PrimaryKey required
-            if (_config.PrimaryKeyResolver == null && _config.PrimaryKeyProp == null)
+            if (_config.RowKeyResolver == null && _config.RowKeyProp == null)
             {
                 throw new InvalidOperationException($"One of PrimaryKeyProp or PrimaryKeyResolver was required and must be set");
             } 
@@ -480,7 +480,7 @@ namespace Azure.EntityServices.Tables
 
         public string ResolvePrimaryKey(T entity)
         {
-            return TableQueryHelper.ToPrimaryRowKey(_config.PrimaryKeyResolver?.Invoke(entity) ?? _config.PrimaryKeyProp.GetValue(entity));
+            return TableQueryHelper.ToPrimaryRowKey(_config.RowKeyResolver?.Invoke(entity) ?? _config.RowKeyProp.GetValue(entity));
         }
 
         public string ResolvePrimaryKey(object value)

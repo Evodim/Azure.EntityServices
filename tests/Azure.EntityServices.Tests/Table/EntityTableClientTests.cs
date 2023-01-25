@@ -38,7 +38,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -58,7 +58,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -95,7 +95,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -116,7 +116,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .IgnoreProp(p => p.Genre)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
@@ -138,7 +138,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -176,7 +176,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -212,7 +212,7 @@ namespace Azure.EntityServices.Table.Tests
             var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
             });
             try
             {
@@ -234,7 +234,7 @@ namespace Azure.EntityServices.Table.Tests
             var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddTag(p => p.LastName);
             });
             try
@@ -265,7 +265,7 @@ namespace Azure.EntityServices.Table.Tests
             var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
             });
             try
@@ -289,7 +289,7 @@ namespace Azure.EntityServices.Table.Tests
             var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
                 c.AddTag("_FirstLastName3Chars");
             });
@@ -323,7 +323,7 @@ namespace Azure.EntityServices.Table.Tests
             var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddTag("_FirstLastName3Chars");
                 c.AddTag(p => p.LastName);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
@@ -371,7 +371,7 @@ namespace Azure.EntityServices.Table.Tests
             var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddObserver(nameof(DummyObserver), observer);
             });
@@ -405,7 +405,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -442,7 +442,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -486,7 +486,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -519,7 +519,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -561,7 +561,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -608,7 +608,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -642,7 +642,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -675,7 +675,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -711,7 +711,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -748,7 +748,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -784,7 +784,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -829,7 +829,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -870,7 +870,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -905,7 +905,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -944,7 +944,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -973,7 +973,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -1003,7 +1003,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -1036,7 +1036,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.LastName)
+                .SetRowKeyProp(p => p.LastName)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });

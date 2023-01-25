@@ -29,7 +29,7 @@ namespace TableClient.Basic.Sample
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .IgnoreProp(p => p.OtherAddress)
 
                 //add computed props to store and compute dynamically additional fields of the entity
@@ -43,6 +43,8 @@ namespace TableClient.Basic.Sample
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
             var entities = fakePersons.Generate(ENTITY_COUNT);
             Console.WriteLine("OK");
+
+            Console.Write($"Adding entities...");
 
             await entityClient.AddAsync(onePerson);
 
