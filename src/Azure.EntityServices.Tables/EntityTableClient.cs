@@ -21,30 +21,6 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>
     where T : class, new()
     {
-        protected async Task NotifyChangeAsync(IEnumerable<IEntityBinderContext<T>> context)
-        {
-            foreach (var observer in _config.Observers)
-            {
-                await observer.Value.OnNextAsync(context);
-            }
-        }
-
-        protected async Task NotifyExceptionAsync(Exception ex)
-        {
-            foreach (var observer in _config.Observers)
-            {
-                await observer.Value.OnErrorAsync(ex);
-            }
-        }
-
-        protected async Task NotifyCompleteAsync()
-        {
-            foreach (var observer in _config.Observers)
-            {
-                await observer.Value.OnCompletedAsync();
-            }
-        }
-
         private EntityTableClientConfig<T> _config;
 
         private EntityTableClientOptions _options;
@@ -58,7 +34,9 @@ namespace Azure.EntityServices.Tables
         private TableServiceClient _tableService;
 
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
+
         private IEnumerable<string> _indextedTags;
+
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
         private EntityTagBuilder<T> _entityTagBuilder;
@@ -117,7 +95,6 @@ namespace Azure.EntityServices.Tables
             }
             return false;
         }
-
 
         private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
         {
@@ -191,26 +168,46 @@ namespace Azure.EntityServices.Tables
             }
         }
 
+        protected async Task NotifyChangeAsync(IEnumerable<IEntityBinderContext<T>> context)
+        {
+            foreach (var observer in _config.Observers)
+            {
+                await observer.Value.OnNextAsync(context);
+            }
+        }
+
+        protected async Task NotifyExceptionAsync(Exception ex)
+        {
+            foreach (var observer in _config.Observers)
+            {
+                await observer.Value.OnErrorAsync(ex);
+            }
+        }
+
+        protected async Task NotifyCompleteAsync()
+        {
+            foreach (var observer in _config.Observers)
+            {
+                await observer.Value.OnCompletedAsync();
+            }
+        }
         public EntityTableClient(TableServiceClient tableServiceClient)
         {
             _tableService = tableServiceClient;
         }
-
-        public EntityTableClient(EntityTableClientOptions options, EntityTableClientConfig<T> config)
+        
+        public EntityTableClient()
         {
-            _ = options ?? throw new ArgumentNullException(nameof(options));
-            _ = config ?? throw new ArgumentNullException(nameof(config));
 
-            Configure(options, config);
         }
 
-        public IEntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
+        public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
             _options = options;
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _client ??= new TableClient(options.ConnectionString, options.TableName);
-            _tableService ??= new TableServiceClient(options.ConnectionString) { };
+         
             _entityTagBuilder = new EntityTagBuilder<T>(ResolvePrimaryKey);
             //PrimaryKey required
             if (_config.RowKeyResolver == null && _config.RowKeyProp == null)

@@ -15,6 +15,7 @@ namespace TableClient.Legacy.Sample
         {
 
             CreateHostBuilder(null).Build().Run();
+
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

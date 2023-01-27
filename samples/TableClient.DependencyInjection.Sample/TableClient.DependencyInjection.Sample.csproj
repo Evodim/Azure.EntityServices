@@ -16,7 +16,6 @@
     <ProjectReference Include="..\..\src\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
     <ProjectReference Include="..\..\src\Azure.EntityServices.Tables.Extensions.DependencyInjection\Azure.EntityServices.Tables.Extensions.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj" />
-    <ProjectReference Include="..\..\tests\Azure.EntityServices.Tests\Azure.EntityServices.Tests.csproj" />
   </ItemGroup>
 
   <ItemGroup>

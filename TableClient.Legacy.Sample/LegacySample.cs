@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace TableClient.Legacy.Sample
 {
-    public class LegacySample: IHostedService
+    public class LegacySample : IHostedService
     {
         private const int ENTITY_COUNT = 200;
         private readonly IEntityTableClient<PersonEntity> _entityClient;
@@ -101,10 +101,10 @@ namespace TableClient.Legacy.Sample
                 Console.CursorTop--;
             }
 
-            Console.WriteLine("====================================");
+            Console.WriteLine("==============Finished======================");
         }
 
-        public  Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
             return Run();
         }

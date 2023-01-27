@@ -21,6 +21,8 @@ namespace TableClient.Performance.Sample
         }
         public ConcurrentDictionary<string, PersonEntity> Persons = new ConcurrentDictionary<string, PersonEntity>();
 
+        public string Name { get; set; }
+
         protected virtual void LogToConsole()
         {
             lock (ConsoleWriterLock)

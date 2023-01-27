@@ -21,6 +21,8 @@ namespace TableClient.DependencyInjection.Sample
         {
         }
 
+        public string Name { get; set; }
+
         public Task OnCompletedAsync()
         {
           

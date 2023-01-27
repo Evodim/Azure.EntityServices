@@ -21,6 +21,8 @@ namespace TableClient.DependencyInjection.Sample
         private long updated = 0;
         private long deleted = 0;
 
+        public string Name { get; set; }
+
         public SampleProjectionObserver()
         {
         }

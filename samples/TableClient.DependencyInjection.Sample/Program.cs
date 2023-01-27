@@ -1,5 +1,6 @@
 ﻿using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Extensions;
+using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Common.Samples;
 using Common.Samples.Models;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,12 +27,14 @@ namespace TableClient.DependencyInjection.Sample
                var tableClientOptions = new EntityTableClientOptions(
              TestEnvironment.ConnectionString,
              $"{nameof(PersonEntity)}",
-             createTableIfNotExists: true);
-             
+             createTableIfNotExists: true);             
 
                var projectionClientOptions = new EntityTableClientOptions(
                 tableClientOptions.ConnectionString,
-                tableClientOptions.TableName);
+                tableClientOptions.TableName);            
+
+               services.AddTransientServiceBag<string, IEntityObserver<PersonEntity>>(
+                   c =>  c.SetupFactory((key,sp) =>  new SampleProjectionObserver(projectionClientOptions)));               
 
                services.AddEntityTableClient<PersonEntity>(tableClientOptions, config =>
                {
@@ -51,7 +54,6 @@ namespace TableClient.DependencyInjection.Sample
                       .AddTag("_FirstLastName3Chars")
                       .AddObserver("LastNameProjection", new SampleProjectionObserver(projectionClientOptions));
                });
-
                services.AddHostedService<EntityTableClientSampleConsole>();
            });
     }

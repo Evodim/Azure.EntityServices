@@ -9,10 +9,12 @@ namespace Azure.EntityServices.Tables.Extensions
     {
         public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services,
             EntityTableClientOptions options,
-            Action<EntityTableClientConfig<T>> configurator)
+            Action<EntityTableClientConfig<T>> configurator,
+            Action<TableClientOptions> tableClientOptionsAction = null
+            )
             where T : class, new()
         {
-            services.AddTableClientService<T>(options.ConnectionString);
+            services.AddTableClientService<T>(options.ConnectionString, tableClientOptionsAction);
 
             var config = new EntityTableClientConfig<T>();
             configurator.Invoke(config);
@@ -21,33 +23,25 @@ namespace Azure.EntityServices.Tables.Extensions
             {
                 var factory = sp.GetRequiredService<IAzureClientFactory<TableServiceClient>>();
                 var client = factory.CreateClient(typeof(T).Name);
-                return EntityTableClient.Create<T>(
-                    factory
-                    .CreateClient(typeof(T).Name))
-                    .Configure(options, config);
+                return EntityTableClient.Create<T>(client)
+                .Configure(options, config);
+                 
             });
 
             return services;
         }
-
-        private static IServiceCollection AddTableClientService<T>(this IServiceCollection services, string connectionString)
+        private static IServiceCollection AddTableClientService<T>(this IServiceCollection services,
+            string connectionString,
+            Action<TableClientOptions> optionsAction = null)
         {
             services.AddAzureClients(clientBuilder =>
             {
                 clientBuilder
-                .AddTableServiceClient(connectionString)
-                .ConfigureOptions(options =>
-                {
-                    options.Diagnostics.IsLoggingContentEnabled = false;
-                    options.Diagnostics.IsDistributedTracingEnabled = false;
-                    options.Diagnostics.IsLoggingEnabled = false;
-                    options.Diagnostics.IsLoggingContentEnabled = false;
-                    options.Diagnostics.IsTelemetryEnabled = false;
-                    
-                })
-                .WithName(typeof(T).Name);
+                 .AddTableServiceClient(connectionString)
+                 .ConfigureOptions(options=> optionsAction?.Invoke(options))
+                 .WithName(typeof(T).Name);
             });
             return services;
         }
-    }
+      }
 }
