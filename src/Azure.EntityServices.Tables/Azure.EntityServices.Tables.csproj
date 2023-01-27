@@ -40,7 +40,8 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Polly" Version="7.2.2" />
-		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" /> 
+		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
+		 
 	</ItemGroup>  
 	<ItemGroup>
 	  <ProjectReference Include="..\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj" />
