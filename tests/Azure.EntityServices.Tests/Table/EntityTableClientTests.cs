@@ -373,7 +373,7 @@ namespace Azure.EntityServices.Table.Tests
                 c.SetPartitionKey(p => p.TenantId)
                 .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
-                .AddObserver(nameof(DummyObserver), observer);
+                .AddObserver(nameof(DummyObserver),()=> observer);
             });
             try
             {
