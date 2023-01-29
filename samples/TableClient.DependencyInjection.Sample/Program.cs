@@ -3,7 +3,9 @@ using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Common.Samples;
 using Common.Samples.Models;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using System;
 
@@ -13,8 +15,7 @@ namespace TableClient.DependencyInjection.Sample
     {
         public static void Main()
         {
-          
-          CreateHostBuilder(null).Build().Run();
+            CreateHostBuilder(null).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -27,18 +28,17 @@ namespace TableClient.DependencyInjection.Sample
                var tableClientOptions = new EntityTableClientOptions(
              TestEnvironment.ConnectionString,
              $"{nameof(PersonEntity)}",
-             createTableIfNotExists: true);             
+             createTableIfNotExists: true);
 
                var projectionClientOptions = new EntityTableClientOptions(
                 tableClientOptions.ConnectionString,
-                tableClientOptions.TableName);            
+                tableClientOptions.TableName);
 
-               services.AddTransientServiceBag<string, IEntityObserver<PersonEntity>>(
-                   c =>  c.SetupFactory((key,sp) =>  new SampleProjectionObserver(projectionClientOptions)));               
-
-               services.AddEntityTableClient<PersonEntity>(tableClientOptions, config =>
-               {
-                   config
+               services.AddTransient(sp => new SampleProjectionObserver().Configure(projectionClientOptions));
+             
+               services.AddEntityTableClient<PersonEntity>(tableClientOptions, configBuilder =>
+               { 
+                   configBuilder
                       .SetPartitionKey(p => p.TenantId)
                       .SetRowKeyProp(p => p.PersonId)
 
@@ -51,8 +51,9 @@ namespace TableClient.DependencyInjection.Sample
 
                       .AddTag(p => p.Created)
                       .AddTag(p => p.LastName)
-                      .AddTag("_FirstLastName3Chars")
-                      .AddObserver("LastNameProjection", new SampleProjectionObserver(projectionClientOptions));
+                      .AddTag("_FirstLastName3Chars");
+
+                   configBuilder.AddObserver<PersonEntity, SampleProjectionObserver>("LastNameProjection");
                });
                services.AddHostedService<EntityTableClientSampleConsole>();
            });

@@ -50,7 +50,7 @@ namespace TableClient.Performance.Sample
                 .AddTag("_FirstLastName3Chars")
 
                 //add an entity oberver to track entity changes and apply any action (projection, logging, etc.)
-                .AddObserver("EntityLoggerObserver", new EntityLoggerObserver<PersonEntity>());
+                .AddObserver("EntityLoggerObserver",()=> new EntityLoggerObserver<PersonEntity>());
             });
             //===============================================================================================
 

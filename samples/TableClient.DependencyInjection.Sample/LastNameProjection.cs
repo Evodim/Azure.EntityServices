@@ -14,8 +14,8 @@ namespace TableClient.DependencyInjection.Sample
         private ConcurrentQueue<PersonEntity> _addOperations = new ConcurrentQueue<PersonEntity>();
         private ConcurrentQueue<PersonEntity> _updateOperations = new ConcurrentQueue<PersonEntity>();
         private ConcurrentQueue<PersonEntity> _deleteOperations = new ConcurrentQueue<PersonEntity>();
-        private readonly IEntityTableClient<PersonEntity> _client;
-        private readonly Func<IEntityTableClient<PersonEntity>> _clientFactory;
+        private  IEntityTableClient<PersonEntity> _client;
+        private  Func<IEntityTableClient<PersonEntity>> _clientFactory;
 
         private long added = 0;
         private long updated = 0;
@@ -25,10 +25,12 @@ namespace TableClient.DependencyInjection.Sample
 
         public SampleProjectionObserver()
         {
+            
         }
-
-        public SampleProjectionObserver(EntityTableClientOptions options)
+       
+        public SampleProjectionObserver Configure(EntityTableClientOptions options)
         {
+
             _client = EntityTableClient.Create<PersonEntity>(
                options,
                 config =>
@@ -49,12 +51,15 @@ namespace TableClient.DependencyInjection.Sample
                      .SetPartitionKey(e => $"~LastName-{e.LastName[..2]}")
                      .SetRowKey(p => $"{p.LastName}~{p.PersonId}");
                 });
+            return this;
         }
+        
 
-        public SampleProjectionObserver(IEntityTableClient<PersonEntity> entityTableClient)
-        {
-            _clientFactory = () => entityTableClient;
-        }
+        //public SampleProjectionObserver(IEntityTableClient<PersonEntity> entityTableClient)
+        //{
+        //    _clientFactory = () => entityTableClient;
+        //    Configure(new EntityTableClientOptions());
+        //}
 
         public async Task OnCompletedAsync()
         {
