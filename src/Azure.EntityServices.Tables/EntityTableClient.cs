@@ -5,7 +5,6 @@ using Azure.EntityServices.Tables.Extensions;
 using Polly;
 using Polly.Retry;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -31,11 +30,13 @@ namespace Azure.EntityServices.Tables
 
         private TableClient _client;
 
-        private TableServiceClient _tableService;
+        private readonly TableServiceClient _tableService;
 
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
         private IEnumerable<string> _indextedTags;
+
+        private IEnumerable<IEntityObserver<T>> _observerInstances;
 
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
@@ -90,7 +91,7 @@ namespace Azure.EntityServices.Tables
                    ex?.ErrorCode == "TooManyRequests"
                    )
                 {
-                    return true; 
+                    return true;
                 }
             }
             return false;
@@ -98,7 +99,6 @@ namespace Azure.EntityServices.Tables
 
         private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
         {
-           
             var query = new TagFilterExpression<T>();
             filter?.Invoke(query);
 
@@ -107,9 +107,9 @@ namespace Azure.EntityServices.Tables
                 query = new TagFilterExpression<T>();
                 query
                       .IgnoreTags()
-                      .And(filter); 
-            } 
-             
+                      .And(filter);
+            }
+
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
             return _retryPolicy.Execute(() => _client
@@ -170,51 +170,51 @@ namespace Azure.EntityServices.Tables
 
         protected async Task NotifyChangeAsync(IEnumerable<IEntityBinderContext<T>> context)
         {
-            foreach (var observer in _config.Observers)
+            foreach (var observer in _observerInstances)
             {
-                await observer.Value.OnNextAsync(context);
+                await observer.OnNextAsync(context);
             }
         }
 
         protected async Task NotifyExceptionAsync(Exception ex)
         {
-            foreach (var observer in _config.Observers)
+            foreach (var observer in _observerInstances)
             {
-                await observer.Value.OnErrorAsync(ex);
+                await observer.OnErrorAsync(ex);
             }
         }
 
         protected async Task NotifyCompleteAsync()
         {
-            foreach (var observer in _config.Observers)
+            foreach (var observer in _observerInstances)
             {
-                await observer.Value.OnCompletedAsync();
+                await observer.OnCompletedAsync();
             }
         }
-        public EntityTableClient(TableServiceClient tableServiceClient)
-        {
-            _tableService = tableServiceClient;
-        }
-        
         public EntityTableClient()
         {
 
         }
-
+        public EntityTableClient(TableServiceClient tableService)
+        {
+            _tableService = tableService;
+        }
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
+            
             _options = options;
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _client ??= new TableClient(options.ConnectionString, options.TableName);
-         
+            _observerInstances = _config.Observers.Select(o => o.Value.Invoke()).ToList();
+
             _entityTagBuilder = new EntityTagBuilder<T>(ResolvePrimaryKey);
             //PrimaryKey required
             if (_config.RowKeyResolver == null && _config.RowKeyProp == null)
             {
                 throw new InvalidOperationException($"One of PrimaryKeyProp or PrimaryKeyResolver was required and must be set");
-            } 
-             
+            }
+
             var basePolicy = Policy.Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex));
 
             _retryPolicy = basePolicy
@@ -298,7 +298,7 @@ namespace Azure.EntityServices.Tables
             {
                 throw new EntityTableClientException($"An error occured during the request, partition:{partition} rowkey:{rowKey}", ex);
             }
-        } 
+        }
 
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -485,9 +485,9 @@ namespace Azure.EntityServices.Tables
             return TableQueryHelper.ToPrimaryRowKey(value);
         }
 
-        public void AddObserver(string name, IEntityObserver<T> observer)
+        public void AddObserver(string name, Func<IEntityObserver<T>> observerFactory)
         {
-            _config.Observers.TryAdd(name, observer);
+            _config.Observers.TryAdd(name, observerFactory);
         }
 
         public void RemoveObserver(string name)

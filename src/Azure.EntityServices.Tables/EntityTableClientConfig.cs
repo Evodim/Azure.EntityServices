@@ -12,7 +12,8 @@ namespace Azure.EntityServices.Tables
         public IDictionary<string, Func<T, object>> DynamicProps { get; } = new Dictionary<string, Func<T, object>>();
         public IList<string> ComputedTags { get; } = new List<string>();
         public Dictionary<string, PropertyInfo> Tags { get; } = new Dictionary<string, PropertyInfo>();
-        public ConcurrentDictionary<string, IEntityObserver<T>> Observers { get; } = new ConcurrentDictionary<string, IEntityObserver<T>>();
+        public ConcurrentDictionary<string, Func<IEntityObserver<T>>> Observers { get; } = new ConcurrentDictionary<string, Func<IEntityObserver<T>>>();
+
         public PropertyInfo RowKeyProp { get; set; }
         public ICollection<string> IgnoredProps { get; } = new List<string>();
     }

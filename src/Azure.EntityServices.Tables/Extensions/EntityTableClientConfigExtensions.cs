@@ -1,5 +1,6 @@
 ﻿using Azure.EntityServices.Tables.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Azure.EntityServices.Tables
@@ -46,9 +47,9 @@ namespace Azure.EntityServices.Tables
             return config;
         }
 
-        public static EntityTableClientConfig<T> AddObserver<T>(this EntityTableClientConfig<T> config, string observerName, IEntityObserver<T> entityObserver)
+        public static EntityTableClientConfig<T> AddObserver<T>(this EntityTableClientConfig<T> config, string observerName, Func<IEntityObserver<T>> entityObserverFactory)
         {
-            config.Observers.TryAdd(observerName, entityObserver);
+            config.Observers.TryAdd(observerName, entityObserverFactory);
             return config;
         }
 
