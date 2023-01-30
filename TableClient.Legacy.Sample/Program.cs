@@ -24,20 +24,17 @@ namespace TableClient.Legacy.Sample
            {
            })
            .ConfigureServices((hostContext, services) =>
-           {
-               var tableClientOptions = new EntityTableClientOptions(
-             TestEnvironment.ConnectionString,
-             $"{nameof(PersonEntity)}",
-             createTableIfNotExists: true);
-
-
-               var projectionClientOptions = new EntityTableClientOptions(
-                tableClientOptions.ConnectionString,
-                tableClientOptions.TableName);
-
-               services.AddEntityTableClient<PersonEntity>(tableClientOptions, config =>
+           {  
+               services.AddEntityTableClient<PersonEntity>(builder=>
                {
-                   config
+                   builder
+                   .ConfigureOptions(options =>
+                   {
+                       options.ConnectionString = TestEnvironment.ConnectionString;
+                       options.TableName = $"{nameof(PersonEntity)}";
+                       options.CreateTableIfNotExists = true;
+                   })
+                   .ConfigureEntity(config => config
                       .SetPartitionKey(p => p.TenantId)
                       .SetRowKeyProp(p => p.PersonId)
 
@@ -50,7 +47,7 @@ namespace TableClient.Legacy.Sample
 
                       .AddTag(p => p.Created)
                       .AddTag(p => p.LastName)
-                      .AddTag("_FirstLastName3Chars");
+                      .AddTag("_FirstLastName3Chars"));
                 });
 
                services.AddHostedService<LegacySample>();
