@@ -8,7 +8,7 @@ namespace Azure.EntityServices.Tables.Extensions
 {
     public static class EntityTableServicesCollectionExtensions
     {
-        public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services,
+        public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, 
         Action<IEntityTableClientBuilder<T>> configBuilder,
         Action<TableClientOptions> tableClientOptionsAction = null
         )
@@ -20,16 +20,16 @@ namespace Azure.EntityServices.Tables.Extensions
 
             var options = buidler.BindOptions();
 
-            services.AddTableClientService<T>(options.ConnectionString, tableClientOptionsAction);
+            services.AddTableClientService<T>(options.ConnectionString);
 
             services.AddTransient<IEntityTableClient<T>>(sp =>
             {
                 var config = buidler.BindConfig(sp);
                 var tableServiceFactory = sp.GetRequiredService<IAzureClientFactory<TableServiceClient>>();
-                var client = tableServiceFactory.CreateClient(typeof(T).Name);
-
+                var tableService = tableServiceFactory.CreateClient(typeof(T).Name);
+               
                 return EntityTableClient
-                .Create<T>(client)
+                .Create<T>(tableService)
                 .Configure(options, config);
             });
 
@@ -42,13 +42,14 @@ namespace Azure.EntityServices.Tables.Extensions
             Action<TableClientOptions> optionsAction = null)
         {
             services.AddAzureClients(clientBuilder =>
-            {
+            { 
                 clientBuilder
                  .AddTableServiceClient(connectionString)
                  .ConfigureOptions(options => optionsAction?.Invoke(options))
                  .WithName(typeof(T).Name);
             });
             return services;
+           
         }
     }
 }

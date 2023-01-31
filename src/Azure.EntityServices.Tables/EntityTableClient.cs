@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Tables
 
         private TableClient _client;
 
-        private readonly TableServiceClient _tableService;
+        private TableServiceClient _tableServiceClient;
 
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
@@ -190,22 +190,25 @@ namespace Azure.EntityServices.Tables
             {
                 await observer.OnCompletedAsync();
             }
-        }
+        } 
         public EntityTableClient()
         {
 
         }
         public EntityTableClient(TableServiceClient tableService)
         {
-            _tableService = tableService;
+            _tableServiceClient = tableService; 
+            
         }
+     
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
             
             _options = options;
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
-            _client ??= new TableClient(options.ConnectionString, options.TableName);
+            _tableServiceClient ??= new TableServiceClient(options.ConnectionString);
+            _client ??= _tableServiceClient.GetTableClient(options.TableName);
             _observerInstances = _config.Observers.Select(o => o.Value.Invoke()).ToList();
 
             _entityTagBuilder = new EntityTagBuilder<T>(ResolvePrimaryKey);
@@ -215,7 +218,7 @@ namespace Azure.EntityServices.Tables
                 throw new InvalidOperationException($"One of PrimaryKeyProp or PrimaryKeyResolver was required and must be set");
             }
 
-            var basePolicy = Policy.Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableService, options.CreateTableIfNotExists, ex));
+            var basePolicy = Policy.Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableServiceClient, options.CreateTableIfNotExists, ex));
 
             _retryPolicy = basePolicy
                                 .WaitAndRetry(5, i => TimeSpan.FromSeconds(2 * i));

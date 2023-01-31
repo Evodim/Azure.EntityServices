@@ -37,28 +37,27 @@ namespace TableClient.DependencyInjection.Sample
                services.AddEntityTableClient<PersonEntity>(builder =>
                {
                    builder
+                   .RegisterObserver<PersonEntity, SampleProjectionObserver>("LastNameProjection")
+                   .ConfigureOptions(options =>
+                   {
+                       options.ConnectionString = TestEnvironment.ConnectionString;
+                       options.TableName = $"{nameof(PersonEntity)}";
+                       options.CreateTableIfNotExists = true;
+                   })
+                   .ConfigureEntity(config => config
+                      .SetPartitionKey(p => p.TenantId)
+                      .SetRowKeyProp(p => p.PersonId)
 
-                  .RegisterObserver<PersonEntity, SampleProjectionObserver>("LastNameProjection")
-                  .ConfigureOptions(options =>
-                  {
-                      options.ConnectionString = TestEnvironment.ConnectionString;
-                      options.TableName = $"{nameof(PersonEntity)}";
-                      options.CreateTableIfNotExists = true;
-                  })
-                  .ConfigureEntity(config => config
-                     .SetPartitionKey(p => p.TenantId)
-                     .SetRowKeyProp(p => p.PersonId)
+                      .IgnoreProp(p => p.OtherAddress)
 
-                     .IgnoreProp(p => p.OtherAddress)
+                      .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                      .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
+                      .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
+                      .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
 
-                     .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                     .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
-                     .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                     .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
-
-                     .AddTag(p => p.Created)
-                     .AddTag(p => p.LastName)
-                     .AddTag("_FirstLastName3Chars"));
+                      .AddTag(p => p.Created)
+                      .AddTag(p => p.LastName)
+                      .AddTag("_FirstLastName3Chars"));
                });
 
                services.AddHostedService<EntityTableClientSampleConsole>();
