@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Azure.Data.Tables;
+using Microsoft.Extensions.Azure;
 using System;
 
 namespace Azure.EntityServices.Tables
@@ -49,6 +50,13 @@ namespace Azure.EntityServices.Tables
             _ = tableServiceClient ?? throw new ArgumentNullException(nameof(tableServiceClient));
 
             return new EntityTableClient<T>(tableServiceClient);
+        }
+        public static EntityTableClient<T> Create<T>(IAzureClientFactory<TableServiceClient> tableServiceClientFactory)
+           where T : class, new()
+        {
+            _ = tableServiceClientFactory ?? throw new ArgumentNullException(nameof(tableServiceClientFactory));
+
+            return new EntityTableClient<T>(tableServiceClientFactory);
         }
 
         public static EntityTableClient<T> Create<T>(string connectionString, TableClientOptions tableClientOptions = null)

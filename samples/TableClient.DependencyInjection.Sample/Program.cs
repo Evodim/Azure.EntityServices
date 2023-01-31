@@ -33,14 +33,14 @@ namespace TableClient.DependencyInjection.Sample
                 tableClientOptions.TableName);
 
                services.AddTransient(sp => new SampleProjectionObserver().Configure(projectionClientOptions));
+ 
 
-               services.AddEntityTableClient<PersonEntity>(builder =>
+               services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,builder =>
                {
-                   builder
+                   builder 
                    .RegisterObserver<PersonEntity, SampleProjectionObserver>("LastNameProjection")
                    .ConfigureOptions(options =>
-                   {
-                       options.ConnectionString = TestEnvironment.ConnectionString;
+                   { 
                        options.TableName = $"{nameof(PersonEntity)}";
                        options.CreateTableIfNotExists = true;
                    })

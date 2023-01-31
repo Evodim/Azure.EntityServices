@@ -1,9 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Azure.Data.Tables;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 {
-    public class EntityTableClientBuilder<T> : IEntityTableClientBuilder<T>
+    public sealed class EntityTableClientBuilder<T> : IEntityTableClientBuilder<T>
     {
         private EntityTableClientOptions _options = new EntityTableClientOptions();
         private EntityTableClientConfig<T> _config = new EntityTableClientConfig<T>();
@@ -55,6 +56,21 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 
             _config.Observers.TryAdd(observerName, () => _serviceProvider.GetServiceByName<IEntityObserver<T>>(observerName));
             return this;
+        }
+
+        public IEntityTableClientBuilder<T> ConfigureConnection(string connectionString)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEntityTableClientBuilder<T> ConfigureConnection(Uri serviceUri)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEntityTableClientBuilder<T> ConfigureConnection(Uri serviceUri, TableSharedKeyCredential sharedKeyCredential)
+        {
+            throw new NotImplementedException();
         }
     }
 }

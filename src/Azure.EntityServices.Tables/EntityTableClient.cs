@@ -2,6 +2,7 @@
 using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Extensions;
+using Microsoft.Extensions.Azure;
 using Polly;
 using Polly.Retry;
 using System;
@@ -51,6 +52,7 @@ namespace Azure.EntityServices.Tables
         private TableBatchClient CreateTableBatchClient()
         {
             return new TableBatchClient(
+                _tableServiceClient,
                 new TableBatchClientOptions()
                 {
                     TableName = _options.TableName,
@@ -195,12 +197,14 @@ namespace Azure.EntityServices.Tables
         {
 
         }
-        public EntityTableClient(TableServiceClient tableService)
+        internal EntityTableClient(TableServiceClient tableService)
         {
-            _tableServiceClient = tableService; 
-            
+            _tableServiceClient = tableService;  
         }
-     
+        internal EntityTableClient(IAzureClientFactory<TableServiceClient> tableServiceFactory)
+        { 
+            _tableServiceClient = tableServiceFactory.CreateClient(typeof(T).Name); 
+        }
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
             

@@ -25,12 +25,11 @@ namespace TableClient.Legacy.Sample
            })
            .ConfigureServices((hostContext, services) =>
            {  
-               services.AddEntityTableClient<PersonEntity>(builder=>
+               services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,builder=>
                {
                    builder
                    .ConfigureOptions(options =>
-                   {
-                       options.ConnectionString = TestEnvironment.ConnectionString;
+                   { 
                        options.TableName = $"{nameof(PersonEntity)}";
                        options.CreateTableIfNotExists = true;
                    })
