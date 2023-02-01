@@ -10,24 +10,25 @@ namespace Azure.EntityServices.Tables.Extensions
     {
         public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, string connectionString, Action<IEntityTableClientBuilder<T>> configBuilder)
         where T : class, new()
-        { 
-            return services.AddEntityTableClient(configBuilder)
+        {
+            return services
+                .AddEntityTableClient(configBuilder)
                 .WithTableClientService<T>(connectionString);
         }
 
         public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, Uri serviceUri, Action<IEntityTableClientBuilder<T>> configBuilder)
         where T : class, new()
         {
-           
-            return services.AddEntityTableClient(configBuilder)
+            return services
+                .AddEntityTableClient(configBuilder)
                 .WithTableClientService<T>(serviceUri);
         }
 
         public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, Uri serviceUri, TableSharedKeyCredential sharedKeyCredential, Action<IEntityTableClientBuilder<T>> configBuilder)
         where T : class, new()
         {
-           
-            return services.AddEntityTableClient(configBuilder)
+            return services
+                .AddEntityTableClient(configBuilder)
                 .WithTableClientService<T>(serviceUri, sharedKeyCredential);
         }
 
@@ -36,23 +37,19 @@ namespace Azure.EntityServices.Tables.Extensions
         )
         where T : class, new()
         {
-            var buidler = new EntityTableClientBuilder<T>(services);
+            var builder = new EntityTableClientBuilder<T>();
 
-            configBuilder.Invoke(buidler);
-
-            var options = buidler.BindOptions();
+            configBuilder.Invoke(builder);
 
             services.AddTransient<IEntityTableClient<T>>(sp =>
             {
-                var config = buidler.BindConfig(sp);
+                var (options, config) = builder.Build(sp);
                 var tableServiceFactory = sp.GetRequiredService<IAzureClientFactory<TableServiceClient>>();
 
                 return EntityTableClient
                 .Create<T>(tableServiceFactory)
                 .Configure(options, config);
             });
-
-            buidler.Build();
             return services;
         }
 

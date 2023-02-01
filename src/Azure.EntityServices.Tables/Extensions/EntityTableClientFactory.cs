@@ -7,6 +7,13 @@ namespace Azure.EntityServices.Tables
 {
     public static class EntityTableClient
     {
+        public static EntityTableClient<T> Create<T>(IAzureClientFactory<TableServiceClient> tableServiceClientFactory)
+         where T : class, new()
+        {
+            _ = tableServiceClientFactory ?? throw new ArgumentNullException(nameof(tableServiceClientFactory));
+
+            return new EntityTableClient<T>(tableServiceClientFactory);
+        }
         public static EntityTableClient<T> Create<T>(Action<EntityTableClientOptions> optionsDelegate, Action<EntityTableClientConfig<T>> configurator)
             where T : class, new()
         {
@@ -51,14 +58,7 @@ namespace Azure.EntityServices.Tables
 
             return new EntityTableClient<T>(tableServiceClient);
         }
-        public static EntityTableClient<T> Create<T>(IAzureClientFactory<TableServiceClient> tableServiceClientFactory)
-           where T : class, new()
-        {
-            _ = tableServiceClientFactory ?? throw new ArgumentNullException(nameof(tableServiceClientFactory));
-
-            return new EntityTableClient<T>(tableServiceClientFactory);
-        }
-
+      
         public static EntityTableClient<T> Create<T>(string connectionString, TableClientOptions tableClientOptions = null)
          where T : class, new()
         {

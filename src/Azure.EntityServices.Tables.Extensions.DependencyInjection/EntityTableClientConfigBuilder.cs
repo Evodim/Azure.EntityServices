@@ -1,43 +1,35 @@
 ﻿using Azure.Data.Tables;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 
 namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 {
     public sealed class EntityTableClientBuilder<T> : IEntityTableClientBuilder<T>
+        where T : class, new()
     {
-        private EntityTableClientOptions _options = new EntityTableClientOptions();
-        private EntityTableClientConfig<T> _config = new EntityTableClientConfig<T>();
-        private IServiceProvider _serviceProvider;
-        private readonly ServicesByNameBuilder<IEntityObserver<T>> _entityObserverBuilder;
-
-        public EntityTableClientBuilder(IServiceCollection serviceCollection)
+        public EntityTableClientBuilder()
         {
-            _entityObserverBuilder = serviceCollection.AddByName<IEntityObserver<T>>();
         }
 
         private Action<EntityTableClientOptions> _optionsAction;
-        private Action<EntityTableClientConfig<T>> _configAction;
+        private Action<IServiceProvider, EntityTableClientConfig<T>> _configAction;
 
-        public EntityTableClientOptions BindOptions()
+        public (EntityTableClientOptions, EntityTableClientConfig<T>) Build(IServiceProvider serviceProvider)
         {
-            _optionsAction.Invoke(_options);
-            return _options;
-        }
-
-        public EntityTableClientConfig<T> BindConfig(IServiceProvider provider)
-        {
-            _serviceProvider = provider;
-            _configAction.Invoke(_config);
-            return _config;
-        }
-
-        public void Build()
-        {
-            _entityObserverBuilder?.Build();
+            var sp = serviceProvider;
+            var options = new EntityTableClientOptions();
+            var config = new EntityTableClientConfig<T>();
+            _optionsAction?.Invoke(options);
+            _configAction?.Invoke(sp, config);
+            return (options, config);
         }
 
         public IEntityTableClientBuilder<T> ConfigureEntity(Action<EntityTableClientConfig<T>> configurator)
+        {
+            _configAction = (_, config) => configurator.Invoke(config);
+            return this;
+        }
+
+        public IEntityTableClientBuilder<T> ConfigureEntity(Action<IServiceProvider, EntityTableClientConfig<T>> configurator)
         {
             _configAction = configurator;
             return this;
@@ -46,15 +38,6 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
         public IEntityTableClientBuilder<T> ConfigureOptions(Action<EntityTableClientOptions> optionsConfigurator)
         {
             _optionsAction = optionsConfigurator;
-            return this;
-        }
-
-        public IEntityTableClientBuilder<T> RegisterObserver<TImplementation>(string observerName)
-            where TImplementation : IEntityObserver<T>
-        {
-            _entityObserverBuilder.Add<TImplementation>(observerName);
-
-            _config.Observers.TryAdd(observerName, () => _serviceProvider.GetServiceByName<IEntityObserver<T>>(observerName));
             return this;
         }
 

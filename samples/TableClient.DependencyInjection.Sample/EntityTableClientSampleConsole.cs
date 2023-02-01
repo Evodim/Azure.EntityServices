@@ -1,6 +1,8 @@
 ﻿using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Common.Samples.Models;
 using Common.Samples.Tools.Fakes;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
@@ -12,11 +14,17 @@ namespace TableClient.DependencyInjection.Sample
     public class EntityTableClientSampleConsole : IHostedService
     {
         private const int ENTITY_COUNT = 100;
-        private readonly IEntityTableClient<PersonEntity> _entityTableClient;
+        private readonly IEntityTableClient<PersonEntity> _defaultClient;
+        private readonly IEntityTableClient<PersonEntity> _namedEntityTableClient;
+        private readonly IEntityTableClient<PersonEntity> _namedEntityTableClient2;
 
-        public EntityTableClientSampleConsole(IEntityTableClient<PersonEntity> entityTableClient)
+        public EntityTableClientSampleConsole(
+            IEntityTableClient<PersonEntity> defaultClient,
+            IAzureClientFactory<IEntityTableClient<PersonEntity>> factory)
         {
-            _entityTableClient = entityTableClient;
+            _defaultClient = defaultClient;
+            _namedEntityTableClient = factory.CreateClient($"{nameof(PersonEntity)}1");
+            _namedEntityTableClient2 = factory.CreateClient($"{nameof(PersonEntity)}2");
         }
 
         public async Task Run()
@@ -29,11 +37,21 @@ namespace TableClient.DependencyInjection.Sample
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
             var entities = faker.Generate(ENTITY_COUNT);
 
-            Console.Write($"Add {ENTITY_COUNT} entities...");
+            Console.WriteLine($"Add {ENTITY_COUNT} entities...");
 
-            await _entityTableClient.AddManyAsync(entities);
+            await _defaultClient.AddManyAsync(entities);
+            await _namedEntityTableClient.AddManyAsync(entities);
+            await _namedEntityTableClient2.AddManyAsync(entities);
+         
+            var person = await _namedEntityTableClient.GetByIdAsync(entities.Last()?.TenantId, entities.Last()?.PersonId);
 
-            var person = await _entityTableClient.GetByIdAsync(entities.Last()?.TenantId, entities.Last()?.PersonId);
+            Console.WriteLine($"Readed {person?.TenantId} {person?.PersonId} ");
+
+            person = await _namedEntityTableClient2.GetByIdAsync(entities.Last()?.TenantId, entities.Last()?.PersonId);
+
+            Console.WriteLine($"Readed {person?.TenantId} {person?.PersonId} ");
+
+            person = await _defaultClient.GetByIdAsync(entities.Last()?.TenantId, entities.Last()?.PersonId);
 
             Console.WriteLine($"Readed {person?.TenantId} {person?.PersonId} ");
         }

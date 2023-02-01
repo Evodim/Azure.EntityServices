@@ -1,6 +1,5 @@
 ﻿using Azure.EntityServices.Tables.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace Azure.EntityServices.Tables
