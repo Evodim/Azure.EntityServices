@@ -1,5 +1,6 @@
 ﻿using Azure.EntityServices.Tables;
 using Common.Samples.Models;
+using Microsoft.Extensions.Azure;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,96 +12,58 @@ namespace TableClient.DependencyInjection.Sample
 {
     public class SampleProjectionObserver : IEntityObserver<PersonEntity>
     {
-        private ConcurrentQueue<PersonEntity> _addOperations = new ConcurrentQueue<PersonEntity>();
-        private ConcurrentQueue<PersonEntity> _updateOperations = new ConcurrentQueue<PersonEntity>();
-        private ConcurrentQueue<PersonEntity> _deleteOperations = new ConcurrentQueue<PersonEntity>();
-        private  IEntityTableClient<PersonEntity> _client;
-        private  Func<IEntityTableClient<PersonEntity>> _clientFactory;
-
+        private readonly ConcurrentQueue<PersonEntity> _addOperations = new ConcurrentQueue<PersonEntity>();
+        private readonly ConcurrentQueue<PersonEntity> _updateOperations = new ConcurrentQueue<PersonEntity>();
+        private readonly ConcurrentQueue<PersonEntity> _deleteOperations = new ConcurrentQueue<PersonEntity>();
+        private readonly IEntityTableClient<PersonEntity> _entityClient;
+          
         private long added = 0;
         private long updated = 0;
         private long deleted = 0;
-
+  
         public string Name { get; set; }
 
         public SampleProjectionObserver()
         {
             
-        }
-       
-        public SampleProjectionObserver Configure(string connectionString,EntityTableClientOptions options)
+        } 
+        public SampleProjectionObserver(IAzureClientFactory<IEntityTableClient<PersonEntity>> factory)
         {
-
-            _client = EntityTableClient.Create<PersonEntity>(connectionString)
-              .Configure(
-               options,
-                config =>
-                {
-                    config
-                        .AddComputedProp("PersonId", p => $"{p.LastName}~{p.PersonId}")
-                        .SetPartitionKey(e => $"~LastName-{e.LastName[..2]}")
-                        .SetRowKey(p => $"{p.LastName}~{p.PersonId}");
-                });
-
-            _clientFactory = () =>
-              EntityTableClient.Create<PersonEntity>(connectionString)
-              .Configure(
-               options,
-                config =>
-                {
-                    config
-                     .AddComputedProp("PersonId", p => $"{p.LastName}~{p.PersonId}")
-                     .SetPartitionKey(e => $"~LastName-{e.LastName[..2]}")
-                     .SetRowKey(p => $"{p.LastName}~{p.PersonId}");
-                });
-            return this;
+            _entityClient = factory.CreateClient(nameof(SampleProjectionObserver));
         }
-        
-
-        //public SampleProjectionObserver(IEntityTableClient<PersonEntity> entityTableClient)
-        //{
-        //    _clientFactory = () => entityTableClient;
-        //    Configure(new EntityTableClientOptions());
-        //}
 
         public async Task OnCompletedAsync()
         {
-            Console.SetCursorPosition(5, 5);
             Interlocked.Exchange(ref added, _addOperations.Count + added);
-            _addOperations.Clear();
             Interlocked.Exchange(ref updated, _updateOperations.Count + updated);
-            _updateOperations.Clear();
             Interlocked.Exchange(ref deleted, _deleteOperations.Count + deleted);
-            _deleteOperations.Clear();
-            Console.Write($"Added:    {added}     Updated:    {updated}    Deleted:  {deleted}        ");
-
-            return;
-
-            var client = _clientFactory();
+            Console.Write($"{nameof(SampleProjectionObserver)} ToAdd:    {added}     ToUpdate:    {updated}    ToDelete:  {deleted}        ");
 
             if (_addOperations.Count > 0)
             {
-                await client.AddOrReplaceManyAsync(_addOperations.ToList());
+                await _entityClient.AddOrReplaceManyAsync(_addOperations.ToList());
                 Console.WriteLine($"{_addOperations.Count} added");
                 _addOperations.Clear();
             }
             if (_updateOperations.Count > 0)
             {
-                await client.AddOrReplaceManyAsync(_updateOperations.ToList());
+                await _entityClient.AddOrReplaceManyAsync(_updateOperations.ToList());
                 Console.WriteLine($"{_updateOperations.Count} updated");
                 _updateOperations.Clear();
             }
 
             if (_deleteOperations.Count > 0)
             {
-                await client.DeleteManyAsync(_deleteOperations.ToList());
+                await _entityClient.DeleteManyAsync(_deleteOperations.ToList());
                 Console.WriteLine($"{_deleteOperations.Count} deleted");
                 _deleteOperations.Clear();
             }
+            Console.SetCursorPosition(5, 5); 
         }
 
-        public Task OnErrorAsync(Exception error)
+        public Task OnErrorAsync(Exception ex)
         {
+            Console.WriteLine(ex.Message);
             return Task.CompletedTask;
         }
 

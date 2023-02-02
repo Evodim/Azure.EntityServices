@@ -102,7 +102,7 @@ namespace Azure.EntityServices.Tables
             var query = new TagFilterExpression<T>();
             filter?.Invoke(query);
 
-            if (string.IsNullOrWhiteSpace(query.TagName))
+            if (string.IsNullOrEmpty(query.TagName))
             {
                 query = new TagFilterExpression<T>();
                 query
@@ -113,7 +113,9 @@ namespace Azure.EntityServices.Tables
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
             return _retryPolicy.Execute(() => _client
-            .QueryAsync<TableEntity>(filter: strQuery, cancellationToken: cancellationToken, maxPerPage: maxPerPage)
+            .QueryAsync<TableEntity>(filter:string.IsNullOrWhiteSpace(strQuery)?null: strQuery,
+                                     cancellationToken: cancellationToken,
+                                     maxPerPage: maxPerPage)
             .AsPages(nextPageToken));
         }
 
@@ -403,7 +405,7 @@ namespace Azure.EntityServices.Tables
                         break;
                 }
 
-                await batchedClient.SubmitToPipelineAsync<TableEntity>(entityBinder.PartitionKey, cancellationToken);
+                await batchedClient.SubmitToPipelineAsync(entityBinder.PartitionKey, cancellationToken);
             }
             await batchedClient.CommitTransactionAsync();
             await NotifyCompleteAsync();
@@ -430,7 +432,7 @@ namespace Azure.EntityServices.Tables
 
                     batchedClient.InsertOrMerge(binder.Bind());
 
-                    await batchedClient.SubmitToPipelineAsync<TableEntity>(binder.PartitionKey, cancellationToken);
+                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
                     count++;
                 }
 #if DEBUG

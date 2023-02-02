@@ -34,7 +34,8 @@ namespace TableClient.Basic.Sample
                 .IgnoreProp(p => p.OtherAddress)
 
                 //add computed props to store and compute dynamically additional fields of the entity
-                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France");
+                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3]);
             });
             //===============================================================================================
 
