@@ -22,21 +22,21 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
             return (options, config);
         }
 
-        public IEntityTableClientBuilder<TEntity> ConfigureEntity(Action<EntityTableClientConfig<TEntity>> entityConfigurator)
+        public IEntityTableClientBuilder<TEntity> ConfigureEntity(Action<EntityTableClientConfig<TEntity>> configureEntity)
         {
-            _configAction = (_, config) => entityConfigurator.Invoke(config);
+            _configAction = (_, config) => configureEntity.Invoke(config);
             return this;
         }
 
-        public IEntityTableClientBuilder<TEntity> ConfigureEntity(Action<IServiceProvider, EntityTableClientConfig<TEntity>> entityConfigurator)
+        public IEntityTableClientBuilder<TEntity> ConfigureEntity(Action<IServiceProvider, EntityTableClientConfig<TEntity>> configureEntity)
         {
-            _configAction = entityConfigurator;
+            _configAction = configureEntity;
             return this;
         }
 
-        public IEntityTableClientBuilder<TEntity> ConfigureOptions(Action<EntityTableClientOptions> optionsConfigurator)
+        public IEntityTableClientBuilder<TEntity> ConfigureOptions(Action<EntityTableClientOptions> configureOptions)
         {
-            _optionsAction = optionsConfigurator;
+            _optionsAction = configureOptions;
             return this;
         }
     }

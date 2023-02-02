@@ -7,7 +7,9 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 {
     public static class AzureClientFactoryBuilderExtensions
     {
-        /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="connectionString"/>
+        /// <summary>
+        /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="connectionString"/> and <paramref name="entityBuilderAction"/>
+        /// </summary>
         public static IAzureClientBuilder<IEntityTableClient<TEntity>, EntityTableClientOptions> AddEntityTableClient<TEntity>(this AzureClientFactoryBuilder builder,
          string connectionString,
          Action<IEntityTableClientBuilder<TEntity>> entityBuilderAction)
@@ -25,7 +27,7 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
         }
 
         /// <summary>
-        /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="serviceUri"/>/>
+        /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="serviceUri"/> and <paramref name="entityBuilderAction"/>
         /// </summary>
         public static IAzureClientBuilder<IEntityTableClient<TEntity>, EntityTableClientOptions> AddEntityTableClient<TEntity>(this AzureClientFactoryBuilder builder,
             Uri serviceUri,
@@ -43,7 +45,7 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
         }
 
         /// <summary>
-        /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="serviceUri"/> and <paramref name="sharedKeyCredential"/>
+        /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="serviceUri"/>, <paramref name="sharedKeyCredential"/> and <paramref name="entityBuilderAction"/>
         /// </summary>
         public static IAzureClientBuilder<IEntityTableClient<TEntity>, EntityTableClientOptions> AddEntityTableClient<TEntity>(this AzureClientFactoryBuilder builder,
             Uri serviceUri,

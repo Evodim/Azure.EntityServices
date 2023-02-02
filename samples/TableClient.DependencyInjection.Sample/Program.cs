@@ -37,7 +37,7 @@ namespace TableClient.DependencyInjection.Sample
                .AddTransient(sp => new SampleProjectionObserver()
                                     .Configure(TestEnvironment.ConnectionString, projectionClientOptions));
 
-               //Register named  IEntityTableClient<TEntity> implementation factories using AzureClientFactoryBuilder
+               //Register two named IEntityTableClient<TEntity> implementations factories using AzureClientFactoryBuilder
                services.AddAzureClients(clients =>
                {
                    clients
@@ -86,7 +86,7 @@ namespace TableClient.DependencyInjection.Sample
                           .WithName($"{nameof(PersonEntity)}2");
                });
 
-               //default/global IEntityTableClient<TEntity> registration (without AzureClientFactoryBuilder)
+               //Register default/global IEntityTableClient<TEntity> instance (without AzureClientFactoryBuilder)
                services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString, builder =>
                {
                    builder
