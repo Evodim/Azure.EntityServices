@@ -15,7 +15,7 @@ namespace Azure.EntityServices.Tables.Core
         private readonly Func<IEnumerable<TableTransactionAction>, Task> _observer;
         private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
         private readonly TableServiceClient _tableClientService;
-        private readonly Queue<TableTransactionAction> _pendingOperations; 
+        private readonly Queue<TableTransactionAction> _pendingOperations;
         private IEntityTransactionGroupPipeline _pipeline;
 #if DEBUG
         private int _taskCount = 0;
@@ -31,7 +31,7 @@ namespace Azure.EntityServices.Tables.Core
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
 
-            _pendingOperations = new Queue<TableTransactionAction>(); 
+            _pendingOperations = new Queue<TableTransactionAction>();
             _retryPolicy = retryPolicy;
             _options = options;
             _observer = observer;

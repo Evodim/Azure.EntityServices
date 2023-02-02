@@ -16,17 +16,17 @@ namespace TableClient.DependencyInjection.Sample
         private readonly ConcurrentQueue<PersonEntity> _updateOperations = new ConcurrentQueue<PersonEntity>();
         private readonly ConcurrentQueue<PersonEntity> _deleteOperations = new ConcurrentQueue<PersonEntity>();
         private readonly IEntityTableClient<PersonEntity> _entityClient;
-          
+
         private long added = 0;
         private long updated = 0;
         private long deleted = 0;
-  
+
         public string Name { get; set; }
 
         public SampleProjectionObserver()
         {
-            
-        } 
+        }
+
         public SampleProjectionObserver(IAzureClientFactory<IEntityTableClient<PersonEntity>> factory)
         {
             _entityClient = factory.CreateClient(nameof(SampleProjectionObserver));
@@ -58,7 +58,7 @@ namespace TableClient.DependencyInjection.Sample
                 Console.WriteLine($"{_deleteOperations.Count} deleted");
                 _deleteOperations.Clear();
             }
-            Console.SetCursorPosition(5, 5); 
+            Console.SetCursorPosition(5, 5);
         }
 
         public Task OnErrorAsync(Exception ex)
