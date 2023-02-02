@@ -1,9 +1,9 @@
 ﻿using Azure.Data.Tables;
-using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Table.Common.Models;
 using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Extensions;
-using Azure.EntityServices.Tests.Common;
+using Common.Samples;
+using Common.Samples.Models;
+using Common.Samples.Tools.Fakes;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -34,7 +34,7 @@ namespace Azure.EntityServices.Table.Tests
             person.Situation = Situation.Divorced;
 
             var tableEntity = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -66,7 +66,7 @@ namespace Azure.EntityServices.Table.Tests
 
             var binder = new TableEntityBinder<PersonEntity>(person, partitionName, person.PersonId.ToString());
 
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -112,7 +112,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Bind_On_Update()
         {
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -140,7 +140,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Bind_Metadatas_On_Update()
         {
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -174,7 +174,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Bind_Metadatas_On_Merge()
         {
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -213,7 +213,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Bind_DynamicProps()
         {
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 var dynamicProps = new Dictionary<string, Func<PersonEntity, object>>() { ["_distance_less_than_500m"] = (e) => e.Distance < 500 };
@@ -239,9 +239,9 @@ namespace Azure.EntityServices.Table.Tests
                 replaced.Should().ContainKey("_distance_less_than_500m");
                 (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();
             }
-            catch 
-            { 
-             throw;
+            catch
+            {
+                throw;
             }
             finally
             {
@@ -255,7 +255,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             var person = new PersonEntity();
 
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -293,7 +293,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             var person = Fakers.CreateFakePerson().Generate();
 
-            var client = new TableClient(TestEnvironment.ConnectionString, NewTableName());
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
             try
             {
                 await client.CreateIfNotExistsAsync();
@@ -320,7 +320,7 @@ namespace Azure.EntityServices.Table.Tests
             }
         }
 
-        private static async Task<TableEntity> MergeThenRetrieveAsync<T>(TableClient client, T tableEntity)
+        private static async Task<TableEntity> MergeThenRetrieveAsync<T>(Data.Tables.TableClient client, T tableEntity)
             where T : class, ITableEntity, new()
 
         {
@@ -328,7 +328,7 @@ namespace Azure.EntityServices.Table.Tests
             return await client.GetEntityAsync<TableEntity>(tableEntity.PartitionKey, tableEntity.RowKey);
         }
 
-        private static async Task<TableEntity> UpsertAndGetEntity<T>(TableClient client, T tableEntity)
+        private static async Task<TableEntity> UpsertAndGetEntity<T>(Data.Tables.TableClient client, T tableEntity)
            where T : class, ITableEntity, new()
         {
             await client.UpsertEntityAsync(tableEntity, TableUpdateMode.Replace);

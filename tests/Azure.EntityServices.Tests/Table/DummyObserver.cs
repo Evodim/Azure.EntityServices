@@ -1,5 +1,5 @@
 ﻿using Azure.EntityServices.Tables;
-using Azure.EntityServices.Table.Common.Models;
+using Common.Samples.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,10 +15,12 @@ namespace Azure.EntityServices.Table.Tests
         public long CreatedCount => _upserted;
         public long DeletedCount => _deleted;
 
+        public string Name { get; set; }
+
         public ConcurrentDictionary<string, PersonEntity> Persons = new();
 
         public Task OnCompletedAsync()
-        { 
+        {
             return Task.CompletedTask;
         }
 
@@ -30,15 +32,14 @@ namespace Azure.EntityServices.Table.Tests
 
         public Task OnNextAsync(IEnumerable<IEntityBinderContext<PersonEntity>> contextBatch)
         {
-           
             foreach (var context in contextBatch)
             {
-                //ignore indexed tags changes 
+                //ignore indexed tags changes
                 if (context.EntityBinder.RowKey.StartsWith("~") ||
                     context.EntityBinder.PartitionKey.StartsWith("~"))
                 {
                     continue;
-                }    
+                }
                 var entity = context.EntityBinder.UnBind();
 
                 switch (context.EntityOperation)
@@ -48,12 +49,14 @@ namespace Azure.EntityServices.Table.Tests
                         Persons.Remove(context.EntityBinder.PartitionKey + entity.PersonId, out var _);
                         Interlocked.Increment(ref _deleted);
                         break;
+
                     case EntityOperation.Add:
                     case EntityOperation.AddOrMerge:
                     case EntityOperation.AddOrReplace:
                         Persons.TryAdd(context.EntityBinder.PartitionKey + entity.PersonId, entity);
                         Interlocked.Increment(ref _upserted);
                         break;
+
                     case EntityOperation.Merge:
                     case EntityOperation.Replace:
 

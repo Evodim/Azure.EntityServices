@@ -14,15 +14,16 @@ namespace Azure.EntityServices.Tables.Core
         private readonly TableBatchClientOptions _options;
         private readonly Func<IEnumerable<TableTransactionAction>, Task> _observer;
         private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
+        private readonly TableServiceClient _tableClientService;
         private readonly Queue<TableTransactionAction> _pendingOperations;
-        private readonly string _tableName;
-        private readonly string _connectionString;
+        private readonly string _tableName; 
         private IEntityTransactionGroupPipeline _pipeline;
 #if DEBUG
         private int _taskCount = 0;
 #endif
 
         public TableBatchClient(
+            TableServiceClient tableClientService,
             TableBatchClientOptions options,
             AsyncRetryPolicy retryPolicy,
             Func<EntityTransactionGroup, Task<EntityTransactionGroup>> preProcessor,
@@ -31,13 +32,13 @@ namespace Azure.EntityServices.Tables.Core
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
 
-            _pendingOperations = new Queue<TableTransactionAction>();
-            _connectionString = options.ConnectionString;
+            _pendingOperations = new Queue<TableTransactionAction>(); 
             _tableName = options.TableName;
             _retryPolicy = retryPolicy;
             _options = options;
             _observer = observer;
             _preProcessor = preProcessor;
+            _tableClientService = tableClientService;
         }
 
         public decimal OutstandingOperations => _pendingOperations.Count;
@@ -81,7 +82,7 @@ namespace Azure.EntityServices.Tables.Core
         public async Task SubmitToPipelineAsync<TEntity>(string partitionKey, CancellationToken cancellationToken = default)
             where TEntity : ITableEntity, new()
         {
-            var client = new TableClient(_connectionString, _tableName);
+            var client = _tableClientService.GetTableClient(_options.TableName);
             if (_pipeline == null)
             {
                 _pipeline = CustomTplBlocks.CreatePipeline(_preProcessor, async transactions =>
@@ -140,7 +141,7 @@ namespace Azure.EntityServices.Tables.Core
         {
             if (_pendingOperations.Count != 0)
             {
-                var client = new TableClient(_connectionString, _tableName);
+                var client = _tableClientService.GetTableClient(_options.TableName);
 
                 var actions = new EntityTransactionGroup(_pendingOperations.First().Entity.PartitionKey);
                 actions.Actions.Add(_pendingOperations.Dequeue());

@@ -6,7 +6,7 @@
         {
         }
 
-        public EntityTableClientOptions(string connectionString,
+        public EntityTableClientOptions(
             string tableName,
             int maxParallelTransactions = -1,
             int maxItemToGroup = 1000,
@@ -15,7 +15,6 @@
             bool handleTagMutation = false
             )
         {
-            ConnectionString = connectionString;
             TableName = tableName;
             MaxParallelTransactions = maxParallelTransactions;
             MaxOperationPerTransaction = maxItemInTransaction;
@@ -25,7 +24,6 @@
         }
 
         public bool CreateTableIfNotExists { get; set; }
-        public string ConnectionString { get; set; }
         public string TableName { get; set; }
         public int MaxParallelTransactions { get; set; } = -1;
         public int MaxOperationPerTransaction { get; set; } = 100;

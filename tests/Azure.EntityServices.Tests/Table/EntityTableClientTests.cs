@@ -1,9 +1,9 @@
 ﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Table.Common.Fakes;
-using Azure.EntityServices.Table.Common.Models;
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Extensions;
-using Azure.EntityServices.Tests.Common;
+using Common.Samples;
+using Common.Samples.Models;
+using Common.Samples.Tools.Fakes;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -20,8 +20,7 @@ namespace Azure.EntityServices.Table.Tests
         public EntityTableClientTests()
         {
             _commonOptions = () => new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
+            { 
                 CreateTableIfNotExists = true,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
                 HandleTagMutation = true
@@ -34,11 +33,12 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -54,11 +54,12 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -91,11 +92,12 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
             person.Altitude = null;
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -112,11 +114,11 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .IgnoreProp(p => p.Genre)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
@@ -134,11 +136,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -172,11 +174,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -209,10 +211,10 @@ namespace Azure.EntityServices.Table.Tests
         public async Task Should_Set_Primary_Key_On_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
             });
             try
             {
@@ -231,10 +233,10 @@ namespace Azure.EntityServices.Table.Tests
         public async Task Should_Get_Indexed_Tag_After_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddTag(p => p.LastName);
             });
             try
@@ -262,10 +264,10 @@ namespace Azure.EntityServices.Table.Tests
             static string First3Char(string s) => s.ToLower()[..3];
 
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
             });
             try
@@ -286,10 +288,10 @@ namespace Azure.EntityServices.Table.Tests
         {
             static string First3Char(string s) => s.ToLower()[..3];
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
                 c.AddTag("_FirstLastName3Chars");
             });
@@ -320,10 +322,10 @@ namespace Azure.EntityServices.Table.Tests
 
             var person = Fakers.CreateFakePerson().Generate();
 
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
-                c.SetPrimaryKeyProp(p => p.PersonId);
+                c.SetRowKeyProp(p => p.PersonId);
                 c.AddTag("_FirstLastName3Chars");
                 c.AddTag(p => p.LastName);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
@@ -368,12 +370,12 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(10);
             var observer = new DummyObserver();
 
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
-                .AddObserver(nameof(DummyObserver), observer);
+                .AddObserver(nameof(DummyObserver),()=> observer);
             });
             try
             {
@@ -401,11 +403,11 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -415,7 +417,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter 
+                filter => filter
                 .WherePartitionKey()
                 .Equal(persons.First().TenantId)))
                 {
@@ -438,11 +440,11 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -482,11 +484,11 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -515,11 +517,11 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -530,7 +532,7 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.AddManyAsync(persons);
                 //get all entities both primary and projected
                 await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter 
+                filter => filter
                 .WherePartitionKey()
                 .Equal(persons.First().TenantId)
                 .And(p => p.Altitude)
@@ -557,11 +559,11 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -604,11 +606,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -638,11 +640,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -671,11 +673,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -707,11 +709,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -744,11 +746,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -780,11 +782,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -825,11 +827,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -866,11 +868,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -901,11 +903,11 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(1);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -940,11 +942,11 @@ namespace Azure.EntityServices.Table.Tests
             person.LocalCreated = default;
             person.LocalUpdated = default;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -969,11 +971,11 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -999,11 +1001,11 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.PersonId)
+                .SetRowKeyProp(p => p.PersonId)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
@@ -1032,11 +1034,11 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
-                .SetPrimaryKeyProp(p => p.LastName)
+                .SetRowKeyProp(p => p.LastName)
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });

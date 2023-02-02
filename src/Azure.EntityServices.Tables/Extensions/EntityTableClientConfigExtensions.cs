@@ -12,18 +12,18 @@ namespace Azure.EntityServices.Tables
             return config;
         }
 
-        public static EntityTableClientConfig<T> SetPrimaryKeyProp<T, P>(this EntityTableClientConfig<T> config, Expression<Func<T, P>> selector)
+        public static EntityTableClientConfig<T> SetRowKeyProp<T, P>(this EntityTableClientConfig<T> config, Expression<Func<T, P>> selector)
         {
             var property = selector.GetPropertyInfo();
-            config.PrimaryKeyProp = property;
-            config.PrimaryKeyResolver = null;
+            config.RowKeyProp = property;
+            config.RowKeyResolver = null;
             return config;
         }
 
-        public static EntityTableClientConfig<T> SetPrimaryKey<T>(this EntityTableClientConfig<T> config, Func<T, string> primaryKeyResolver)
+        public static EntityTableClientConfig<T> SetRowKey<T>(this EntityTableClientConfig<T> config, Func<T, string> rowKeyResolver)
         {
-            config.PrimaryKeyProp = null;
-            config.PrimaryKeyResolver = primaryKeyResolver;
+            config.RowKeyProp = null;
+            config.RowKeyResolver = rowKeyResolver;
             return config;
         }
 
@@ -46,9 +46,9 @@ namespace Azure.EntityServices.Tables
             return config;
         }
 
-        public static EntityTableClientConfig<T> AddObserver<T>(this EntityTableClientConfig<T> config, string observerName, IEntityObserver<T> entityObserver)
+        public static EntityTableClientConfig<T> AddObserver<T>(this EntityTableClientConfig<T> config, string observerName, Func<IEntityObserver<T>> entityObserverFactory)
         {
-            config.Observers.TryAdd(observerName, entityObserver);
+            config.Observers.TryAdd(observerName, entityObserverFactory);
             return config;
         }
 
