@@ -18,9 +18,9 @@ namespace TableClient.Basic.Sample
             //==============Entity options and configuratin section====================================================
             //set here for your technical stuff: table name, connection, parallelization
             var entityClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
-            .Configure(options=>
-               
-            { 
+            .Configure(options =>
+
+            {
                 options.TableName = $"{nameof(PersonEntity)}";
                 options.CreateTableIfNotExists = true;
             }
@@ -34,7 +34,8 @@ namespace TableClient.Basic.Sample
                 .IgnoreProp(p => p.OtherAddress)
 
                 //add computed props to store and compute dynamically additional fields of the entity
-                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France");
+                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3]);
             });
             //===============================================================================================
 
@@ -116,7 +117,7 @@ namespace TableClient.Basic.Sample
                 Console.WriteLine($"{count} iterated");
                 Console.CursorTop--;
             }
-           
+
 
             Console.WriteLine("====================================");
         }

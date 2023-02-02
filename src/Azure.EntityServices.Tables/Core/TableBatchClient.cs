@@ -16,7 +16,6 @@ namespace Azure.EntityServices.Tables.Core
         private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
         private readonly TableServiceClient _tableClientService;
         private readonly Queue<TableTransactionAction> _pendingOperations;
-        private readonly string _tableName; 
         private IEntityTransactionGroupPipeline _pipeline;
 #if DEBUG
         private int _taskCount = 0;
@@ -32,8 +31,7 @@ namespace Azure.EntityServices.Tables.Core
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = retryPolicy ?? throw new ArgumentNullException(nameof(retryPolicy));
 
-            _pendingOperations = new Queue<TableTransactionAction>(); 
-            _tableName = options.TableName;
+            _pendingOperations = new Queue<TableTransactionAction>();
             _retryPolicy = retryPolicy;
             _options = options;
             _observer = observer;
@@ -79,8 +77,7 @@ namespace Azure.EntityServices.Tables.Core
             _pendingOperations.Enqueue(new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity));
         }
 
-        public async Task SubmitToPipelineAsync<TEntity>(string partitionKey, CancellationToken cancellationToken = default)
-            where TEntity : ITableEntity, new()
+        public async Task SubmitToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default)
         {
             var client = _tableClientService.GetTableClient(_options.TableName);
             if (_pipeline == null)
@@ -99,7 +96,7 @@ namespace Azure.EntityServices.Tables.Core
                                return;
                            }
 #if DEBUG
-                           System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count());
+                           System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count);
 #endif
 
                            await _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations, cancellationToken));
@@ -109,10 +106,6 @@ namespace Azure.EntityServices.Tables.Core
                                await _observer.Invoke(operations);
                            }
 #if DEBUG
-                       }
-                       catch
-                       {
-                           throw;
                        }
                        finally
                        {
