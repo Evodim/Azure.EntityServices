@@ -35,7 +35,6 @@
 	</ItemGroup>	
 	<ItemGroup>
 		<PackageReference Include="Azure.Data.Tables" Version="12.7.1" />
-		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.0" />
 		<PackageReference Include="MinVer" Version="2.5.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

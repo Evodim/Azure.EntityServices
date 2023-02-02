@@ -1,59 +1,43 @@
-﻿using Azure.Data.Tables;
-using System;
+﻿using System;
 
 namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 {
-    public sealed class EntityTableClientBuilder<T> : IEntityTableClientBuilder<T>
-        where T : class, new()
+    public sealed class EntityTableClientBuilder<TEntity> : IEntityTableClientBuilder<TEntity>
+        where TEntity : class, new()
     {
         public EntityTableClientBuilder()
         {
         }
 
         private Action<EntityTableClientOptions> _optionsAction;
-        private Action<IServiceProvider, EntityTableClientConfig<T>> _configAction;
+        private Action<IServiceProvider, EntityTableClientConfig<TEntity>> _configAction;
 
-        public (EntityTableClientOptions, EntityTableClientConfig<T>) Build(IServiceProvider serviceProvider)
+        public (EntityTableClientOptions, EntityTableClientConfig<TEntity>) Build(IServiceProvider serviceProvider)
         {
             var sp = serviceProvider;
             var options = new EntityTableClientOptions();
-            var config = new EntityTableClientConfig<T>();
+            var config = new EntityTableClientConfig<TEntity>();
             _optionsAction?.Invoke(options);
-            _configAction?.Invoke(sp, config);
+            _configAction?.Invoke(sp,config);
             return (options, config);
         }
 
-        public IEntityTableClientBuilder<T> ConfigureEntity(Action<EntityTableClientConfig<T>> configurator)
+        public IEntityTableClientBuilder<TEntity> ConfigureEntity(Action<EntityTableClientConfig<TEntity>> entityConfigurator)
         {
-            _configAction = (_, config) => configurator.Invoke(config);
+            _configAction = (_, config) => entityConfigurator.Invoke(config);
             return this;
         }
 
-        public IEntityTableClientBuilder<T> ConfigureEntity(Action<IServiceProvider, EntityTableClientConfig<T>> configurator)
+        public IEntityTableClientBuilder<TEntity> ConfigureEntity(Action<IServiceProvider, EntityTableClientConfig<TEntity>> entityConfigurator)
         {
-            _configAction = configurator;
+            _configAction = entityConfigurator;
             return this;
         }
 
-        public IEntityTableClientBuilder<T> ConfigureOptions(Action<EntityTableClientOptions> optionsConfigurator)
+        public IEntityTableClientBuilder<TEntity> ConfigureOptions(Action<EntityTableClientOptions> optionsConfigurator)
         {
             _optionsAction = optionsConfigurator;
             return this;
-        }
-
-        public IEntityTableClientBuilder<T> ConfigureConnection(string connectionString)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEntityTableClientBuilder<T> ConfigureConnection(Uri serviceUri)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEntityTableClientBuilder<T> ConfigureConnection(Uri serviceUri, TableSharedKeyCredential sharedKeyCredential)
-        {
-            throw new NotImplementedException();
         }
     }
 }

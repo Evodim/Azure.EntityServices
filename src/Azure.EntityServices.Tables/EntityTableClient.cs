@@ -2,7 +2,6 @@
 using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Extensions;
-using Microsoft.Extensions.Azure;
 using Polly;
 using Polly.Retry;
 using System;
@@ -192,22 +191,19 @@ namespace Azure.EntityServices.Tables
             {
                 await observer.OnCompletedAsync();
             }
-        } 
+        }
+
         public EntityTableClient()
         {
-
         }
+
         internal EntityTableClient(TableServiceClient tableService)
         {
-            _tableServiceClient = tableService;  
+            _tableServiceClient = tableService;
         }
-        internal EntityTableClient(IAzureClientFactory<TableServiceClient> tableServiceFactory)
-        { 
-            _tableServiceClient = tableServiceFactory.CreateClient(typeof(T).Name); 
-        }
+
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
-            
             _options = options;
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";

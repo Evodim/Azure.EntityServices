@@ -8,55 +8,55 @@ namespace Azure.EntityServices.Tables.Extensions
 {
     public static class EntityTableServicesCollectionExtensions
     {
-        public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, string connectionString, Action<IEntityTableClientBuilder<T>> configBuilder)
-        where T : class, new()
+        public static IServiceCollection AddEntityTableClient<TEntity>(this IServiceCollection services, string connectionString, Action<IEntityTableClientBuilder<TEntity>> configBuilder)
+        where TEntity : class, new()
         {
             return services
                 .AddEntityTableClient(configBuilder)
-                .WithTableClientService<T>(connectionString);
+                .WithTableClientService<TEntity>(connectionString);
         }
 
-        public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, Uri serviceUri, Action<IEntityTableClientBuilder<T>> configBuilder)
-        where T : class, new()
+        public static IServiceCollection AddEntityTableClient<TEntity>(this IServiceCollection services, Uri serviceUri, Action<IEntityTableClientBuilder<TEntity>> configBuilder)
+        where TEntity : class, new()
         {
             return services
                 .AddEntityTableClient(configBuilder)
-                .WithTableClientService<T>(serviceUri);
+                .WithTableClientService<TEntity>(serviceUri);
         }
 
-        public static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services, Uri serviceUri, TableSharedKeyCredential sharedKeyCredential, Action<IEntityTableClientBuilder<T>> configBuilder)
-        where T : class, new()
+        public static IServiceCollection AddEntityTableClient<TEntity>(this IServiceCollection services, Uri serviceUri, TableSharedKeyCredential sharedKeyCredential, Action<IEntityTableClientBuilder<TEntity>> configBuilder)
+        where TEntity : class, new()
         {
             return services
                 .AddEntityTableClient(configBuilder)
-                .WithTableClientService<T>(serviceUri, sharedKeyCredential);
+                .WithTableClientService<TEntity>(serviceUri, sharedKeyCredential);
         }
 
-        private static IServiceCollection AddEntityTableClient<T>(this IServiceCollection services,
-        Action<IEntityTableClientBuilder<T>> configBuilder
+        private static IServiceCollection AddEntityTableClient<TEntity>(this IServiceCollection services,
+        Action<IEntityTableClientBuilder<TEntity>> configBuilder
         )
-        where T : class, new()
+        where TEntity : class, new()
         {
-            var builder = new EntityTableClientBuilder<T>();
+            var builder = new EntityTableClientBuilder<TEntity>();
 
             configBuilder.Invoke(builder);
 
-            services.AddTransient<IEntityTableClient<T>>(sp =>
+            services.AddTransient<IEntityTableClient<TEntity>>(sp =>
             {
                 var (options, config) = builder.Build(sp);
                 var tableServiceFactory = sp.GetRequiredService<IAzureClientFactory<TableServiceClient>>();
 
                 return EntityTableClient
-                .Create<T>(tableServiceFactory)
+                .Create<TEntity>(tableServiceFactory.CreateClient(typeof(TEntity).Name))
                 .Configure(options, config);
             });
             return services;
         }
 
-        public static IServiceCollection WithTableClientService<T>(this IServiceCollection services,
+        internal static IServiceCollection WithTableClientService<TEntity>(this IServiceCollection services,
          string connectionString,
          Action<TableClientOptions> optionsAction = null)
-         where T : class, new()
+         where TEntity : class, new()
 
         {
             services.AddAzureClients(clientBuilder =>
@@ -64,15 +64,15 @@ namespace Azure.EntityServices.Tables.Extensions
                 clientBuilder
                  .AddTableServiceClient(connectionString)
                  .ConfigureOptions(options => optionsAction?.Invoke(options))
-                 .WithName(typeof(T).Name);
+                 .WithName(typeof(TEntity).Name);
             });
             return services;
         }
 
-        public static IServiceCollection WithTableClientService<T>(this IServiceCollection services,
+        internal static IServiceCollection WithTableClientService<TEntity>(this IServiceCollection services,
         Uri endPoint,
         Action<TableClientOptions> optionsAction = null)
-        where T : class, new()
+        where TEntity : class, new()
 
         {
             services.AddAzureClients(clientBuilder =>
@@ -80,16 +80,16 @@ namespace Azure.EntityServices.Tables.Extensions
                 clientBuilder
                  .AddTableServiceClient(endPoint)
                  .ConfigureOptions(options => optionsAction?.Invoke(options))
-                 .WithName(typeof(T).Name);
+                 .WithName(typeof(TEntity).Name);
             });
             return services;
         }
 
-        public static IServiceCollection WithTableClientService<T>(this IServiceCollection services,
+        internal static IServiceCollection WithTableClientService<TEntity>(this IServiceCollection services,
          Uri endPoint,
          TableSharedKeyCredential tableSharedKeyCredential,
          Action<TableClientOptions> optionsAction = null)
-         where T : class, new()
+         where TEntity : class, new()
 
         {
             services.AddAzureClients(clientBuilder =>
@@ -97,7 +97,7 @@ namespace Azure.EntityServices.Tables.Extensions
                 clientBuilder
                  .AddTableServiceClient(endPoint, tableSharedKeyCredential)
                  .ConfigureOptions(options => optionsAction?.Invoke(options))
-                 .WithName(typeof(T).Name);
+                 .WithName(typeof(TEntity).Name);
             });
             return services;
         }
