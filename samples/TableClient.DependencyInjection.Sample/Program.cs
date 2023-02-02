@@ -54,13 +54,15 @@ namespace TableClient.DependencyInjection.Sample
                             .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
                             .AddTag(p => p.Created)
                             .AddTag(p => p.LastName)
-                            .AddTag("_FirstLastName3Chars")))
-
+                            .AddTag("_FirstLastName3Chars")                            
+                            )
                        .ConfigureOptions(options =>
                        {
                            options.TableName = $"{nameof(PersonEntity)}1";
                            options.CreateTableIfNotExists = true;
-                       })
+                       }))
+
+                       
                        .WithName($"{nameof(PersonEntity)}1");
 
                    clients
@@ -76,13 +78,14 @@ namespace TableClient.DependencyInjection.Sample
                             .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
                             .AddTag(p => p.Created)
                             .AddTag(p => p.LastName)
-                            .AddTag("_FirstLastName3Chars")))
-
+                            .AddTag("_FirstLastName3Chars"))
                           .ConfigureOptions(options =>
-                          {
-                              options.TableName = $"{nameof(PersonEntity)}2";
-                              options.CreateTableIfNotExists = true;
-                          })
+                            {
+                                options.TableName = $"{nameof(PersonEntity)}2";
+                                options.CreateTableIfNotExists = true;
+                            }))
+
+                          
                           .WithName($"{nameof(PersonEntity)}2");
                });
 
