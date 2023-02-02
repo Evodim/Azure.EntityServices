@@ -6,7 +6,6 @@ using Common.Samples.Models;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 
 namespace TableClient.DependencyInjection.Sample
 {
@@ -24,72 +23,29 @@ namespace TableClient.DependencyInjection.Sample
            })
            .ConfigureServices((hostContext, services) =>
            {
-               services.AddHostedService<EntityTableClientSampleConsole>();
-
-               var tableClientOptions = new EntityTableClientOptions(
-               $"{nameof(PersonEntity)}",
-               createTableIfNotExists: true);
-
-               var projectionClientOptions = new EntityTableClientOptions(
-                tableClientOptions.TableName);
+               services.AddHostedService<ProjectionWithDependencyInjectionSampleConsole>();
 
                services
-               .AddTransient(sp => new SampleProjectionObserver()
-                                    .Configure(TestEnvironment.ConnectionString, projectionClientOptions));
+               .AddTransient<SampleProjectionObserver>();
 
-               //Register two named IEntityTableClient<TEntity> implementations factories using AzureClientFactoryBuilder
+               //Register projection IEntityTableClient<PersonEntity> named implementation factory to be injected with IAzureClientFactory<IEntityTableclient<PersonEntity>>
                services.AddAzureClients(clients =>
                {
                    clients
                        .AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,
-                       entityBuilder => entityBuilder 
-                       .ConfigureEntity(config =>
-                            config
-                            .SetPartitionKey(p => p.TenantId)
-                            .SetRowKeyProp(p => p.PersonId)
-                            .IgnoreProp(p => p.OtherAddress)
-                            .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                            .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
-                            .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                            .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
-                            .AddTag(p => p.Created)
-                            .AddTag(p => p.LastName)
-                            .AddTag("_FirstLastName3Chars")                            
-                            )
-                       .ConfigureOptions(options =>
-                       {
-                           options.TableName = $"{nameof(PersonEntity)}1";
-                           options.CreateTableIfNotExists = true;
-                       }))
-
-                       
-                       .WithName($"{nameof(PersonEntity)}1");
-
-                   clients
-                       .AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,
                         entityBuilder => entityBuilder
                           .ConfigureEntity(config => config
-                            .SetPartitionKey(p => p.TenantId)
-                            .SetRowKeyProp(p => p.PersonId)
-                            .IgnoreProp(p => p.OtherAddress)
-                            .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                            .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
-                            .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                            .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
-                            .AddTag(p => p.Created)
-                            .AddTag(p => p.LastName)
-                            .AddTag("_FirstLastName3Chars"))
+                            .SetPartitionKey(p => $"~projection-{p.LastName?.ToLowerInvariant()[..3]}")
+                            .SetRowKey(p => $"{p.LastName}-{p.PersonId}"))
                           .ConfigureOptions(options =>
                             {
-                                options.TableName = $"{nameof(PersonEntity)}2";
+                                options.TableName = $"{nameof(PersonEntity)}";
                                 options.CreateTableIfNotExists = true;
                             }))
-
-                          
-                          .WithName($"{nameof(PersonEntity)}2");
+                          .WithName($"{nameof(SampleProjectionObserver)}");
                });
 
-               //Register default/global IEntityTableClient<TEntity> instance (without AzureClientFactoryBuilder)
+               //Register default IEntityTableClient<PersonEntity> implementation factory to be injected directly with IEntityTableclient<PersonEntity>
                services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString, builder =>
                {
                    builder
@@ -104,11 +60,6 @@ namespace TableClient.DependencyInjection.Sample
                       .IgnoreProp(p => p.OtherAddress)
                       .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
                       .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
-                      .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                      .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
-                      .AddTag(p => p.Created)
-                      .AddTag(p => p.LastName)
-                      .AddTag("_FirstLastName3Chars")
                       .AddObserver("LastNameProjection", () => sp.GetService<SampleProjectionObserver>())
                       );
                });
