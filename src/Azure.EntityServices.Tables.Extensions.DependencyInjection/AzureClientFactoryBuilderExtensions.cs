@@ -5,7 +5,7 @@ using System;
 
 namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 {
-    public static class AzureClientBuilderExtensions
+    public static class AzureClientFactoryBuilderExtensions
     {
         /// Registers a <see cref="EntityTableClient"/> instance with the provided <paramref name="connectionString"/>
         public static IAzureClientBuilder<IEntityTableClient<TEntity>, EntityTableClientOptions> AddEntityTableClient<TEntity>(this AzureClientFactoryBuilder builder,
@@ -18,9 +18,9 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
             entityBuilderAction.Invoke(entityBuilder);
             return builder.AddClient<IEntityTableClient<TEntity>, EntityTableClientOptions>((options, provider) =>
              {
-                 var config = entityBuilder.Build(provider);
-                 return EntityTableClient.Create<TEntity>(new TableServiceClient(connectionString))
-                  .Configure(options, config.Item2);
+                 var (innerOptions, config) = entityBuilder.Build(provider);
+                 return EntityTableClient.Create<TEntity>(connectionString)
+                  .Configure(options ?? innerOptions, config);
              });
         }
 
@@ -36,9 +36,9 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
             entityBuilderAction.Invoke(entityBuilder);
             return builder.AddClient<IEntityTableClient<TEntity>, EntityTableClientOptions>((options, token, provider) =>
             {
-                var config = entityBuilder.Build(provider);
+                var (innerOptions, config) = entityBuilder.Build(provider);
                 return EntityTableClient.Create<TEntity>(serviceUri, token)
-                 .Configure(options, config.Item2);
+                 .Configure(options ?? innerOptions, config);
             });
         }
 
@@ -55,9 +55,9 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
             entityBuilderAction.Invoke(entityBuilder);
             return builder.AddClient<IEntityTableClient<TEntity>, EntityTableClientOptions>((options, provider) =>
             {
-                var config = entityBuilder.Build(provider);
+                var (innerOptions,config) = entityBuilder.Build(provider);
                 return EntityTableClient.Create<TEntity>(serviceUri, sharedKeyCredential)
-                 .Configure(options, config.Item2);
+                 .Configure(options ?? innerOptions, config);
             });
         }
     }

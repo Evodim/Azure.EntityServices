@@ -26,16 +26,16 @@ namespace TableClient.DependencyInjection.Sample
            {
                services.AddHostedService<EntityTableClientSampleConsole>();
 
-             var tableClientOptions = new EntityTableClientOptions(
-             TestEnvironment.ConnectionString,
+             var tableClientOptions = new EntityTableClientOptions( 
              $"{nameof(PersonEntity)}",
              createTableIfNotExists: true);
 
                var projectionClientOptions = new EntityTableClientOptions(
-                tableClientOptions.ConnectionString,
                 tableClientOptions.TableName);
 
-               services.AddTransient(sp => new SampleProjectionObserver().Configure(projectionClientOptions));
+               services
+               .AddTransient(sp => new SampleProjectionObserver()
+                                    .Configure(TestEnvironment.ConnectionString,projectionClientOptions));
 
                //Register named  IEntityTableClient<TEntity> implementation factories using AzureClientFactoryBuilder
                services.AddAzureClients(clients =>
@@ -67,7 +67,6 @@ namespace TableClient.DependencyInjection.Sample
                    clients
                        .AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,
                         entityBuilder => entityBuilder
-
                           .ConfigureEntity(config =>
                                           config
                                           .SetPartitionKey(p => p.TenantId)

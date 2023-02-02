@@ -20,8 +20,7 @@ namespace Azure.EntityServices.Table.Tests
         public EntityTableClientTests()
         {
             _commonOptions = () => new EntityTableClientOptions()
-            {
-                ConnectionString = TestEnvironment.ConnectionString,
+            { 
                 CreateTableIfNotExists = true,
                 TableName = $"{nameof(EntityTableClientTests)}{Guid.NewGuid():N}",
                 HandleTagMutation = true
@@ -34,7 +33,8 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
@@ -54,7 +54,8 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
@@ -91,7 +92,8 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
             person.Altitude = null;
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
@@ -112,7 +114,7 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(1);
             var person = persons.First();
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                  SetPartitionKey(p => p.TenantId)
@@ -134,7 +136,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -172,7 +174,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -209,7 +211,7 @@ namespace Azure.EntityServices.Table.Tests
         public async Task Should_Set_Primary_Key_On_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
@@ -231,7 +233,7 @@ namespace Azure.EntityServices.Table.Tests
         public async Task Should_Get_Indexed_Tag_After_InsertOrUpdate()
         {
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
@@ -262,7 +264,7 @@ namespace Azure.EntityServices.Table.Tests
             static string First3Char(string s) => s.ToLower()[..3];
 
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
@@ -286,7 +288,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             static string First3Char(string s) => s.ToLower()[..3];
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
@@ -320,7 +322,7 @@ namespace Azure.EntityServices.Table.Tests
 
             var person = Fakers.CreateFakePerson().Generate();
 
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
@@ -368,7 +370,7 @@ namespace Azure.EntityServices.Table.Tests
             var persons = Fakers.CreateFakePerson().Generate(10);
             var observer = new DummyObserver();
 
-            var tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.SetPartitionKey(p => p.TenantId)
                 .SetRowKeyProp(p => p.PersonId)
@@ -401,7 +403,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -438,7 +440,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -482,7 +484,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -515,7 +517,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -557,7 +559,7 @@ namespace Azure.EntityServices.Table.Tests
             var partitionName = Guid.NewGuid().ToString();
             persons.ForEach(p => p.TenantId = partitionName);
 
-            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(_commonOptions(), config =>
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), config =>
             {
                 config
                 .SetPartitionKey(p => p.TenantId)
@@ -604,7 +606,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -638,7 +640,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -671,7 +673,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -707,7 +709,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -744,7 +746,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -780,7 +782,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -825,7 +827,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -866,7 +868,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -901,7 +903,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(1);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -940,7 +942,7 @@ namespace Azure.EntityServices.Table.Tests
             person.LocalCreated = default;
             person.LocalUpdated = default;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
@@ -969,7 +971,7 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
@@ -999,7 +1001,7 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
@@ -1032,7 +1034,7 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(_commonOptions(), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(_commonOptions(), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)

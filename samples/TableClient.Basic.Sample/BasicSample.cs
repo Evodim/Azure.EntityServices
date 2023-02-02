@@ -17,9 +17,10 @@ namespace TableClient.Basic.Sample
         {
             //==============Entity options and configuratin section====================================================
             //set here for your technical stuff: table name, connection, parallelization
-            var entityClient = EntityTableClient.Create<PersonEntity>(options =>
-            {
-                options.ConnectionString = TestEnvironment.ConnectionString;
+            var entityClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+            .Configure(options=>
+               
+            { 
                 options.TableName = $"{nameof(PersonEntity)}";
                 options.CreateTableIfNotExists = true;
             }

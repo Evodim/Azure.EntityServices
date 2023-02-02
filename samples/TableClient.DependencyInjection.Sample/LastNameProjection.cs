@@ -28,10 +28,11 @@ namespace TableClient.DependencyInjection.Sample
             
         }
        
-        public SampleProjectionObserver Configure(EntityTableClientOptions options)
+        public SampleProjectionObserver Configure(string connectionString,EntityTableClientOptions options)
         {
 
-            _client = EntityTableClient.Create<PersonEntity>(
+            _client = EntityTableClient.Create<PersonEntity>(connectionString)
+              .Configure(
                options,
                 config =>
                 {
@@ -42,7 +43,8 @@ namespace TableClient.DependencyInjection.Sample
                 });
 
             _clientFactory = () =>
-              EntityTableClient.Create<PersonEntity>(
+              EntityTableClient.Create<PersonEntity>(connectionString)
+              .Configure(
                options,
                 config =>
                 {

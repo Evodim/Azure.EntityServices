@@ -33,7 +33,7 @@ namespace TableClient.Legacy.Sample
                        options.TableName = $"{nameof(PersonEntity)}";
                        options.CreateTableIfNotExists = true;
                    })
-                   .ConfigureEntity(config => config
+                   .ConfigureEntity(entityConfig => entityConfig
                       .SetPartitionKey(p => p.TenantId)
                       .SetRowKeyProp(p => p.PersonId)
 

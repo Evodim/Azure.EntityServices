@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Tables
 
         private TableClient _client;
 
-        private TableServiceClient _tableServiceClient;
+        private readonly TableServiceClient _tableServiceClient;
 
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
@@ -55,7 +55,6 @@ namespace Azure.EntityServices.Tables
                 new TableBatchClientOptions()
                 {
                     TableName = _options.TableName,
-                    ConnectionString = _options.ConnectionString,
                     MaxItemInBatch = _options.MaxItemToGroup,
                     MaxItemInTransaction = _options.MaxOperationPerTransaction,
                     MaxParallelTasks = _options.MaxParallelTransactions == -1 ? Environment.ProcessorCount : _options.MaxParallelTransactions
@@ -207,7 +206,6 @@ namespace Azure.EntityServices.Tables
             _options = options;
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
-            _tableServiceClient ??= new TableServiceClient(options.ConnectionString);
             _client ??= _tableServiceClient.GetTableClient(options.TableName);
             _observerInstances = _config.Observers.Select(o => o.Value.Invoke()).ToList();
 
