@@ -22,7 +22,7 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
              {
                  var (innerOptions, config) = entityBuilder.Build(provider);
                  return EntityTableClient.Create<TEntity>(connectionString)
-                  .Configure(options ?? innerOptions, config);
+                  .Configure(innerOptions ?? options, config);
              });
         }
 
@@ -40,7 +40,7 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
             {
                 var (innerOptions, config) = entityBuilder.Build(provider);
                 return EntityTableClient.Create<TEntity>(serviceUri, token)
-                 .Configure(options ?? innerOptions, config);
+                 .Configure(innerOptions ?? options, config);
             });
         }
 
@@ -59,7 +59,7 @@ namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
             {
                 var (innerOptions,config) = entityBuilder.Build(provider);
                 return EntityTableClient.Create<TEntity>(serviceUri, sharedKeyCredential)
-                 .Configure(options ?? innerOptions, config);
+                 .Configure(innerOptions ?? options, config);
             });
         }
     }
