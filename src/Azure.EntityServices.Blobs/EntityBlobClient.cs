@@ -1,5 +1,8 @@
-﻿using Azure.EntityServices.Blobs.Extensions;
+﻿using Azure.Core;
+using Azure.EntityServices.Blobs.Extensions;
 using Azure.EntityServices.Queries;
+using Azure.Storage.Blobs;
+using Azure.Storage;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,33 +18,28 @@ namespace Azure.EntityServices.Blobs
     public class EntityBlobClient<T> : IEntityBlobClient<T>
         where T : class, new()
     {
-        private readonly BlobStorageService _blobStorageService;
-        private readonly EntityBlobClientOptions _options;
-        private readonly EntityBlobClientConfig<T> _config;
+        private BlobStorageService _blobStorageService;
+        private EntityBlobClientOptions _options;
+        private EntityBlobClientConfig<T> _config;
         protected readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties();
 
-        public EntityBlobClient(EntityBlobClientOptions options, Action<EntityBlobClientConfig<T>> configurator)
+        public EntityBlobClient()
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _config = new EntityBlobClientConfig<T>();
 
-             configurator?.Invoke(_config);
-            _blobStorageService = new BlobStorageService(new BlobStorageServiceOptions()
-            {
-                ConnectionString = _options.ConnectionString,
-                Container = _options.Container
-            });
         }
-        public EntityBlobClient(EntityBlobClientOptions options, EntityBlobClientConfig<T> config)
+
+        public EntityBlobClient(BlobStorageService blobStorageService)
+        {
+            _blobStorageService = blobStorageService;
+        }
+      
+        
+        public EntityBlobClient<T> Configure(EntityBlobClientOptions options, EntityBlobClientConfig<T> config)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            
-            _blobStorageService = new BlobStorageService(new BlobStorageServiceOptions()
-            {
-                ConnectionString = _options.ConnectionString,
-                Container = _options.Container
-            });
+
+            return this;
         }
 
         public async Task<BinaryData> GetContentAsync(string entityRef)

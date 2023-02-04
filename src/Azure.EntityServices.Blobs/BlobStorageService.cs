@@ -1,4 +1,6 @@
-﻿using Azure.EntityServices.Blobs.Extensions;
+﻿using Azure.Core;
+using Azure.EntityServices.Blobs.Extensions;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Polly;
@@ -24,14 +26,16 @@ namespace Azure.EntityServices.Blobs
         private readonly BlobServiceClient _blobServiceClient;
         private readonly AsyncRetryPolicy _retryPolicy;
 
-        public BlobStorageService(BlobStorageServiceOptions options)
+        internal BlobStorageService(BlobServiceClient blobServiceClient, BlobStorageServiceOptions options = null)
         {
+            _blobServiceClient = blobServiceClient;
             _options = options;
             _client = new BlobContainerClient(_options.ConnectionString, _options.Container);
-            _blobServiceClient = new BlobServiceClient(_options.ConnectionString);
             _retryPolicy = Policy.Handle<RequestFailedException>(ex => HandleExceptions(_options.Container, _blobServiceClient, ex))
                              .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
+
         }
+      
 
         public async Task<IDictionary<string, string>> GetBlobProperiesAsync(string blobRef)
         {
