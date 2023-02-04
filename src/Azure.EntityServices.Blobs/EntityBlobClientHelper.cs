@@ -7,13 +7,13 @@ namespace Azure.EntityServices.Blobs
 {
     public static class EntityBlobClient
     {
-        public static EntityBlobClient<T> Create<T>(BlobService blobStorageService)
+        public static EntityBlobClient<T> Create<T>(BlobService blobService)
 
              where T : class, new()
         {
-            _ = blobStorageService ?? throw new ArgumentNullException(nameof(blobStorageService));
+            _ = blobService ?? throw new ArgumentNullException(nameof(blobService));
 
-            return new EntityBlobClient<T>(blobStorageService);
+            return new EntityBlobClient<T>(blobService);
         }
 
         public static EntityBlobClient<T> Create<T>(string connectionString, BlobClientOptions blobClientOptions = null)

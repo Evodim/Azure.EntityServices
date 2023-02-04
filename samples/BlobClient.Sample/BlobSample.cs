@@ -15,11 +15,11 @@ namespace TableClient.Performance.Sample
 
         public static async Task Run()
         {
-            var options = new EntityBlobClientOptions(TestEnvironment.ConnectionString,
-                $"{nameof(DocumentEntity)}Container".ToLower());
+            var options = new EntityBlobClientOptions($"{nameof(DocumentEntity)}Container".ToLower());
 
             //Configure entity binding in the table storage
-            var client = new EntityBlobClient<DocumentEntity>(options, config =>
+            var client = EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(options, config =>
              config
                 .SetBlobContentProp(p => p.Content)
                 .SetBlobPath(p => $"{p.Created:yyyy/MM/dd}")
@@ -51,6 +51,7 @@ namespace TableClient.Performance.Sample
                     foreach (var entity in readed)
                     {
                         Console.WriteLine($"{client.GetEntityReference(entity)}");
+                        count++;
                     }
                 }
                 Console.WriteLine($"Readed : {count}");
