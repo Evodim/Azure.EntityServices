@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Blobs
 {
-    public interface IBlobStorageService
+    public interface IBlobService
     {
         Task UploadAsync(string blobRef, Stream streamContent);
 

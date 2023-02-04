@@ -2,6 +2,7 @@
 
 namespace Azure.EntityServices.Tables
 {
+
     /// <summary>
     /// Handle and persist tag in a query filter 
     /// </summary>

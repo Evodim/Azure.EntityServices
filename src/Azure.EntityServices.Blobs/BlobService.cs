@@ -1,6 +1,4 @@
-﻿using Azure.Core;
-using Azure.EntityServices.Blobs.Extensions;
-using Azure.Storage;
+﻿using Azure.EntityServices.Blobs.Extensions;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Polly;
@@ -15,34 +13,37 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Blobs
 {
-    public class BlobStorageService : IBlobStorageService
+    public class BlobService : IBlobService
     {
         private static readonly IDictionary<string, PropertyInfo> HeaderProps = typeof(BlobHttpHeaders)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
              .ToDictionary(x => x.Name, x => x);
 
-        private readonly BlobStorageServiceOptions _options;
-        private readonly BlobContainerClient _client;
+        private BlobServiceOptions _options;
+        private BlobContainerClient _client;
         private readonly BlobServiceClient _blobServiceClient;
-        private readonly AsyncRetryPolicy _retryPolicy;
+        private AsyncRetryPolicy _retryPolicy;
 
-        internal BlobStorageService(BlobServiceClient blobServiceClient, BlobStorageServiceOptions options = null)
+        public BlobService(BlobServiceClient blobServiceClient)
         {
             _blobServiceClient = blobServiceClient;
-            _options = options;
-            _client = new BlobContainerClient(_options.ConnectionString, _options.Container);
-            _retryPolicy = Policy.Handle<RequestFailedException>(ex => HandleExceptions(_options.Container, _blobServiceClient, ex))
-                             .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
-
         }
-      
+
+        public BlobService Configure(BlobServiceOptions options)
+        {
+            _options = options;
+            _client = _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
+            _retryPolicy = Policy.Handle<RequestFailedException>(ex => HandleExceptions(_options.ContainerName, _blobServiceClient, ex))
+                             .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
+            return this;
+        }
 
         public async Task<IDictionary<string, string>> GetBlobProperiesAsync(string blobRef)
         {
-            var blob = _client.GetBlobClient(CleanupBasePath(blobRef)); 
+            var blob = _client.GetBlobClient(CleanupBasePath(blobRef));
 
-            var props = await blob.GetPropertiesAsync(); 
-            
+            var props = await blob.GetPropertiesAsync();
+
             return props.Value?.Metadata ?? new Dictionary<string, string>();
         }
 
@@ -90,7 +91,7 @@ namespace Azure.EntityServices.Blobs
         public async IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListAsync(string blobPath)
         {
             await foreach (var itemPage in _client.GetBlobsAsync(BlobTraits.Metadata, prefix: blobPath)
-                    .AsPages(pageSizeHint: _options.ResultPerPage))
+                    .AsPages(pageSizeHint: _options.MaxResultPerPage))
 
             {
                 yield return itemPage.Values.Select(blobItem => ExtractPropertiesFromBlob(blobItem).AsDictionnary()).ToList();
@@ -100,17 +101,17 @@ namespace Azure.EntityServices.Blobs
         public async IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListByTagsAsync(string tagQuery)
         {
             await foreach (var tagItems in _blobServiceClient.FindBlobsByTagsAsync(tagQuery)
-                .AsPages(pageSizeHint: _options.ResultPerPage))
+                .AsPages(pageSizeHint: _options.MaxResultPerPage))
             {
                 var propItems = new List<IDictionary<string, string>>();
 
                 foreach (var item in tagItems.Values)
                 {
-                   var props =await GetBlobProperiesAsync(item.BlobName);
+                    var props = await GetBlobProperiesAsync(item.BlobName);
                     props.Add("_Name", item.BlobName);
                     propItems.Add(props);
                 }
-               
+
                 yield return propItems;
             }
         }
@@ -132,9 +133,8 @@ namespace Azure.EntityServices.Blobs
 
             await _retryPolicy.ExecuteAsync(async () =>
             {
-                    streamContent.ResetPosition();
-                    await blob.UploadAsync(streamContent, overwrite: true);
-               
+                streamContent.ResetPosition();
+                await blob.UploadAsync(streamContent, overwrite: true);
             });
 
             if (tags != null && tags.Any())
@@ -175,7 +175,7 @@ namespace Azure.EntityServices.Blobs
 
         public Task DeleteContainerAsync()
         {
-            return _blobServiceClient.DeleteBlobContainerAsync(_options.Container);
+            return _blobServiceClient.DeleteBlobContainerAsync(_options.ContainerName);
         }
 
         private static Stream CreateStreamFromText(string content)
@@ -216,7 +216,6 @@ namespace Azure.EntityServices.Blobs
                 yield return prop;
             }
         }
-
 
         private static bool HandleExceptions(string containerName, BlobServiceClient serviceClient, RequestFailedException exception)
         {
