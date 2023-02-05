@@ -22,6 +22,7 @@ namespace BlobClient.BasicSample
             IAzureClientFactory<IEntityBlobClient<DocumentEntity>> azureFactory)
         {
             _entityBlobClient = entityBlobClient;
+            //you could also inject IAzureClientFactory to resolve mamed instances of IEntityBlobClient<T>
             _ = azureFactory.CreateClient("DocumentEntityClient1");
         }
         public  async Task Run()

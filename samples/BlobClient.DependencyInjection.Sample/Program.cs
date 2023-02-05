@@ -24,7 +24,9 @@ namespace BlobClient.BasicSample
            {
                services.AddHostedService<SampleConsole>();
 
-               //Register projection IEntityTableClient<PersonEntity> named implementation factory to be injected with IAzureClientFactory<IEntityTableclient<PersonEntity>>
+               //IEntityBlobClient<T> could be registred in two ways:
+
+               //Register IAzureClientFactory<IEntityBlobClient<T>> to inject IEntityBlobClient<T> named implementation factory
                services.AddAzureClients(clients =>
                {
                    clients.AddEntityBlobClient<DocumentEntity>(TestEnvironment.ConnectionString, builder =>
@@ -42,6 +44,9 @@ namespace BlobClient.BasicSample
                        });
                    }).WithName("DocumentEntityClient1");
                });
+
+               //Or
+               //Register directly IEntityBlobClient<T> as a global and default injection
                services.AddEntityBlobClient<DocumentEntity>(TestEnvironment.ConnectionString, builder =>
                 {
 

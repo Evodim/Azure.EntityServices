@@ -28,7 +28,9 @@ namespace TableClient.DependencyInjectionSample
                services
                .AddTransient<SampleProjectionObserver>();
 
-               //Register projection IEntityTableClient<PersonEntity> named implementation factory to be injected with IAzureClientFactory<IEntityTableclient<PersonEntity>>
+               //IEntityTableClient<T> could be registred in two ways:
+
+               //Register IAzureClientFactory<IEntityTableClient<T>> to inject IEntityTableClient<T> named implementation factory
                services.AddAzureClients(clients =>
                {
                    clients
@@ -45,7 +47,7 @@ namespace TableClient.DependencyInjectionSample
                           .WithName($"{nameof(SampleProjectionObserver)}");
                });
 
-               //Register default IEntityTableClient<PersonEntity> implementation factory to be injected directly with IEntityTableclient<PersonEntity>
+               //Register directly IEntityTableClient<T> as a global and default injection
                services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString, builder =>
                {
                    builder
