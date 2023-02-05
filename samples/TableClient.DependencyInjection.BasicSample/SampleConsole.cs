@@ -1,44 +1,27 @@
-﻿using Azure.EntityServices.Queries; 
+﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
-using Common.Samples;
 using Common.Samples.Models;
 using Common.Samples.Tools.Fakes;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace TableClient.BasicSample
+namespace TableClient.DependencyInjection.BasicSample
 {
-    public static class SampleConsole
+    public class SampleConsole : IHostedService
     {
-        private const int ENTITY_COUNT = 200;
+        private const int ENTITY_COUNT = 50;
+        private readonly IEntityTableClient<PersonEntity> _entityClient;
 
-        public static async Task Run()
+        public SampleConsole(IEntityTableClient<PersonEntity> entityClient)
         {
-            //==============Entity options and configuratin section====================================================
-            //set here for your technical stuff: table name, connection, parallelization
-            var _entityClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
-            .Configure(options =>
+            _entityClient = entityClient;
+        }
 
-            {
-                options.TableName = $"{nameof(PersonEntity)}";
-                options.CreateTableIfNotExists = true;
-            }
-
-            //set here your entity behavior dynamic fields, tags, observers
-            , config =>
-            {
-                config
-                .SetPartitionKey(p => p.TenantId)
-                .SetRowKeyProp(p => p.PersonId)
-                .IgnoreProp(p => p.OtherAddress)
-
-                //add computed props to store and compute dynamically additional fields of the entity
-                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3]);
-            });
-            //===============================================================================================
-
+        public async Task Run()
+        {
             var fakePersons = Fakers.CreateFakePerson(new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" });
 
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
@@ -75,7 +58,17 @@ namespace TableClient.BasicSample
                 Console.CursorTop--;
             }
 
-            Console.WriteLine("===================================="); 
+            Console.WriteLine("====================================");
+        }
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            return Run();
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
         }
     }
 }

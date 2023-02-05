@@ -8,7 +8,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TableClient.DependencyInjectionSample
+namespace TableClient.DependencyInjection.AdvancedSample
 {
     public class SampleConsole : IHostedService
     {
