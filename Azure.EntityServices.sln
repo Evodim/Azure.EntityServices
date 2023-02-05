@@ -23,19 +23,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Tables
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{12E4FDA9-194D-4758-BB02-1619C2956738}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.Performance.Sample", "samples\TableClient.Performance.Sample\TableClient.Performance.Sample.csproj", "{1AE5DF7B-3328-49B9-A455-D609ACC2BB95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.PerformanceSample", "samples\TableClient.Performance.Sample\TableClient.PerformanceSample.csproj", "{1AE5DF7B-3328-49B9-A455-D609ACC2BB95}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.DependencyInjection.Sample", "samples\TableClient.DependencyInjection.Sample\TableClient.DependencyInjection.Sample.csproj", "{498524E9-4591-4D15-80E5-A3745B92FC8E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.DependencyInjectionSample", "samples\TableClient.DependencyInjection.Sample\TableClient.DependencyInjectionSample.csproj", "{498524E9-4591-4D15-80E5-A3745B92FC8E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Samples", "Common.Samples\Common.Samples.csproj", "{ADAFA655-104A-4375-BA08-3A8007860B5A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlobClient.Sample", "samples\BlobClient.Sample\BlobClient.Sample.csproj", "{61ED3E91-9ED3-4D09-A51C-83ABA1F83D75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlobClient.BasicSample", "samples\BlobClient.Sample\BlobClient.BasicSample.csproj", "{61ED3E91-9ED3-4D09-A51C-83ABA1F83D75}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.Basic.Sample", "samples\TableClient.Basic.Sample\TableClient.Basic.Sample.csproj", "{5CEB65EF-0D90-493C-9A81-270B3914F3C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.BasicSample", "samples\TableClient.Basic.Sample\TableClient.BasicSample.csproj", "{5CEB65EF-0D90-493C-9A81-270B3914F3C4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.Legacy.Sample", "TableClient.Legacy.Sample\TableClient.Legacy.Sample.csproj", "{9DF46286-6193-4A5D-A127-866C76252419}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.LegacySample", "TableClient.Legacy.Sample\TableClient.LegacySample.csproj", "{9DF46286-6193-4A5D-A127-866C76252419}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.EntityServices.Blobs.Extensions.DependencyInjection", "src\Azure.EntityServices.Blobs.Extensions.DependencyInjection\Azure.EntityServices.Blobs.Extensions.DependencyInjection.csproj", "{6D5B1034-2ED7-4EBE-BC4E-6C93CBDCDED6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlobClient.DependencyInjection.Sample", "samples\BlobClient.DependencyInjection.Sample\BlobClient.DependencyInjection.Sample.csproj", "{BAB3206B-D2F7-4790-8629-76D7A33DC969}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,6 +93,10 @@ Global
 		{6D5B1034-2ED7-4EBE-BC4E-6C93CBDCDED6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D5B1034-2ED7-4EBE-BC4E-6C93CBDCDED6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D5B1034-2ED7-4EBE-BC4E-6C93CBDCDED6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAB3206B-D2F7-4790-8629-76D7A33DC969}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAB3206B-D2F7-4790-8629-76D7A33DC969}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAB3206B-D2F7-4790-8629-76D7A33DC969}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAB3206B-D2F7-4790-8629-76D7A33DC969}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -102,6 +108,7 @@ Global
 		{61ED3E91-9ED3-4D09-A51C-83ABA1F83D75} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 		{5CEB65EF-0D90-493C-9A81-270B3914F3C4} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 		{9DF46286-6193-4A5D-A127-866C76252419} = {12E4FDA9-194D-4758-BB02-1619C2956738}
+		{BAB3206B-D2F7-4790-8629-76D7A33DC969} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {92B5DB88-8C8E-4300-8891-C52633DDF5D9}

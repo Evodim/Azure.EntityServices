@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace TableClient.Performance.Sample
+namespace TableClient.PerformanceSample
 {
     public class EntityLoggerObserver<T> : IEntityObserver<T>
         where T : class

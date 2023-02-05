@@ -7,7 +7,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace TableClient.DependencyInjection.Sample
+namespace TableClient.DependencyInjectionSample
 {
     public static class Program
     {
@@ -23,7 +23,7 @@ namespace TableClient.DependencyInjection.Sample
            })
            .ConfigureServices((hostContext, services) =>
            {
-               services.AddHostedService<ProjectionWithDependencyInjectionSampleConsole>();
+               services.AddHostedService<SampleConsole>();
 
                services
                .AddTransient<SampleProjectionObserver>();

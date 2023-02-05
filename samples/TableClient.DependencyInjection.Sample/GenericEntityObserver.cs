@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TableClient.DependencyInjection.Sample
+namespace TableClient.DependencyInjectionSample
 {
     public class GenericEntityObserver<T> : IEntityObserver<T>
         where T : class, new()

@@ -9,9 +9,9 @@ using Common.Samples.Tools;
 using Common.Samples;
 using Common.Samples.Tools.Fakes;
 
-namespace TableClient.Performance.Sample
+namespace TableClient.PerformanceSample
 {
-    public static class TableSample
+    public static class SampleConsole
     {
         private const int ENTITY_COUNT = 200;
 

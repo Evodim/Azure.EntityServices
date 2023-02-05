@@ -1,21 +1,18 @@
-﻿using System; 
-using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Extensions;
+﻿using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Common.Samples;
 using Common.Samples.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
-
-namespace TableClient.Legacy.Sample
+namespace TableClient.LegacySample
 {
     public static class Program
     {
         public static void Main()
         {
-
             CreateHostBuilder(null).Build().Run();
-
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -24,12 +21,12 @@ namespace TableClient.Legacy.Sample
            {
            })
            .ConfigureServices((hostContext, services) =>
-           {  
-               services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,builder=>
+           {
+               services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString, builder =>
                {
                    builder
                    .ConfigureOptions(options =>
-                   { 
+                   {
                        options.TableName = $"{nameof(PersonEntity)}";
                        options.CreateTableIfNotExists = true;
                    })
@@ -47,9 +44,9 @@ namespace TableClient.Legacy.Sample
                       .AddTag(p => p.Created)
                       .AddTag(p => p.LastName)
                       .AddTag("_FirstLastName3Chars"));
-                });
+               });
 
-               services.AddHostedService<LegacySample>();
+               services.AddHostedService<SampleConsole>();
            });
     }
 }

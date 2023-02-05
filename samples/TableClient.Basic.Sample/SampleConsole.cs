@@ -1,27 +1,44 @@
-﻿using Azure.EntityServices.Queries;
+﻿using Azure.EntityServices.Queries; 
 using Azure.EntityServices.Tables;
+using Common.Samples;
 using Common.Samples.Models;
 using Common.Samples.Tools.Fakes;
-using Microsoft.Extensions.Hosting;
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace TableClient.Legacy.Sample
+namespace TableClient.BasicSample
 {
-    public class LegacySample : IHostedService
+    public static class SampleConsole
     {
         private const int ENTITY_COUNT = 200;
-        private readonly IEntityTableClient<PersonEntity> _entityClient;
 
-        public LegacySample(IEntityTableClient<PersonEntity> entityClient)
+        public static async Task Run()
         {
-            _entityClient = entityClient;
-        }
+            //==============Entity options and configuratin section====================================================
+            //set here for your technical stuff: table name, connection, parallelization
+            var entityClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+            .Configure(options =>
 
-        public async Task Run()
-        {
+            {
+                options.TableName = $"{nameof(PersonEntity)}";
+                options.CreateTableIfNotExists = true;
+            }
+
+            //set here your entity behavior dynamic fields, tags, observers
+            , config =>
+            {
+                config
+                .SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.PersonId)
+                .IgnoreProp(p => p.OtherAddress)
+
+                //add computed props to store and compute dynamically additional fields of the entity
+                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
+                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3]);
+            });
+            //===============================================================================================
+
             var fakePersons = Fakers.CreateFakePerson(new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" });
             var onePerson = fakePersons.Generate(1).FirstOrDefault();
 
@@ -31,20 +48,20 @@ namespace TableClient.Legacy.Sample
 
             Console.Write($"Adding entities...");
 
-            await _entityClient.AddAsync(onePerson);
+            await entityClient.AddAsync(onePerson);
 
-            await _entityClient.AddOrReplaceAsync(onePerson);
+            await entityClient.AddOrReplaceAsync(onePerson);
 
-            await _entityClient.AddManyAsync(entities);
+            await entityClient.AddManyAsync(entities);
 
-            await _entityClient.AddOrReplaceManyAsync(entities);
+            await entityClient.AddOrReplaceManyAsync(entities);
 
             Console.WriteLine($"Querying entities ...");
 
-            _ = await _entityClient.GetByIdAsync(onePerson.TenantId, onePerson.PersonId);
+            _ = await entityClient.GetByIdAsync(onePerson.TenantId, onePerson.PersonId);
 
             var count = 0;
-            await foreach (var _ in _entityClient.GetAsync(
+            await foreach (var _ in entityClient.GetAsync(
                    filter => filter
                     .Where(p => p.LastName)
                     .Equal(onePerson.LastName)
@@ -59,7 +76,7 @@ namespace TableClient.Legacy.Sample
             Console.WriteLine();
 
             count = 0;
-            await foreach (var _ in _entityClient.GetAsync(
+            await foreach (var _ in entityClient.GetAsync(
                 filter => filter
                 .WhereTag(p => p.LastName)
                 .Equal(onePerson.LastName)
@@ -75,7 +92,7 @@ namespace TableClient.Legacy.Sample
             Console.WriteLine();
 
             count = 0;
-            await foreach (var _ in _entityClient.GetAsync(
+            await foreach (var _ in entityClient.GetAsync(
                     filter => filter
                     .WherePartitionKey()
                     .Equal("tenant1")
@@ -89,7 +106,7 @@ namespace TableClient.Legacy.Sample
             Console.WriteLine();
 
             count = 0;
-            await foreach (var _ in _entityClient.GetAsync(
+            await foreach (var _ in entityClient.GetAsync(
                 filter => filter
                 .WhereTag("_FirstLastName3Chars")
                 .Equal("arm")
@@ -101,17 +118,8 @@ namespace TableClient.Legacy.Sample
                 Console.CursorTop--;
             }
 
-            Console.WriteLine("==============Finished======================");
-        }
 
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Run();
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
+            Console.WriteLine("====================================");
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TableClient.DependencyInjection.Sample
+namespace TableClient.DependencyInjectionSample
 {
     public class SampleProjectionObserver : IEntityObserver<PersonEntity>
     {

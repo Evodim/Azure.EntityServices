@@ -207,7 +207,16 @@ namespace Azure.EntityServices.Tables
 
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
+            _ = options ?? throw new ArgumentNullException(nameof(options));
+            _ = config ?? throw new ArgumentNullException(nameof(config));
             _options = options;
+
+
+            if (string.IsNullOrWhiteSpace(_options.TableName))
+            {
+                throw new ArgumentNullException(nameof(_options.TableName));
+            }
+           
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _client ??= _tableServiceClient.GetTableClient(options.TableName);

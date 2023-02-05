@@ -1,10 +1,9 @@
 ﻿using Azure.Data.Tables;
-using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace Azure.EntityServices.Tables.Extensions
+namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
 {
     public static class EntityTableServicesCollectionExtensions
     {

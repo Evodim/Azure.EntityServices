@@ -5,19 +5,18 @@ using Common.Samples.Tools.Fakes;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TableClient.DependencyInjection.Sample
+namespace TableClient.DependencyInjectionSample
 {
-    public class ProjectionWithDependencyInjectionSampleConsole : IHostedService
+    public class SampleConsole : IHostedService
     {
         private const int ENTITY_COUNT = 50;
         private readonly IEntityTableClient<PersonEntity> _defaultClient;
         private readonly IEntityTableClient<PersonEntity> _projectionClient;
 
-        public ProjectionWithDependencyInjectionSampleConsole(
+        public SampleConsole(
             IEntityTableClient<PersonEntity> defaultClient,
             IAzureClientFactory<IEntityTableClient<PersonEntity>> projectionClient
             )
@@ -37,7 +36,7 @@ namespace TableClient.DependencyInjection.Sample
             var entities = faker.Generate(ENTITY_COUNT);
 
             Console.WriteLine($"Add {ENTITY_COUNT} entities...");
-            
+
             await _defaultClient.AddManyAsync(entities);
 
             foreach (var entity in entities)
@@ -45,7 +44,7 @@ namespace TableClient.DependencyInjection.Sample
                 Console.WriteLine($"from source table: {entity.LastName}");
             }
 
-            await foreach (var batch in _projectionClient.GetAsync(p => 
+            await foreach (var batch in _projectionClient.GetAsync(p =>
             p
             .WithTags()
             .WherePartitionKey()

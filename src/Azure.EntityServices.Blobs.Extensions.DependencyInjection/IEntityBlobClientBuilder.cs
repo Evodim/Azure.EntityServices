@@ -1,7 +1,6 @@
-﻿using Azure.EntityServices.Blobs;
-using System;
+﻿using System;
 
-namespace Azure.EntityServices.Tables.Extensions.DependencyInjection
+namespace Azure.EntityServices.Blobs.Extensions.DependencyInjection
 {
     public interface IEntityBlobClientBuilder<TEntity>
     {

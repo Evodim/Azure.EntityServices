@@ -1,12 +1,11 @@
-﻿using Azure.EntityServices.Blobs;
-using Azure.EntityServices.Tables.Extensions.DependencyInjection;
+﻿using Azure.EntityServices.Blobs.Extensions.DependencyInjection;
 using Azure.Storage;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace Azure.EntityServices.Tables.Extensions
+namespace Azure.EntityServices.Blobs.Extensions.DependencyInjection
 {
     public static class EntityBlobServicesCollectionExtensions
     {

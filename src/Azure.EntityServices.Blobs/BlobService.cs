@@ -33,7 +33,14 @@ namespace Azure.EntityServices.Blobs
 
         public BlobService Configure(BlobServiceOptions options)
         {
+            _ = options ?? throw new ArgumentNullException(nameof(options));
             _options = options;
+
+            if (string.IsNullOrWhiteSpace(_options?.ContainerName))
+            {
+                throw new ArgumentNullException(nameof(_options.ContainerName)); 
+            }
+           
             _client ??= _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
             _retryPolicy = Policy.Handle<RequestFailedException>(ex => HandleExceptions(_options.ContainerName, _blobServiceClient, ex))
                              .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
