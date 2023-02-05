@@ -21,6 +21,8 @@ namespace Azure.EntityServices.Blobs
 
         private BlobServiceOptions _options;
         private BlobContainerClient _client;
+        private BlobContainerClient _configuredClient => _client ?? throw new InvalidOperationException("BlobService was not configured");
+
         private readonly BlobServiceClient _blobServiceClient;
         private AsyncRetryPolicy _retryPolicy;
 
@@ -32,7 +34,7 @@ namespace Azure.EntityServices.Blobs
         public BlobService Configure(BlobServiceOptions options)
         {
             _options = options;
-            _client = _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
+            _client ??= _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
             _retryPolicy = Policy.Handle<RequestFailedException>(ex => HandleExceptions(_options.ContainerName, _blobServiceClient, ex))
                              .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
             return this;
@@ -40,7 +42,7 @@ namespace Azure.EntityServices.Blobs
 
         public async Task<IDictionary<string, string>> GetBlobProperiesAsync(string blobRef)
         {
-            var blob = _client.GetBlobClient(CleanupBasePath(blobRef));
+            var blob = _configuredClient.GetBlobClient(CleanupBasePath(blobRef));
 
             var props = await blob.GetPropertiesAsync();
 
@@ -49,7 +51,7 @@ namespace Azure.EntityServices.Blobs
 
         public async Task<IDictionary<string, string>> GetBlobTagsAsync(string blobRef)
         {
-            var blob = _client.GetBlobClient(CleanupBasePath(blobRef));
+            var blob = _configuredClient.GetBlobClient(CleanupBasePath(blobRef));
 
             var props = await blob.GetTagsAsync();
 
@@ -58,7 +60,7 @@ namespace Azure.EntityServices.Blobs
 
         public async Task<Stream> DownloadAsync(string blobRef)
         {
-            var blob = _client.GetBlobClient(CleanupBasePath(blobRef));
+            var blob = _configuredClient.GetBlobClient(CleanupBasePath(blobRef));
             var download = await blob.DownloadAsync();
             var resultStream = new MemoryStream();
             await download.Value.Content.CopyToAsync(resultStream);
@@ -68,7 +70,7 @@ namespace Azure.EntityServices.Blobs
 
         public async Task<string> DownloadAsTextAsync(string blobRef)
         {
-            var blob = _client.GetBlobClient(CleanupBasePath(blobRef));
+            var blob = _configuredClient.GetBlobClient(CleanupBasePath(blobRef));
             var download = await blob.DownloadAsync();
 
             using var reader = new StreamReader(download.Value.Content);
@@ -78,7 +80,7 @@ namespace Azure.EntityServices.Blobs
 
         public async Task<IDictionary<string, string>> FetchPropAsync(string blobRef)
         {
-            var blob = _client.GetBlobClient(blobRef);
+            var blob = _configuredClient.GetBlobClient(blobRef);
             var response = await blob.GetPropertiesAsync();
             return response.Value?.Metadata;
         }
@@ -90,7 +92,7 @@ namespace Azure.EntityServices.Blobs
 
         public async IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListAsync(string blobPath)
         {
-            await foreach (var itemPage in _client.GetBlobsAsync(BlobTraits.Metadata, prefix: blobPath)
+            await foreach (var itemPage in _configuredClient.GetBlobsAsync(BlobTraits.Metadata, prefix: blobPath)
                     .AsPages(pageSizeHint: _options.MaxResultPerPage))
 
             {
@@ -129,7 +131,7 @@ namespace Azure.EntityServices.Blobs
         public async Task UploadAsync(string blobRef, Stream streamContent, IDictionary<string, string> tags, IDictionary<string, string> props)
         {
             var blobName = CleanupBasePath(blobRef);
-            var blob = _client.GetBlobClient(blobName);
+            var blob = _configuredClient.GetBlobClient(blobName);
 
             await _retryPolicy.ExecuteAsync(async () =>
             {
@@ -170,7 +172,7 @@ namespace Azure.EntityServices.Blobs
 
         public Task DeleteAsync(string blobRef)
         {
-            return _client.DeleteBlobIfExistsAsync(blobRef);
+            return _configuredClient.DeleteBlobIfExistsAsync(blobRef);
         }
 
         public Task DeleteContainerAsync()
