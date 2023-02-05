@@ -44,7 +44,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
                                 options.TableName = $"{nameof(PersonEntity)}";
                                 options.CreateTableIfNotExists = true;
                             }))
-                          .WithName($"{nameof(SampleProjectionObserver)}");
+                          .WithName($"ProjectionClient");
                });
 
                //Register directly IEntityTableClient<T> as a global and default injection

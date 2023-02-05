@@ -9,7 +9,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace TableClient.DependencyInjection.AdvancedSample
-{
+    {/// <summary>
+     /// Example of IEntityObserver implementation with DI
+     /// </summary>
+     /// <remarks>This is not a real worl example to create and maintain a projection updated from source table entity.
+     /// You should apply asynchronous and decloupled side effects according to CQRS patterns
+     /// it's common to use messaging to process commands and publish update events
+     /// </remarks>
     public class SampleProjectionObserver : IEntityObserver<PersonEntity>
     {
         private readonly ConcurrentQueue<PersonEntity> _addOperations = new ConcurrentQueue<PersonEntity>();
@@ -28,8 +34,8 @@ namespace TableClient.DependencyInjection.AdvancedSample
         }
 
         public SampleProjectionObserver(IAzureClientFactory<IEntityTableClient<PersonEntity>> factory)
-        {
-            _entityClient = factory.CreateClient(nameof(SampleProjectionObserver));
+        { 
+            _entityClient = factory.CreateClient("ProjectionClient");
         }
 
         public async Task OnCompletedAsync()

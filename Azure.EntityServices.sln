@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.DependencyInjec
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.DependencyInjection.AdvancedSample", "samples\TableClient.DependencyInjection.AdvancedSample\TableClient.DependencyInjection.AdvancedSample.csproj", "{C825B333-1737-45F2-ADD3-2BF7D735BB41}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.DependencyInjection.ProjectionSample", "samples\TableClient.DependencyInjection.ProjectionSample\TableClient.DependencyInjection.ProjectionSample.csproj", "{321BB55F-AA1C-4973-9315-7323D4FC19B0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{C825B333-1737-45F2-ADD3-2BF7D735BB41}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C825B333-1737-45F2-ADD3-2BF7D735BB41}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C825B333-1737-45F2-ADD3-2BF7D735BB41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{321BB55F-AA1C-4973-9315-7323D4FC19B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{321BB55F-AA1C-4973-9315-7323D4FC19B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{321BB55F-AA1C-4973-9315-7323D4FC19B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{321BB55F-AA1C-4973-9315-7323D4FC19B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -116,6 +122,7 @@ Global
 		{BAB3206B-D2F7-4790-8629-76D7A33DC969} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 		{8F8165C7-37ED-42C2-9D8A-BBABB461BCB8} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 		{C825B333-1737-45F2-ADD3-2BF7D735BB41} = {12E4FDA9-194D-4758-BB02-1619C2956738}
+		{321BB55F-AA1C-4973-9315-7323D4FC19B0} = {12E4FDA9-194D-4758-BB02-1619C2956738}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {92B5DB88-8C8E-4300-8891-C52633DDF5D9}
