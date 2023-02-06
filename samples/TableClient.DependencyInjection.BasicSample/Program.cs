@@ -1,12 +1,13 @@
 ﻿using Azure.EntityServices.Tables;
+using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Common.Samples;
 using Common.Samples.Models;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
 
-namespace TableClient.LegacySample
+namespace TableClient.DependencyInjection.BasicSample
 {
     public static class Program
     {
@@ -22,31 +23,25 @@ namespace TableClient.LegacySample
            })
            .ConfigureServices((hostContext, services) =>
            {
+               services.AddHostedService<SampleConsole>();
+                
+               //Register directly IEntityTableClient<T> as a global and default injection
                services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString, builder =>
                {
                    builder
-                   .ConfigureOptions(options =>
+                     .ConfigureOptions(options =>
                    {
                        options.TableName = $"{nameof(PersonEntity)}";
                        options.CreateTableIfNotExists = true;
                    })
-                   .ConfigureEntity(entityConfig => entityConfig
+                   .ConfigureEntity((sp, config) => config
                       .SetPartitionKey(p => p.TenantId)
                       .SetRowKeyProp(p => p.PersonId)
-
                       .IgnoreProp(p => p.OtherAddress)
-
                       .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                      .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
-                      .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                      .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
-
-                      .AddTag(p => p.Created)
-                      .AddTag(p => p.LastName)
-                      .AddTag("_FirstLastName3Chars"));
+                      .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1) 
+                      );
                });
-
-               services.AddHostedService<SampleConsole>();
            });
     }
 }

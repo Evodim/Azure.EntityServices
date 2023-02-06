@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk"> 
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    <UserSecretsId>a8d98bdc-3fa5-43dd-879a-eb3b0060fcbf</UserSecretsId> 
+  </PropertyGroup>
+	<PropertyGroup>
+		<Company>Evodim</Company>
+		<Product>Azure.EntityServices.Blobs.Extensions.DependencyInjection</Product>
+		<Authors>Evodim</Authors>
+		<Copyright>Evodim Solutions - 2023</Copyright>
+		<PackageId>AzureEntityServices.Blobs.Extensions.DependencyInjection</PackageId>
+		<PackageLicenseExpression></PackageLicenseExpression>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<RepositoryUrl>https://github.com/Evodim/Azure.EntityServices</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
+		<PackageTags>azure, entity, services, blobs</PackageTags>
+		<Description>Entity Blobs services for Azure storage</Description>
+		<Title>Azure entity services</Title>
+	</PropertyGroup>
+	<PropertyGroup>
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Include="..\..\LICENSE" Link="LICENSE">
+	    <PackagePath></PackagePath>
+	    <Pack>true</Pack>
+	  </None>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MinVer" Version="2.5.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
+	</ItemGroup>
+</Project>

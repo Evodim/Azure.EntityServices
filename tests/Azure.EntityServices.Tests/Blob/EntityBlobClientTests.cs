@@ -16,14 +16,10 @@ namespace Azure.EntityServices.Blob.Tests
     [TestClass]
     public class EntityBlobClientTests
     {
-        private static EntityBlobClientOptions CreateDefaultOptions<T>()
+        private static EntityBlobClientOptions CreateDefaultOptions<T>() => new EntityBlobClientOptions()
         {
-            return new EntityBlobClientOptions()
-            {
-                Container = $"{typeof(T).Name}{DateTime.UtcNow.Ticks}".ToLowerInvariant(),
-                ConnectionString = TestEnvironment.ConnectionString
-            };
-        }
+            ContainerName = $"{typeof(T).Name}{DateTime.UtcNow.Ticks}".ToLowerInvariant()
+        };
 
         public EntityBlobClientTests()
         {
@@ -34,8 +30,10 @@ namespace Azure.EntityServices.Blob.Tests
         {
             var doc = Fakers.CreateFakedDoc().Generate(1).First();
 
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
-                config
+            var client =
+                EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
+                 config
                  .SetBlobContentProp(p => p.Content)
                  .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
                  .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
@@ -59,7 +57,9 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Add_Then_Get_Entities()
         {
             var docs = Fakers.CreateFakedDoc().Generate(10);
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
+            var client = EntityBlobClient
+                .Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
                config
                 .SetBlobContentProp(p => p.Content)
                 .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
@@ -90,7 +90,9 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Get_Content()
         {
             var doc = Fakers.CreateFakedDoc().Generate(1).First();
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
+            var client = EntityBlobClient
+                .Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
               config
                .SetBlobContentProp(p => p.Content)
                .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
@@ -114,8 +116,9 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Store_Entity_Content_As_BinaryData()
         {
             var trace = Fakers.CreateFakedHttpTraceEntity().Generate(1).First();
-            var client = new EntityBlobClient<HttpTraceEntity>(CreateDefaultOptions<HttpTraceEntity>(),
-
+            var client = EntityBlobClient
+                .Create<HttpTraceEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<HttpTraceEntity>(),
                 config => config
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
@@ -138,8 +141,9 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Store_Entity_Content_As_String()
         {
             var trace = Fakers.CreateFakedHttpTraceEntity().Generate(1).First();
-            var client = new EntityBlobClient<HttpTraceEntity>(CreateDefaultOptions<HttpTraceEntity>(),
-
+            var client = EntityBlobClient
+                .Create<HttpTraceEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<HttpTraceEntity>(),
                 config => config
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
@@ -168,8 +172,9 @@ namespace Azure.EntityServices.Blob.Tests
             var person = Fakers.CreateFakePerson().Generate(1);
             trace.BodyObject = person;
 
-            var client = new EntityBlobClient<HttpTraceEntity>(CreateDefaultOptions<HttpTraceEntity>(),
-
+            var client = EntityBlobClient
+                .Create<HttpTraceEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<HttpTraceEntity>(),
                 config => config
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
@@ -196,8 +201,9 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Use_Computed_Prop_With_BinaryData_Content()
         {
             var trace = Fakers.CreateFakedHttpTraceEntity().Generate(1).First();
-            var client = new EntityBlobClient<HttpTraceEntity>(CreateDefaultOptions<HttpTraceEntity>(),
-
+            var client = EntityBlobClient
+                .Create<HttpTraceEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<HttpTraceEntity>(),
                 config => config
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
@@ -220,7 +226,9 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_List_Entities_By_Index()
         {
             var docs = Fakers.CreateFakedDoc().Generate(5);
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
+            var client = EntityBlobClient
+                .Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
               config
                .SetBlobContentProp(p => p.Content)
                .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
@@ -235,7 +243,7 @@ namespace Azure.EntityServices.Blob.Tests
                 }
                 Task.Delay(2000).Wait();
                 var readedEntities = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync(query: p => p.Where(p => p.Reference)
+                await foreach (var doc in client.ListAsync(p => p.Where(p => p.Reference)
                 .Equal(docs.First().Reference)))
                 {
                     readedEntities.AddRange(doc);
@@ -253,7 +261,8 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Filter_Entities_With_Many_Tags()
         {
             var docs = Fakers.CreateFakedDoc().Generate(5);
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
+            var client = EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
                config
                 .SetBlobContentProp(p => p.Content)
                 .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
@@ -268,7 +277,7 @@ namespace Azure.EntityServices.Blob.Tests
                 }
                 Task.Delay(3000).Wait();
                 var readedEntities = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync(query: p => p
+                await foreach (var doc in client.ListAsync(p => p
                 .Where(p => p.Name)
                 .Equal(docs.First().Name)
                 .And(p => p.Reference)
@@ -290,7 +299,8 @@ namespace Azure.EntityServices.Blob.Tests
         {
             var docs = Fakers.CreateFakedDoc().Generate(3);
             docs.Last().Created = DateTimeOffset.UtcNow.AddMonths(7);
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
+            var client = EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
                config
                 .SetBlobContentProp(p => p.Content)
                 .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
@@ -307,7 +317,7 @@ namespace Azure.EntityServices.Blob.Tests
                 }
                 Task.Delay(3000).Wait();
                 var readedEntities = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync(query: p => p
+                await foreach (var doc in client.ListAsync(p => p
                                 .Where("_CreatedSince6Month")
                                 .Equal(false)))
 
@@ -326,7 +336,8 @@ namespace Azure.EntityServices.Blob.Tests
         public async Task Should_Get_Internal_Entity_Properties()
         {
             var doc = Fakers.CreateFakedDoc().Generate(1).First();
-            var client = new EntityBlobClient<DocumentEntity>(CreateDefaultOptions<DocumentEntity>(), config =>
+            var client = EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(CreateDefaultOptions<DocumentEntity>(), config =>
               config
                .SetBlobContentProp(p => p.Content)
                .SetBlobPath(p => $"{nameof(DocumentEntity)}/{p.Created:yyyy/MM/dd}")
@@ -344,11 +355,9 @@ namespace Azure.EntityServices.Blob.Tests
                 props["_EntityPath"].Should().Be($"{nameof(DocumentEntity)}/{DateTimeOffset.UtcNow:yyyy/MM/dd}");
                 props["_EntityName"].Should().Be($"{doc.Name}-{doc.Reference}.{doc.Extension}");
             }
-
             finally
             {
                 await client.DropContainerAsync();
-
             }
         }
     }

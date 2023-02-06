@@ -1,6 +1,6 @@
 ﻿namespace Azure.EntityServices.Queries
 {
-    public interface IQuery<T>
+    public interface IQuery<out T>
     {
 
     }

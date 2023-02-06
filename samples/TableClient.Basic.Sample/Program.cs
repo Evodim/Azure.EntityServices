@@ -1,12 +1,12 @@
 ﻿using System.Threading.Tasks;
 
-namespace TableClient.Basic.Sample
+namespace TableClient.BasicSample
 {
     public static class Program
     {
         private static async Task Main()
         {
-            await BasicSample.Run();
+            await SampleConsole.Run();
             System.Console.ReadLine();
         }
     }

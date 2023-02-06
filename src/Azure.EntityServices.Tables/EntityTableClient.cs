@@ -30,6 +30,8 @@ namespace Azure.EntityServices.Tables
 
         private TableClient _client;
 
+        private TableClient _configuredClient => _client ?? throw new InvalidOperationException("EntityTableClient was not configured");
+
         private readonly TableServiceClient _tableServiceClient;
 
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
@@ -112,7 +114,7 @@ namespace Azure.EntityServices.Tables
 
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
-            return _retryPolicy.Execute(() => _client
+            return _retryPolicy.Execute(() => _configuredClient
             .QueryAsync<TableEntity>(filter:string.IsNullOrWhiteSpace(strQuery)?null: strQuery,
                                      cancellationToken: cancellationToken,
                                      maxPerPage: maxPerPage)
@@ -205,7 +207,16 @@ namespace Azure.EntityServices.Tables
 
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
         {
+            _ = options ?? throw new ArgumentNullException(nameof(options));
+            _ = config ?? throw new ArgumentNullException(nameof(config));
             _options = options;
+
+
+            if (string.IsNullOrWhiteSpace(_options.TableName))
+            {
+                throw new ArgumentNullException(nameof(_options.TableName));
+            }
+           
             _config = config;
             _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
             _client ??= _tableServiceClient.GetTableClient(options.TableName);
@@ -247,7 +258,7 @@ namespace Azure.EntityServices.Tables
                 var entityAction = transaction.Actions.First().ActionType;
                 if (entityAction != TableTransactionActionType.Add && _options.HandleTagMutation)
                 {
-                    existingEntity = await _client.GetEntityIfExistsAsync<TableEntity>(newEntity.PartitionKey, newEntity.RowKey, props);
+                    existingEntity = await _configuredClient.GetEntityIfExistsAsync<TableEntity>(newEntity.PartitionKey, newEntity.RowKey, props);
                 }
                 //project entity tags in same partition group
                 foreach (var tag in _indextedTags)
@@ -282,7 +293,7 @@ namespace Azure.EntityServices.Tables
             var rowKey = ResolvePrimaryKey(id);
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityIfExistsAsync<TableEntity>(partition.EscapeDisallowedChars(), rowKey, select: new string[] { }, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityIfExistsAsync<TableEntity>(partition.EscapeDisallowedChars(), rowKey, select: new string[] { }, cancellationToken));
                 if (!response.HasValue)
                 {
                     return null;
@@ -456,7 +467,7 @@ namespace Azure.EntityServices.Tables
 
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _client.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
                 var entityBinder = CreateEntityBinderFromTableEntity(response.Value);
                 entityBinder.UnBind();
                 return entityBinder?.Metadata ?? new Dictionary<string, object>();
@@ -500,12 +511,12 @@ namespace Azure.EntityServices.Tables
 
         public Task DropTableAsync(CancellationToken cancellationToken = default)
         {
-            return _client.DeleteAsync(cancellationToken);
+            return _configuredClient.DeleteAsync(cancellationToken);
         }
 
         public Task CreateTableAsync(CancellationToken cancellationToken = default)
         {
-            return _client.CreateIfNotExistsAsync(cancellationToken);
+            return _configuredClient.CreateIfNotExistsAsync(cancellationToken);
         }
 
         public Task DeleteManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)

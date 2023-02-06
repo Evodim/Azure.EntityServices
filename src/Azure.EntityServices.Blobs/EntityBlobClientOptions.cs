@@ -3,12 +3,12 @@
     public class EntityBlobClientOptions
     {
         public EntityBlobClientOptions() { }
-        public EntityBlobClientOptions(string connectionString, string container)
-        {
-            ConnectionString = connectionString;
-            Container = container;
+        public EntityBlobClientOptions(string containerName, int maxResultPerPage = 100)
+        { 
+            ContainerName = containerName;
+            MaxResultPerPage = maxResultPerPage;
         }
-        public string Container { get; set; }
-        public string ConnectionString { get; set; }
+        public string ContainerName { get; set; }
+        public int? MaxResultPerPage { get; set; }
     }
 }

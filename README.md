@@ -1,40 +1,37 @@
 # Azure.EntityServices
-## Azure Storage client to use generic entities in tables and blobs
+## Manage your C# Entities in Azure storage without pain !
 ![Public](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-public.yml/badge.svg)
 ![Internal](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-internal.yml/badge.svg)
 
 
 ## Purpose
 
-Azure.EntityServices help you to store, update and search generic entities in Azure storage tables and blobs
-Entities could be any pure classes without any infrastructure specific dependencies
+Azure.EntityServices is a set of packages  help you to store, update and search generic entities in Azure storage tables and blobs
 
-Initial project (experimental) was located here: [EntityStorageServices](https://github.com/Evodim/EntityStorageServices)
-This new version was partiallly rewritted and based on the new official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
+Entities could be any POCO C# classes without any azure related dependencies
 
-This project is focused on azure sdk abstraction and performance
+This library is based on official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
+
+This project is focused on Azure SDK abstraction and performance
  
-Features:
-
-* You can use any generic entities without azure sdk dependencies: no needs to inehrit from ITableEntity or TableEntity neither
-* You can extend entity properties with dynamic properties 
+## EntityTableClient package features
+ 
+* You can manage any generic C# entities without Azure SDK dependencies: no needs to inehrit from ITableEntity or TableEntity neither
+* You can extend entity properties with dynamic properties (to simplify search and indexing nested objects)
 * You can tag any entity or dynamic properties to be indexed for faster search for tables with large amount of items
 * Handle more primitive types that are not supported by default in azure table storage 
-* Lightweight and extensible query expression builder (used to build advanced filter expressions)
-* Entity table observers, subscribe and apply side effects when any entity changed (experimental)
- 
-## How it works?
+* Lightweight and extensible query expression builder, used to build advanced filter expressions and indexed tags
+* Observe entity changes, subscribe and apply any side effects like CQRS patterns
+* It Could be injected and configured with Microsoft Azure extensions: AzureClientFactoryBuilder 
 
-EntityTableClient bind any classes (entities) to Entity table storage
+### How it works?
+
+EntityTableClient bind any classes (C# entities) to Entity table storage (IEntityTableClient)
+
 This binding allows to have more control when entity was stored of readed from the table storage
+
 Internally, it use Azure storage ETG feature (entity transaction group) to keep indexed tag synchronized with the main entity.
 
-Upcoming:
-* Expand test coverage
-* Add validation rules according to [azure storage limitations](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-table-storage-limits)
-* Gradually improvement of EntityBlobClient  
-* More description of the internal implementation of this library
-* Entity migration services, usefull for data or structural migration
 
 
 ### EntityTableClient configuration example
@@ -94,3 +91,39 @@ Upcoming:
 ### Added an implementation of entity observer
 
 ![image](https://user-images.githubusercontent.com/4396827/213823101-c36917fe-93a1-4fef-bf14-6b363e9eb32b.png)
+
+
+## EntityBlobClient package features
+ 
+* Like EntityTableClient, you can manage any generic C# entities without Azure SDK dependencies
+* Entities properties was mapped and stored directly into Blob metadata, no need to maintain a relation with blob and any additional tables 
+* You can tag any entity or dynamic properties to be indexed natively by Azure Blob Storage service
+* It use also same query expression builder of EntityTableClient to query Blobs inside a container
+* It could be injected and configured with Microsoft Azure extensions: AzureClientFactoryBuilder 
+* Abstract and simplify Blob reference path by using dynamic path delegate based on your entity properties (SetBlobPath and SetBlobName)
+
+
+
+
+
+### EntityTableClient configuration example
+
+```csharp
+     var options = new EntityBlobClientOptions($"{nameof(DocumentEntity)}Container".ToLower());
+
+            //Configure entity binding in the table storage
+            var client = EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
+                .Configure(options, config =>
+             config
+                .SetBlobContentProp(p => p.Content)
+                .SetBlobPath(p => $"{p.Created:yyyy/MM/dd}")
+                .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
+                .AddTag(p => p.Reference)
+                .AddTag(p => p.Name));
+```
+Upcoming:
+* Expand test coverage
+* Add more validation rules according to [azure storage limitations](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/azure-subscription-service-limits#azure-table-storage-limits)
+* Gradually improvement of EntityBlobClient  
+* More description of the internal implementation of this library
+* Entity migration services, usefull for data or structural migration

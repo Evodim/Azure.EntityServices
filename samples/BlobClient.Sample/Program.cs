@@ -1,7 +1,6 @@
-﻿using Azure.Storage.Blobs;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace TableClient.Performance.Sample
+namespace BlobClient.BasicSample
 {
     public static class Program
     {

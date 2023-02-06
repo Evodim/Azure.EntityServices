@@ -7,7 +7,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace TableClient.DependencyInjection.Sample
+namespace TableClient.DependencyInjection.AdvancedSample
 {
     public static class Program
     {
@@ -23,12 +23,14 @@ namespace TableClient.DependencyInjection.Sample
            })
            .ConfigureServices((hostContext, services) =>
            {
-               services.AddHostedService<ProjectionWithDependencyInjectionSampleConsole>();
+               services.AddHostedService<SampleConsole>();
 
                services
                .AddTransient<SampleProjectionObserver>();
 
-               //Register projection IEntityTableClient<PersonEntity> named implementation factory to be injected with IAzureClientFactory<IEntityTableclient<PersonEntity>>
+               //IEntityTableClient<T> could be registred in two ways:
+
+               //Register IAzureClientFactory<IEntityTableClient<T>> to inject IEntityTableClient<T> named implementation factory
                services.AddAzureClients(clients =>
                {
                    clients
@@ -42,10 +44,10 @@ namespace TableClient.DependencyInjection.Sample
                                 options.TableName = $"{nameof(PersonEntity)}";
                                 options.CreateTableIfNotExists = true;
                             }))
-                          .WithName($"{nameof(SampleProjectionObserver)}");
+                          .WithName($"ProjectionClient");
                });
 
-               //Register default IEntityTableClient<PersonEntity> implementation factory to be injected directly with IEntityTableclient<PersonEntity>
+               //Register directly IEntityTableClient<T> as a global and default injection
                services.AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString, builder =>
                {
                    builder

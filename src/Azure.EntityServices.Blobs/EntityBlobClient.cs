@@ -15,55 +15,54 @@ namespace Azure.EntityServices.Blobs
     public class EntityBlobClient<T> : IEntityBlobClient<T>
         where T : class, new()
     {
-        private readonly BlobStorageService _blobStorageService;
-        private readonly EntityBlobClientOptions _options;
-        private readonly EntityBlobClientConfig<T> _config;
+        private readonly BlobService _blobService;
+        private EntityBlobClientOptions _options;
+        private EntityBlobClientConfig<T> _config;
         protected readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties();
 
-        public EntityBlobClient(EntityBlobClientOptions options, Action<EntityBlobClientConfig<T>> configurator)
+        public EntityBlobClient()
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _config = new EntityBlobClientConfig<T>();
-
-             configurator?.Invoke(_config);
-            _blobStorageService = new BlobStorageService(new BlobStorageServiceOptions()
-            {
-                ConnectionString = _options.ConnectionString,
-                Container = _options.Container
-            });
         }
-        public EntityBlobClient(EntityBlobClientOptions options, EntityBlobClientConfig<T> config)
+
+        public EntityBlobClient(BlobService blobService)
+        {
+            _blobService = blobService;
+        }
+
+        public EntityBlobClient<T> Configure(EntityBlobClientOptions options, EntityBlobClientConfig<T> config)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _config = config ?? throw new ArgumentNullException(nameof(config));
-            
-            _blobStorageService = new BlobStorageService(new BlobStorageServiceOptions()
-            {
-                ConnectionString = _options.ConnectionString,
-                Container = _options.Container
+            _blobService.Configure(new BlobServiceOptions() { 
+             ContainerName= options.ContainerName,
+             MaxResultPerPage = options.MaxResultPerPage ?? 100
             });
+            return this;
         }
 
         public async Task<BinaryData> GetContentAsync(string entityRef)
         {
-            using var binaryStream = await _blobStorageService.DownloadAsync(entityRef);
+            using var binaryStream = await _blobService.DownloadAsync(entityRef);
 
             return BinaryData.FromStream(binaryStream);
         }
-        public  Task<BinaryData> GetContentAsync(T entity)
+
+        public Task<BinaryData> GetContentAsync(T entity)
         {
             return GetContentAsync(GetEntityReference(entity));
         }
+
         public Task<IDictionary<string, string>> GetPropsAsync(string entityRef)
         {
-            return _blobStorageService.GetBlobProperiesAsync(entityRef);
+            return _blobService.GetBlobProperiesAsync(entityRef);
         }
 
         public Task<T> AddOrReplaceAsync(T entity)
-        {    
-            return AddOrReplaceAsync(ResolveEntityPath(entity), entity);               
+        {
+            return AddOrReplaceAsync(ResolveEntityPath(entity), entity);
         }
-        private async Task<T> AddOrReplaceAsync(string entityPath,T entity)
+
+        private async Task<T> AddOrReplaceAsync(string entityPath, T entity)
         {
             var value = _config.ContentProp?.GetValue(entity);
             var binaryContent = value switch
@@ -73,40 +72,39 @@ namespace Azure.EntityServices.Blobs
                 byte[] v => BinaryData.FromBytes(v),
                 BinaryData v => v,
                 _ => BinaryData.FromObjectAsJson(value)
-                
-            }; 
-            await _blobStorageService.UploadAsync($"{entityPath}/{ResolveEntityName(entity)}", binaryContent.ToStream(),
+            };
+            await _blobService.UploadAsync($"{entityPath}/{ResolveEntityName(entity)}", binaryContent.ToStream(),
             BuildAllTags(entity), BuildAllProps(entity));
             return entity;
         }
 
-        public async IAsyncEnumerable<IReadOnlyList<IDictionary<string,string>>> ListPropsAsync(string entityPath)
+        public async IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListPropsAsync(string entityPath)
         {
-            await foreach (var page in _blobStorageService.ListAsync(entityPath))
+            await foreach (var page in _blobService.ListAsync(entityPath))
             {
                 yield return page.Select(p => p).ToList();
             }
         }
+
         public async IAsyncEnumerable<IReadOnlyList<T>> ListAsync(string entityPath)
         {
-            await foreach (var page in _blobStorageService.ListAsync(entityPath))
+            await foreach (var page in _blobService.ListAsync(entityPath))
             {
-                yield return page.Select(p =>  BindEntityFromProperties(p)).ToList();
+                yield return page.Select(p => BindEntityFromProperties(p)).ToList();
             }
         }
-         
+
         public async IAsyncEnumerable<IReadOnlyList<T>> ListAsync(Action<IQuery<T>> query)
         {
-            var queryExpr = new FilterExpression<T>();
-
+            var queryExpr = new FilterExpression<T>(); 
             var baseQuery = queryExpr
-                 .Where("@container").Equal(_options.Container);
+                 .Where("@container").Equal(_options.ContainerName);
 
             if (query != null) baseQuery.And(query);
 
             var queryStr = new BlobTagQueryBuilder<T>(queryExpr).Build();
 
-            await foreach (var page in _blobStorageService.ListByTagsAsync(queryStr))
+            await foreach (var page in _blobService.ListByTagsAsync(queryStr))
             {
                 yield return page.Select(d => BindEntityFromProperties(d)).ToList();
             }
@@ -158,28 +156,31 @@ namespace Azure.EntityServices.Blobs
             {
                 ValueToEntity(entity, property, blobProperties);
             }
-            
+
             return entity;
         }
 
         public async Task<T> GetAsync(string entityRef)
         {
-            var props = await _blobStorageService.GetBlobProperiesAsync(entityRef);
+            var props = await _blobService.GetBlobProperiesAsync(entityRef);
             return BindEntityFromProperties(props);
         }
 
         public Task DropContainerAsync()
         {
-            return _blobStorageService.DeleteContainerAsync();
-        } 
+            return _blobService.DeleteContainerAsync();
+        }
+
         public Task DeleteAsync(string entityRef)
         {
-            return _blobStorageService.DeleteAsync(entityRef);
+            return _blobService.DeleteAsync(entityRef);
         }
+
         public string GetEntityReference(T entity)
         {
             return $"{ResolveEntityPath(entity)}/{ResolveEntityName(entity)}";
         }
+
         private string ResolveEntityPath(T entity)
         {
             if (_config.ComputedProps.TryGetValue("_EntityPath", out var resolver))
@@ -197,6 +198,7 @@ namespace Azure.EntityServices.Blobs
             }
             throw new InvalidOperationException("EntityName not configured");
         }
+
         private static string ValueToBlob(object value)
         {
             return value switch
@@ -323,6 +325,5 @@ namespace Azure.EntityServices.Blobs
                 throw new InvalidOperationException($"Unable to bind entity property {property.Name} with type  {property.PropertyType.Name}", ex);
             }
         }
-      
     }
 }

@@ -19,9 +19,11 @@ namespace Azure.EntityServices.Blob.Tests
         private string TempContainerName() => $"{nameof(BlobClientTests)}{Guid.NewGuid():N}".ToLowerInvariant();
 
         private readonly Random _random = new();
+        private readonly BlobServiceClient _blobServiceClient;
 
         public BlobClientTests()
         {
+            _blobServiceClient = new BlobServiceClient(TestEnvironment.ConnectionString);
         }
 
         [TestMethod]
@@ -32,15 +34,13 @@ namespace Azure.EntityServices.Blob.Tests
             // Get a connection string to our Azure Storage account.
             var connectionString = TestEnvironment.ConnectionString;
             var containerName = TempContainerName();
-            var client = new BlobStorageService(new BlobStorageServiceOptions()
-            {
-                Container = containerName,
-                ConnectionString = TestEnvironment.ConnectionString
-            });
+
+            var client = new BlobService(_blobServiceClient)
+                .Configure(new BlobServiceOptions() { ContainerName = containerName });
             // Get a reference to a container named "sample-container" and then create it
             var container = new BlobContainerClient(connectionString, containerName);
             await container.CreateIfNotExistsAsync();
-            
+
 
             try
             {
@@ -91,11 +91,8 @@ namespace Azure.EntityServices.Blob.Tests
                 await container.UploadBlobAsync($"{blobPath}/{nameof(file2)}", GenerateBlob(file2));
                 await container.UploadBlobAsync($"{blobPath}/{nameof(file3)}", GenerateBlob(file3));
 
-                var client = new BlobStorageService(new BlobStorageServiceOptions()
-                {
-                    Container = containerName,
-                    ConnectionString = TestEnvironment.ConnectionString
-                });
+                var client = new BlobService(_blobServiceClient)
+                    .Configure(new BlobServiceOptions() { ContainerName = containerName });
 
                 // List all the blobs
                 var blobs = new List<IDictionary<string, string>>();
@@ -153,7 +150,7 @@ namespace Azure.EntityServices.Blob.Tests
             // Get a reference to a container named "sample-container" and then create it
             var container = new BlobContainerClient(connectionString, containerName);
 
-            await container.CreateIfNotExistsAsync(); 
+            await container.CreateIfNotExistsAsync();
             try
             {
                 // Get a reference to a blob
@@ -161,11 +158,8 @@ namespace Azure.EntityServices.Blob.Tests
 
                 var blob = container.GetBlobClient(fileName);
 
-                var client = new BlobStorageService(new BlobStorageServiceOptions()
-                {
-                    Container = containerName,
-                    ConnectionString = TestEnvironment.ConnectionString
-                });
+                var client = new BlobService(_blobServiceClient)
+                    .Configure(new BlobServiceOptions() { ContainerName = containerName });
                 // Open the file and upload its data
                 await using (var fs = GenerateBlob(sampleFileContent))
                 {
@@ -199,11 +193,8 @@ namespace Azure.EntityServices.Blob.Tests
             await container.CreateIfNotExistsAsync();
             try
             {
-                var client = new BlobStorageService(new BlobStorageServiceOptions()
-                {
-                    Container = containerName,
-                    ConnectionString = TestEnvironment.ConnectionString
-                });
+                var client = new BlobService(_blobServiceClient)
+                       .Configure(new BlobServiceOptions() { ContainerName = containerName });
                 for (var i = 0; i < 11; i++)
                 {
                     var name = GenerateRandomBlobName(nameof(Should_List_By_Tags));
@@ -241,11 +232,8 @@ namespace Azure.EntityServices.Blob.Tests
                 var propValue = Guid.NewGuid().ToString();
                 var propValue2 = Guid.NewGuid().ToString();
                 await container.CreateIfNotExistsAsync();
-                var client = new BlobStorageService(new BlobStorageServiceOptions()
-                {
-                    Container = containerName,
-                    ConnectionString = TestEnvironment.ConnectionString
-                });
+                var client = new BlobService(_blobServiceClient)
+                       .Configure(new BlobServiceOptions() { ContainerName = containerName });
                 await client.UploadAsync(name, GenerateBlob(file1), null, new Dictionary<string, string>() { ["Property1"] = propValue, ["Property2"] = propValue2 });
                 var props = await client.GetBlobProperiesAsync(name);
 
@@ -273,11 +261,8 @@ namespace Azure.EntityServices.Blob.Tests
                 var contentType = "application/json";
                 var contentEncoding = "gzip";
                 await container.CreateIfNotExistsAsync();
-                var client = new BlobStorageService(new BlobStorageServiceOptions()
-                {
-                    Container = containerName,
-                    ConnectionString = TestEnvironment.ConnectionString
-                });
+                var client = new BlobService(_blobServiceClient)
+                    .Configure(new BlobServiceOptions() { ContainerName = containerName });
                 await client.UploadAsync(name, GenerateBlob(file1), null, new Dictionary<string, string>() { ["ContentType"] = contentType, ["ContentEncoding"] = contentEncoding });
                 var props = await client.GetBlobProperiesAsync(name);
                 props.Should().ContainKeys("ContentType", "ContentEncoding");
