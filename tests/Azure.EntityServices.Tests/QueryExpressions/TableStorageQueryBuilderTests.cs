@@ -154,5 +154,36 @@ namespace Azure.EntityServices.Table.Tests
             result.Should()
             .Be("PartitionKey eq 'tenantId' and Latitude eq 48.77309806265856 and Distance eq '148.45648566856' and BankAmount eq '1248.7731'");
         }
+
+        [TestMethod]
+        public void Should_Use_WithTag_Extension_To_Get_All_Tag_Values_Without_Filter_Operator()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .WithTag("Created")
+           .And(p => p.TenantId).Equal("10");  
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("RowKey gt '~Created-' and RowKey lt '~Created-~' and TenantId eq '10'");
+         }
+        
+        [TestMethod] 
+        public void Should_Use_IncludeTags_To_Get_All_Entities_Included_All_Tags()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .IncludeTags()
+           .WherePartitionKey().Equal("tenant1"); 
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("PartitionKey eq 'tenant1'");
+        }
     }
 }

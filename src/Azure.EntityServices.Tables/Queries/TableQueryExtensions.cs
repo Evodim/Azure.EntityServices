@@ -8,14 +8,7 @@ namespace Azure.EntityServices.Tables
     /// </summary>
     public static class TableQueryExtensions
     {
-        public static IFilterOperator<T> IgnoreTags<T>(this IQuery<T> query)
-
-           => (query as IQueryCompose<T>)
-                 .AddQuery("PartitionKey")
-                 .LessThan("~")
-                 .AndRowKey()
-                 .LessThan("~");
-
+      
         public static IQueryFilter<T> WherePartitionKey<T>(this IQuery<T> query)
             => (query as IQueryCompose<T>).AddQuery("PartitionKey");
 
