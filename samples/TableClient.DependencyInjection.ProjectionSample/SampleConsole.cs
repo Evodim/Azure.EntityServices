@@ -1,5 +1,4 @@
-﻿using Azure.EntityServices.Queries;
-using Azure.EntityServices.Tables;
+﻿using Azure.EntityServices.Tables;
 using Common.Samples.Models;
 using Common.Samples.Tools.Fakes;
 using Microsoft.Extensions.Azure;
@@ -25,7 +24,6 @@ namespace TableClient.DependencyInjection.ProjectionSample
         {
             _entityClient = entityClientFactory.CreateClient("Source");
             _projectionClient = entityClientFactory.CreateClient("Projection");
-
         }
 
         public async Task Run()
@@ -43,20 +41,17 @@ namespace TableClient.DependencyInjection.ProjectionSample
             await _entityClient.AddOrReplaceManyAsync(persons);
 
             var count = 0;
-            await foreach (var  result in _entityClient
+            await foreach (var result in _entityClient
                 .GetAsync(filter => filter
-                .WhereTag("LastName")
-                .GreaterThan("")))
+                    .WithTag(p => p.LastName)))
+
             {
-                 
                 foreach (var person in result)
-                { 
-                    Console.WriteLine(person.LastName); 
+                {
+                    Console.WriteLine(person.LastName);
                 }
                 count += result.Count();
                 await _projectionClient.AddOrReplaceManyAsync(result);
-                 
-               
             }
             Console.WriteLine($"updated projection entities: {count}");
             Console.WriteLine("====================================");

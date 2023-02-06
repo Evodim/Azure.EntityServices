@@ -19,6 +19,32 @@ namespace Azure.EntityServices.Tables
             return query;
         }
 
+        /// <summary>
+        /// Allow to retrieve all entities for a given tag
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="tagName"></param>
+        /// <returns></returns>
+        public static IFilterOperator<T> WithTag<T>(this IQuery<T> query, string tagName)
+        {
+            return query.WhereTag(tagName)
+                .GreaterThan("");           
+        }
+        /// <summary>
+        /// Allow to retrieve all entities for a given tag as property selector
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="P"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="tagSelector"></param>
+        /// <returns></returns>
+        public static IFilterOperator<T> WithTag<T, P>(this IQuery<T> query, Expression<Func<T, P>> tagSelector)
+        {
+            return query.WhereTag(tagSelector.GetPropertyInfo().Name)
+                .GreaterThan("");
+        }
+
         public static ITagQueryFilter<T> WhereTag<T>(this IQuery<T> query, string tagName)
         {
             (query as ITagQueryCompose<T>).TagName = tagName;
