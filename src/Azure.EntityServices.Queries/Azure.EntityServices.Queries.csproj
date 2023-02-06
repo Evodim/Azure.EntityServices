@@ -28,10 +28,10 @@
 		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Include="..\..\LICENSE" Pack="true" PackagePath=""/>
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
 	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="2.5.0">
+    <PackageReference Include="MinVer" Version="4.3.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
