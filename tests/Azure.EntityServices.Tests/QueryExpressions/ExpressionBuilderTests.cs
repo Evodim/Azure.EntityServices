@@ -122,7 +122,7 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public void Should_BuildGroup_Dynamic_Query_Expression_With_Extension_Helper()
+        public void Should_BuildGroup_Dynamic_Query_Expression_WithEach_Extension_Helper()
         {
             var builder = new MockedExpressionBuilder<PersonEntity>();
 
@@ -137,6 +137,62 @@ namespace Azure.EntityServices.Table.Tests
             queryStr.Trim()
                 .Should()
                 .Be("TenantId Equal '50' Or FirstName Equal 'do 0' Or FirstName Equal 'do 1' Or FirstName Equal 'do 2' Or FirstName Equal 'do 3' Or FirstName Equal 'do 4' Or FirstName Equal 'do 5' Or FirstName Equal 'do 6' Or FirstName Equal 'do 7' Or FirstName Equal 'do 8' Or FirstName Equal 'do 9'");
+        }
+
+        [TestMethod]
+        public void Should_BuildGroup_Dynamic_Query_Expression_In_Extension_Helper()
+        {
+            var builder = new MockedExpressionBuilder<PersonEntity>();
+
+            var dynamicQuery = builder.Query
+              .Where(p => p.TenantId).Equal("50")
+              .And(p => p.LastName)
+              .In("Doe");
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' And LastName Equal 'Doe'");
+
+            dynamicQuery = builder.Query
+         .Where(p => p.TenantId).Equal("50")
+         .And("LastName")
+         .In("Doe", "Kent");
+
+            queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' And LastName Equal 'Doe' Or LastName Equal 'Kent'");
+        }
+
+        [TestMethod]
+        public void Should_BuildGroup_Dynamic_Query_Expression_NotIn_Extension_Helper()
+        {
+            var builder = new MockedExpressionBuilder<PersonEntity>();
+
+            var dynamicQuery = builder.Query
+              .Where(p => p.TenantId).Equal("50")
+              .And(p => p.LastName)
+              .NotIn("Doe");
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' And LastName NotEqual 'Doe'");
+
+            dynamicQuery = builder.Query
+         .Where(p => p.TenantId).Equal("50")
+         .And("LastName")
+         .NotIn("Doe", "Kent");
+
+            queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' And LastName NotEqual 'Doe' And LastName NotEqual 'Kent'");
         }
     }
 }
