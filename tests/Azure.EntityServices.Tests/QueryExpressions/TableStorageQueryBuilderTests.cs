@@ -154,5 +154,26 @@ namespace Azure.EntityServices.Table.Tests
             result.Should()
             .Be("PartitionKey eq 'tenantId' and Latitude eq 48.77309806265856 and Distance eq '148.45648566856' and BankAmount eq '1248.7731'");
         }
+        [TestMethod]
+        public void Should_Use_Multi_PartitionKey_filter()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .WherePartitionKey()
+           .Equal("partition1")
+           .OrPartitionKey()
+           .Equal("partition2")
+           .OrPartitionKey()
+           .Equal("Partition3");
+           
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("PartitionKey eq 'partition1' or PartitionKey eq 'partition2' or PartitionKey eq 'Partition3'");
+
+        } 
+       
     }
 }
