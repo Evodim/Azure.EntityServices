@@ -46,7 +46,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
 
             await foreach (var batch in _projectionClient.GetAsync(p =>
             p
-            .WithTags()
+            .IncludeTags()
             .WherePartitionKey()
             .GreaterThanOrEqual("~")))
             {
