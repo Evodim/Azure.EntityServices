@@ -1,11 +1,12 @@
-# Manage your entities in Azure Storage without tears !
+# Azure Entity Services
+## Manage your entities in Azure Storage without tears !
 
 ## What is Azure Entity Services?
 
 Azure Entity Services is an abstraction layer library which help you to **store**, **query**, **update** any entities classes in Azure Storage Table and Blob
 
  This library was written in C# Core and based on official **Azure SDK**
-
+  
 ## Focused on performance and productity 
 
 The library was designed to offer optimized performance and memory consumption to allow batched reading and writing operations on large entities store
@@ -16,26 +17,18 @@ Moreover, abstraction layers for Table and Blob will simplify implementation of 
 
 
  
-### What the meaning of Entity ?
+## What the meaning of Entity ?
 An entity class is essentially an object wrapper for a database table.
 
-The attributes of an entity are transformed to columns on the database table. 
-Entities can have various data maintenance operations such as read, insert, modify, remove,
- readmulti (read multi reads multiple records from a table based on a partial key).
-
-Standard operations such as read or insert operate on a single database table by default.
-
+Attributes of an entity are mapped automatically into storage table or metadata of a blob 
+Managing your entities by using various basic and advanced operations such as:  read, insert, modify, remove, paginate, bulk read and bulk add/update
 
 With this Library you can map any data entities (C# class) into a **table** or a **blob** item
 
-
-
-
-
-This library is based on official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
-
  
-## EntityTableClient package features
+## EntityTableClient features
+ 
+ based on  [Azure.Data.Tables sdk library](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/Data.Tables-readme?view=azure-dotnet&viewFallbackFrom=azure-dotnet%2F)
  
 * You can manage any generic C# entities without Azure SDK dependencies: no needs to inehrit from ITableEntity or TableEntity neither
 * You can extend entity properties with dynamic properties (to simplify search and indexing nested objects)
@@ -52,7 +45,6 @@ EntityTableClient bind any classes (C# entities) to Entity table storage (IEntit
 This binding allows to have more control when entity was stored of readed from the table storage
 
 Internally, it use Azure storage ETG feature (entity transaction group) to keep indexed tag synchronized with the main entity.
-
 
 
 ### EntityTableClient configuration example
@@ -97,25 +89,16 @@ Internally, it use Azure storage ETG feature (entity transaction group) to keep 
             //===============================================================================================
 
 ```
+## Sample projects
+[Sample projects](https://github.com/Evodim/Azure.EntityServices/tree/main/samples)
 
-
-### Output of sample console projet based on a table with 1.5 million of entities and only 5 partitions (standard storageV2)
+### Performance tests Sample console based on a table with 1.5 million of entities and 5 partitions (standard storageV2)
  
 ![image](https://user-images.githubusercontent.com/4396827/213818315-bf0370d3-82f2-4908-b969-761bd0b3b9de.png)
-
-
-### Same table with added 10K entities and parallelization setted up to 64 concurrent batch operations
-
-![image](https://user-images.githubusercontent.com/4396827/213819426-3c9d2896-07db-4601-8355-b36c22440235.png)
-
-
-### Added an implementation of entity observer
-
-![image](https://user-images.githubusercontent.com/4396827/213823101-c36917fe-93a1-4fef-bf14-6b363e9eb32b.png)
-
-
+  
 ## EntityBlobClient package features
  
+ Based on [Azure.Data.Blobs sdk library](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/Storage.Blobs-readme?view=azure-dotnet/)
 * Like EntityTableClient, you can manage any generic C# entities without Azure SDK dependencies
 * Entities properties was mapped and stored directly into Blob metadata, no need to maintain a relation with blob and any additional tables 
 * You can tag any entity or dynamic properties to be indexed natively by Azure Blob Storage service
