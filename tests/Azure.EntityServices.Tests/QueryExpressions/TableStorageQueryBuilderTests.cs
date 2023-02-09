@@ -70,7 +70,8 @@ namespace Azure.EntityServices.Table.Tests
             var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
-           .WhereTag("Created").GreaterThanOrEqual("2022-10-22")
+           .WhereTag("Created")
+           .GreaterThanOrEqual("2022-10-22")
            .And(p => p.TenantId).Equal("10");
 
             var queryStr = builder.Build();
@@ -86,7 +87,8 @@ namespace Azure.EntityServices.Table.Tests
             var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
-           .WhereTag("Created").LessThanOrEqual("2022-10-22")
+           .WhereTag("Created")
+           .LessThanOrEqual("2022-10-22")
            .And(p => p.TenantId).Equal("10");
 
             var queryStr = builder.Build();
@@ -197,13 +199,120 @@ namespace Azure.EntityServices.Table.Tests
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .IncludeTags()
-           .WherePartitionKey().Equal("tenant1");
+           .WherePartitionKey()
+           .Equal("tenant1");
 
             var queryStr = builder.Build();
 
             queryStr.Trim()
                 .Should()
                 .Be("PartitionKey eq 'tenant1'");
+        }
+
+        [TestMethod]
+        public void Should_Use_In_Filter_With_Tag_Prop()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .Where("PartitionKey")
+           .In("value1", "value2", "value3");
+
+            var queryStr = builder.Build();
+            queryStr.Trim()
+                .Should()
+                .Be("(PartitionKey eq 'value1' or PartitionKey eq 'value2' or PartitionKey eq 'value3')");
+        }
+
+        [TestMethod]
+        public void Should_Use_In_Filter_Inside_ExpressionFilter_Prop2()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .Where("prop1s")
+           .Equal("value")
+           .And("tenant1")
+           .In("tag1", "tag2", "tag3")
+           .And("prop2")
+           .Equal("newValue");
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("prop1s eq 'value' and (tenant1 eq 'tag1' or tenant1 eq 'tag2' or tenant1 eq 'tag3') and prop2 eq 'newValue'");
+        }
+
+        [TestMethod]
+        public void Should_Use_In_Filter_At_Start_Of_ExpressionFilter_Prop2()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .Where("tenant1")
+           .In("tag1", "tag2", "tag3")
+           .And("prop2")
+           .Equal("newValue");
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("(tenant1 eq 'tag1' or tenant1 eq 'tag2' or tenant1 eq 'tag3') and prop2 eq 'newValue'");
+        }
+
+        [TestMethod]
+        public void Should_Use_NotIn_Filter_With_Tag_Prop()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .Where("PartitionKey")
+           .NotIn("value1", "value2", "value3");
+
+            var queryStr = builder.Build();
+            queryStr.Trim()
+                .Should()
+                .Be("(PartitionKey ne 'value1' and PartitionKey ne 'value2' and PartitionKey ne 'value3')");
+        }
+
+        [TestMethod]
+        public void Should_Use_NotIn_Filter_Inside_ExpressionFilter_Prop2()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .Where("prop1s")
+           .Equal("value")
+           .And("tenant1")
+           .NotIn("tag1", "tag2", "tag3")
+           .And("prop2")
+           .Equal("newValue");
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("prop1s eq 'value' and (tenant1 ne 'tag1' and tenant1 ne 'tag2' and tenant1 ne 'tag3') and prop2 eq 'newValue'");
+        }
+
+        [TestMethod]
+        public void Should_Use_NotIn_Filter_At_Start_Of_ExpressionFilter_Prop2()
+        {
+            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+
+            (builder.Query as TagFilterExpression<PersonEntity>)
+           .Where("tenant1")
+           .NotIn("tag1", "tag2", "tag3")
+           .And("prop2")
+           .Equal("newValue");
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("(tenant1 ne 'tag1' and tenant1 ne 'tag2' and tenant1 ne 'tag3') and prop2 eq 'newValue'");
         }
     }
 }

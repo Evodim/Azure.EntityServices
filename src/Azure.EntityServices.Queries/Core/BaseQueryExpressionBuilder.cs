@@ -21,6 +21,7 @@ namespace Azure.EntityServices.Queries.Core
             {
                 if (expression == null) return string.Empty;
                 StringBuilder queryBuilder = new();
+                
                 if (expression.PropertyName != null)
                 {
                     var strExpression = ExpressionFilterConverter(expression);
@@ -29,14 +30,13 @@ namespace Azure.EntityServices.Queries.Core
                 if (expression.Group.Count > 0)
                 {
                     foreach (var operation in expression.Group)
-                    {
-                        if (!string.IsNullOrEmpty(InstructionsProvider.Get(operation.GroupOperator))) queryBuilder.Append($" {InstructionsProvider.Get(operation.GroupOperator)} (");
+                    { 
+                        queryBuilder.Append($" {InstructionsProvider.Get(operation.GroupOperator)} (");
                         queryBuilder.Append(Build(operation));
-                        if (!string.IsNullOrEmpty(InstructionsProvider.Get(operation.GroupOperator))) queryBuilder.Append(")");
+                        queryBuilder.Append(")");
                     }
-                }
-                if (!string.IsNullOrEmpty(expression.Operator))
-                    queryBuilder.Append($" {InstructionsProvider.Get(expression.Operator)} ");
+                } 
+                queryBuilder.Append($" {InstructionsProvider.Get(expression.Operator)} ");
                 queryBuilder.Append(Build(expression.NextOperation));
 
                 return queryBuilder.ToString().Trim();

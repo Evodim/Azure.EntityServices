@@ -1,5 +1,6 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core;
+using System.Linq;
 
 namespace Azure.EntityServices.Tables
 {
@@ -55,6 +56,6 @@ namespace Azure.EntityServices.Tables
                .GreaterThan($"~{query.TagName}-")
                .AndRowKey()
                .LessThan($"{TableQueryHelper.ToTagRowKeyPrefix(query.TagName, value)}~");
-        }
+        } 
     }
 }
