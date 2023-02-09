@@ -1,18 +1,39 @@
-# Azure.EntityServices
-## Manage your C# Entities in Azure storage without pain !
-![Public](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-public.yml/badge.svg)
-![Internal](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-internal.yml/badge.svg)
+# Manage your entities in Azure Storage without tears !
+
+## What is Azure Entity Services?
+
+Azure Entity Services is an abstraction layer library which help you to **store**, **query**, **update** any entities classes in Azure Storage Table and Blob
+
+ This library was written in C# Core and based on official **Azure SDK**
+
+## Focused on performance and productity 
+
+The library was designed to offer optimized performance and memory consumption to allow batched reading and writing operations on large entities store
+
+Moreover, abstraction layers for Table and Blob will simplify implementation of your applications and provide simple and fast integration
+
+**This will allow you to focus on you application business logic**
 
 
-## Purpose
+ 
+### What the meaning of Entity ?
+An entity class is essentially an object wrapper for a database table.
 
-Azure.EntityServices is a set of packages  help you to store, update and search generic entities in Azure storage tables and blobs
+The attributes of an entity are transformed to columns on the database table. 
+Entities can have various data maintenance operations such as read, insert, modify, remove,
+ readmulti (read multi reads multiple records from a table based on a partial key).
 
-Entities could be any POCO C# classes without any azure related dependencies
+Standard operations such as read or insert operate on a single database table by default.
+
+
+With this Library you can map any data entities (C# class) into a **table** or a **blob** item
+
+
+
+
 
 This library is based on official [Azure.Data.Tables sdk library](https://devblogs.microsoft.com/azure-sdk/announcing-the-new-azure-data-tables-libraries/)
 
-This project is focused on Azure SDK abstraction and performance
  
 ## EntityTableClient package features
  
