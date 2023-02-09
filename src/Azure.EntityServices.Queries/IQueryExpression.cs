@@ -13,5 +13,6 @@ namespace Azure.EntityServices.Queries
         List<IFilterExpression<T>> Group { get; }
         public string GroupOperator { get; set; }
         IFilterExpression<T> NextOperation { get; set; }
+        IFilterExpression<T> LastOperation { get; set; }
     }
 }

@@ -4,7 +4,10 @@
     {
         public virtual string Get(string instruction)
         {
-            if (instruction == null) return string.Empty;
+            if (string.IsNullOrEmpty(instruction))
+            {
+                return string.Empty;
+            }
             var type = GetType();
             var value = type.GetProperty(instruction)?.GetValue(this) as string;
             return value;

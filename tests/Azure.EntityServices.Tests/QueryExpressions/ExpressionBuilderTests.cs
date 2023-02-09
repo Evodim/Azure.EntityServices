@@ -177,8 +177,10 @@ namespace Azure.EntityServices.Table.Tests
 
             dynamicQuery = builder.Query
          .Where(p => p.TenantId).Equal("50")
-         .And("LastName")
-         .In("Doe", "Kent");
+         .And(p=>p
+           .Where("LastName")
+            .In("Doe", "Kent"));
+
 
             queryStr = builder.Build();
 
