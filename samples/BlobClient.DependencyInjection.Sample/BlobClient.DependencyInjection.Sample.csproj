@@ -12,10 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Common.Samples\Common.Samples.csproj" />
     <ProjectReference Include="..\..\src\Azure.EntityServices.Blobs.Extensions.DependencyInjection\Azure.EntityServices.Blobs.Extensions.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj" />
     <ProjectReference Include="..\..\tests\Azure.EntityServices.Tests\Azure.EntityServices.Tests.csproj" />
+    <ProjectReference Include="..\Common.Samples\Common.Samples.csproj" />
   </ItemGroup>
 
 </Project>

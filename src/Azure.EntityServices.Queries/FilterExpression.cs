@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Queries
         public List<IFilterExpression<T>> Group { get; } = new List<IFilterExpression<T>>();
 
         public IFilterExpression<T> NextOperation { get; set; }
-        public IFilterExpression<T> LastOperation { get; set; }
+        public IFilterExpression<T> PrevOperation { get; set; }
 
         public IQueryFilter<T, P> AddOperator<P>(string expressionOperator, Expression<Func<T, P>> property)
         {
@@ -40,7 +40,7 @@ namespace Azure.EntityServices.Queries
 
             newOperation.PropertyName = prop.Name;
             newOperation.PropertyType = prop.PropertyType;
-            newOperation.LastOperation = this;
+            newOperation.PrevOperation = this;
 
             NextOperation = newOperation;
             return newOperation as IQueryFilter<T,P>;
@@ -53,7 +53,7 @@ namespace Azure.EntityServices.Queries
 
             newOperation.PropertyName = property;
             newOperation.PropertyType = typeof(object);
-            newOperation.LastOperation = this;
+            newOperation.PrevOperation = this;
 
             NextOperation = newOperation;
             return newOperation;

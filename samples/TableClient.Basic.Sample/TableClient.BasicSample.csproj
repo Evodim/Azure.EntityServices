@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Common.Samples\Common.Samples.csproj" />
     <ProjectReference Include="..\..\src\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
     <ProjectReference Include="..\..\src\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj" />
+    <ProjectReference Include="..\Common.Samples\Common.Samples.csproj" />
   </ItemGroup>
 
 </Project>

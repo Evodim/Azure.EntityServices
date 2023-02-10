@@ -30,13 +30,14 @@ namespace Azure.EntityServices.Queries.Core
                 if (expression.Group.Count > 0)
                 {
                     foreach (var operation in expression.Group)
-                    { 
+                    {
                         queryBuilder.Append($" {InstructionsProvider.Get(operation.GroupOperator)} (");
                         queryBuilder.Append(Build(operation));
                         queryBuilder.Append(")");
                     }
-                } 
+                }
                 queryBuilder.Append($" {InstructionsProvider.Get(expression.Operator)} ");
+                
                 queryBuilder.Append(Build(expression.NextOperation));
 
                 return queryBuilder.ToString().Trim();
