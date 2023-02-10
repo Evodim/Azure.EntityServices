@@ -36,14 +36,16 @@ namespace Azure.EntityServices.Queries
         public static IFilterOperator<T> NotIn<T, P>(this IQueryFilter<T, P> query, params P[] values)
         {
             var exp = query as IFilterExpression<T>;
-
-            exp.LastOperation.AddGroupExpression(string.IsNullOrEmpty(exp.LastOperation.PropertyName) ? "" : "And",
+            
+            exp.PrevOperation.AddGroupExpression(string.IsNullOrEmpty(exp.PrevOperation.PropertyName) ? "" : "And",
                 p => p.Where(exp.PropertyName)
                 ._NotIn(values));
+
+            //ignore current expression because we need override and keep the previous expression
             exp.PropertyName = null;
             exp.Operator = null;
-
-            return exp.LastOperation;
+            exp.PrevOperation.Operator = null;
+            return exp.PrevOperation;
         }
         /// <summary>
         /// Build a filter to check if current field value was present in given list
@@ -58,13 +60,15 @@ namespace Azure.EntityServices.Queries
 
             var exp = query as IFilterExpression<T>;
 
-            exp.LastOperation.AddGroupExpression(string.IsNullOrEmpty(exp.LastOperation.PropertyName) ? "" : "And",
+            exp.PrevOperation.AddGroupExpression(string.IsNullOrEmpty(exp.PrevOperation.PropertyName) ? "" : "And",
                 p => p.Where(exp.PropertyName)
                 ._In(values));
+
+            //ignore current expression because we need override and keep the previous expression
             exp.PropertyName = null;
             exp.Operator = null;
-
-            return exp.LastOperation;
+            exp.PrevOperation.Operator = null;
+            return exp.PrevOperation;
         }
      
         private static IFilterOperator<T> _In<T, P>(this IQueryFilter<T> query, P[] values)
@@ -75,7 +79,7 @@ namespace Azure.EntityServices.Queries
                 nextQuery = (IQuery<T>)(nextQuery as IQueryFilter<T>)
                     .Equal(item)
                     .Or((query as IFilterExpression<T>).PropertyName);
-            }
+            } 
             (nextQuery as IQueryFilter<T>).Equal(values.Last());
             return nextQuery as IFilterOperator<T>;
         }

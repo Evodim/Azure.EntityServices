@@ -113,7 +113,7 @@ namespace Azure.EntityServices.Table.Tests
            .AndNot(p => p
               .Where(p => p.Created).GreaterThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z"))
               .Or(p => p.Created).LessThan(DateTimeOffset.Parse("2012-04-21T18:25:43Z")))
-           .OrNot(p => p.Where(p=>p.Enabled).Equal(true));
+           .OrNot(p => p.Where(p => p.Enabled).Equal(true));
 
             var queryStr = builder.Build();
 
@@ -166,27 +166,41 @@ namespace Azure.EntityServices.Table.Tests
 
             var dynamicQuery = builder.Query
               .Where(p => p.TenantId).Equal("50")
-              .And(p => p.LastName)
-              .In("Doe");
+              .And(p => p.LastName).In("Doe");
 
             var queryStr = builder.Build();
 
             queryStr.Trim()
                 .Should()
-                .Be("TenantId Equal '50' And LastName Equal 'Doe'");
+                .Be("TenantId Equal '50' And (LastName Equal 'Doe')");
 
             dynamicQuery = builder.Query
          .Where(p => p.TenantId).Equal("50")
-         .And(p=>p
-           .Where("LastName")
-            .In("Doe", "Kent"));
-
+         .And("LastName")
+           .In("Doe", "Kent");
 
             queryStr = builder.Build();
 
             queryStr.Trim()
                 .Should()
-                .Be("TenantId Equal '50' And LastName Equal 'Doe' Or LastName Equal 'Kent'");
+                .Be("TenantId Equal '50' And (LastName Equal 'Doe' Or LastName Equal 'Kent')");
+        }
+
+        [TestMethod]
+        public void Should_BuildGroup_Dynamic_SubQuery_With_In_Extension_Helper()
+        {
+            var builder = new MockedExpressionBuilder<PersonEntity>();
+            builder.Query
+         .Where(p => p.TenantId).Equal("50")
+         .And(p => p
+           .Where("LastName")
+           .In("Doe", "Kent"));
+
+            var queryStr = builder.Build();
+
+            queryStr.Trim()
+                .Should()
+                .Be("TenantId Equal '50' And ((LastName Equal 'Doe' Or LastName Equal 'Kent'))");
         }
 
         [TestMethod]
@@ -194,27 +208,15 @@ namespace Azure.EntityServices.Table.Tests
         {
             var builder = new MockedExpressionBuilder<PersonEntity>();
 
-            var dynamicQuery = builder.Query
-              .Where(p => p.TenantId).Equal("50")
-              .And(p => p.LastName)
-              .NotIn("Doe");
+            builder.Query
+            .Where(p => p.TenantId).Equal("50")
+            .And("LastName").NotIn("Doe", "Kent");
 
             var queryStr = builder.Build();
 
             queryStr.Trim()
                 .Should()
-                .Be("TenantId Equal '50' And LastName NotEqual 'Doe'");
-
-            dynamicQuery = builder.Query
-         .Where(p => p.TenantId).Equal("50")
-         .And("LastName")
-         .NotIn("Doe", "Kent");
-
-            queryStr = builder.Build();
-
-            queryStr.Trim()
-                .Should()
-                .Be("TenantId Equal '50' And LastName NotEqual 'Doe' And LastName NotEqual 'Kent'");
+                .Be("TenantId Equal '50' And (LastName NotEqual 'Doe' And LastName NotEqual 'Kent')");
         }
     }
 }
