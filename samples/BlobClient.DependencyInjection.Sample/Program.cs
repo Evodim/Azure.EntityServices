@@ -36,9 +36,9 @@ namespace BlobClient.BasicSample
                        builder.ConfigureEntity(config =>
                        {
                            config
-                            .SetBlobContentProp(p => p.Content)
-                            .SetBlobPath(p => $"{p.Created:yyyy/MM/dd}")
-                            .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
+                            .SetBlobContentProp(entity => entity.Content)
+                            .SetBlobPath(entity => $"{entity.Created:yyyy/MM/dd}")
+                            .SetBlobName(entity => $"{entity.Name}-{entity.Reference}.{entity.Extension}")
                             .AddTag(p => p.Reference)
                             .AddTag(p => p.Name);
                        });
@@ -56,10 +56,10 @@ namespace BlobClient.BasicSample
                     {
                         config
                          .SetBlobContentProp(p => p.Content)
-                         .SetBlobPath(p => $"{p.Created:yyyy/MM/dd}")
-                         .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
-                         .AddTag(p => p.Reference)
-                         .AddTag(p => p.Name);
+                         .SetBlobPath(entity => $"{entity.Created:yyyy/MM/dd}")
+                         .SetBlobName(entity => $"{entity.Name}-{entity.Reference}.{entity.Extension}")
+                         .AddTag(entity => entity.Reference)
+                         .AddTag(entity => entity.Name);
                     });
                 });
            });
