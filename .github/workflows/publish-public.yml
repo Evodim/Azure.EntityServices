@@ -4,6 +4,7 @@ name: MAIN public deployment
 on:  
   push:
     branches: [ main ]
+    paths: [src/**]
     tags:
      - v[0-9]+.[0-9]+.[0-9]+  
 
