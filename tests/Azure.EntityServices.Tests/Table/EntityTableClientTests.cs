@@ -1074,7 +1074,7 @@ namespace Azure.EntityServices.Table.Tests
             var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
             var options = new EntityTableClientOptions() { };
             _commonOptions.Invoke(options);
-            options.SerializeWithStringEnumConverter();
+            options.ConfigureSerializerWithStringEnumConverter();
 
             var genericClient = EntityTableClient.Create<TableEntity>(TestEnvironment.ConnectionString)
                 .Configure(options, c =>

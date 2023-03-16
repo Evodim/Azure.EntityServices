@@ -11,7 +11,7 @@ namespace Azure.EntityServices.Tables
             return options;
         }
 
-        public static EntityTableClientOptions SerializeWithStringEnumConverter(this EntityTableClientOptions options)
+        public static EntityTableClientOptions ConfigureSerializerWithStringEnumConverter(this EntityTableClientOptions options)
         {
             options?.SerializerOptions?.AddJsonStringEnumConverter();
             return options;
