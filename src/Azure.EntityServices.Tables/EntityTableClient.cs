@@ -45,10 +45,10 @@ namespace Azure.EntityServices.Tables
         private EntityTagBuilder<T> _entityTagBuilder;
 
         private IEntityBinder<T> CreatePrimaryEntityBinderFromEntity(T entity)
-          => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps, _entityTagBuilder);
+          => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
 
         private IEntityBinder<T> CreateEntityBinderFromTableEntity(TableEntity tableEntity)
-            => new TableEntityBinder<T>(tableEntity, _config.IgnoredProps, _entityTagBuilder);
+            => new TableEntityBinder<T>(tableEntity, _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
 
         private TableBatchClient CreateTableBatchClient()
         {
