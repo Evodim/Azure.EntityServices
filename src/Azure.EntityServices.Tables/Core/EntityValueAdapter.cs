@@ -15,7 +15,11 @@ namespace Azure.EntityServices.Tables.Core
         /// <param name="value"></param>
         /// <param name="entityProp"></param>
         /// <returns></returns>
-        public static object WriteValue(object value, PropertyInfo entityProp = null)
+        public static object WriteValue(
+            object value,
+            JsonSerializerOptions serializerOptions,
+            PropertyInfo entityProp = null
+           )
         {
             if (value == null)
             {
@@ -49,7 +53,7 @@ namespace Azure.EntityServices.Tables.Core
                 //otherwise try to serialize in string
                 decimal v => v.ToInvariantString(),
                 float v => v.ToInvariantString(),
-                _ => JsonSerializer.Serialize(value)
+                _ => JsonSerializer.Serialize(value, serializerOptions)
             };
         }
 
@@ -59,7 +63,11 @@ namespace Azure.EntityServices.Tables.Core
         /// <param name="value"></param>
         /// <param name="entityProp"></param>
         /// <returns></returns>
-        public static void ReadValue<T>(T entity, PropertyInfo entityProp, object tablePropValue)
+        public static void ReadValue<T>(
+            T entity
+            , PropertyInfo entityProp,
+            JsonSerializerOptions serializerOptions,
+            object tablePropValue = null)
         {
             var propertyType = entityProp.PropertyType;
 
@@ -213,10 +221,10 @@ namespace Azure.EntityServices.Tables.Core
                     if (propertyType.IsClass && !propertyType.IsValueType)
                     {
                         //otherwise  it should be a serialized object
-                        entityProp.SetValue(entity, JsonSerializer.Deserialize(strPropValue, propertyType), null);
+                        entityProp.SetValue(entity, JsonSerializer.Deserialize(strPropValue, propertyType, serializerOptions), null);
                         return;
                     }
-                    entityProp.SetValue(entity, JsonSerializer.Deserialize(strPropValue, propertyType), null);
+                    entityProp.SetValue(entity, JsonSerializer.Deserialize(strPropValue, propertyType, serializerOptions), null);
                     return;
                 }
 

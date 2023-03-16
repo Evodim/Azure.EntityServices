@@ -2,9 +2,9 @@
 using Azure.EntityServices.Tables.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 
 namespace Azure.EntityServices.Tables.Core
 {
@@ -19,6 +19,8 @@ namespace Azure.EntityServices.Tables.Core
 
         public TableEntity TableEntity { get; }
 
+        private readonly JsonSerializerOptions _serializerOptions;
+
         public T Entity { get; private set; }
         public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
         public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>();
@@ -28,61 +30,63 @@ namespace Azure.EntityServices.Tables.Core
             BindingFlags.Instance |
             BindingFlags.SetProperty);
 
-
         private readonly IEnumerable<PropertyInfo> _filteredEntityProperties = EntityProperties.ToList();
         private readonly EntityTagBuilder<T> _entityTagBuilder;
-        private readonly IEnumerable<string> _propsToIgnore= Enumerable.Empty<string>();
+        private readonly IEnumerable<string> _propsToIgnore = Enumerable.Empty<string>();
 
         private List<PropertyInfo> FilterEntityProperties() => EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
 
-        public TableEntityBinder(T entity)
+        public TableEntityBinder(T entity, JsonSerializerOptions serializerOptions = null)
         {
             Entity = entity;
             TableEntity = new TableEntity();
+            _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(T entity, IEnumerable<string> propsToIgnore)
+        public TableEntityBinder(T entity, IEnumerable<string> propsToIgnore, JsonSerializerOptions serializerOptions = null)
         {
             Entity = entity;
             TableEntity = new TableEntity();
             _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
             _filteredEntityProperties = FilterEntityProperties();
             _propsToIgnore = propsToIgnore.ToList();
+            _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(TableEntity tableEntity)
+        public TableEntityBinder(TableEntity tableEntity, JsonSerializerOptions serializerOptions = null)
         {
             TableEntity = tableEntity;
+            _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore, EntityTagBuilder<T> entityTagBuilder)
+        public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore, EntityTagBuilder<T> entityTagBuilder, JsonSerializerOptions serializerOptions = null)
         {
-            TableEntity = tableEntity; 
+            TableEntity = tableEntity;
             _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
             _filteredEntityProperties = FilterEntityProperties();
             _entityTagBuilder = entityTagBuilder;
+            _serializerOptions = serializerOptions;
         }
 
-
-        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore=null, EntityTagBuilder<T> entityTagBuilder=null)
+        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore = null, EntityTagBuilder<T> entityTagBuilder = null, JsonSerializerOptions serializerOptions = null)
         {
             Entity = entity;
             TableEntity = new TableEntity(partitionKey, rowKey);
-            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>() ;
-            _filteredEntityProperties =  FilterEntityProperties();
+            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
+            _filteredEntityProperties = FilterEntityProperties();
             _entityTagBuilder = entityTagBuilder;
+            _serializerOptions = serializerOptions;
         }
 
         public TableEntity Bind()
         {
-
             foreach (var metadata in Metadata)
             {
-                TableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value));
+                TableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value, _serializerOptions));
             }
             if (Entity is TableEntity tbe)
             {
-                foreach (var property in tbe.Where(e=> !_propsToIgnore.Contains(e.Key)))
+                foreach (var property in tbe.Where(e => !_propsToIgnore.Contains(e.Key)))
                 {
                     if (property.Key == "PartitionKey" ||
                         property.Key == "RowKey" ||
@@ -91,20 +95,19 @@ namespace Azure.EntityServices.Tables.Core
                     {
                         continue;
                     }
-                    TableEntity.AddOrUpdate(property.Key,property.Value);
+                    TableEntity.AddOrUpdate(property.Key, property.Value);
                 }
             }
             else
             {
                 foreach (var property in _filteredEntityProperties)
                 {
-
-                    TableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), property));
+                    TableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(Entity), _serializerOptions, property));
                 }
             }
             foreach (var property in Properties)
             {
-              TableEntity.AddOrUpdate(property.Key, EntityValueAdapter.WriteValue(property.Value));
+                TableEntity.AddOrUpdate(property.Key, EntityValueAdapter.WriteValue(property.Value, _serializerOptions));
             }
             return TableEntity;
         }
@@ -128,23 +131,21 @@ namespace Azure.EntityServices.Tables.Core
             {
                 foreach (var property in TableEntity.Keys)
                 {
-
                     tbe.AddOrUpdate(property, TableEntity[property]);
                 }
-
             }
-            else 
-            foreach (var property in _filteredEntityProperties)
-            {
-                if (TableEntity.TryGetValue(property.Name, out var tablePropValue))
+            else
+                foreach (var property in _filteredEntityProperties)
                 {
-                    EntityValueAdapter.ReadValue(Entity, property, tablePropValue);
+                    if (TableEntity.TryGetValue(property.Name, out var tablePropValue))
+                    {
+                        EntityValueAdapter.ReadValue(Entity, property, _serializerOptions, tablePropValue);
+                    }
                 }
-            }
 
             return Entity;
         }
-         
+
         public void BindDynamicProps(IDictionary<string, Func<T, object>> props, bool toDelete = false)
         {
             foreach (var prop in props)
@@ -159,15 +160,14 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public void BindTags(Dictionary<string, PropertyInfo> tags, IList<string> computedTags)
-        { 
-
+        {
             foreach (var propInfo in tags)
             {
                 Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(propInfo.Key), _entityTagBuilder.CreateTagRowKey(propInfo.Value, Entity));
             }
             foreach (var tagPrefix in computedTags)
             {
-               Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(tagPrefix), _entityTagBuilder.CreateTagRowKey(tagPrefix, Metadata[$"{tagPrefix}"], Entity));
+                Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(tagPrefix), _entityTagBuilder.CreateTagRowKey(tagPrefix, Metadata[$"{tagPrefix}"], Entity));
             }
         }
     }

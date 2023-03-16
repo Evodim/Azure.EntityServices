@@ -52,7 +52,7 @@ namespace Common.Samples.Models
         public DateTime LocalUpdated { get; set; }
         public bool? Enabled { get; set; }
         public Address Address { get; set; }
-        public List<Address> OtherAddress { get; set; }
+        public List<Address> OtherAddresses { get; set; }
         public Guid PersonId { get; set; }
         public string FirstName { get; set; }
         public int? Rank { get; set; }

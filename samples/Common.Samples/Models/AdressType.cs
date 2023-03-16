@@ -2,7 +2,7 @@
 {
     public enum AdressType
     {
-        Billing,
-        Home
+        Billing = 0,
+        Home = 1
     }
 }

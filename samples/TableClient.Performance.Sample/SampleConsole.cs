@@ -32,7 +32,7 @@ namespace TableClient.PerformanceSample
                 config
                 .SetPartitionKey(entity => entity.TenantId)
                 .SetRowKeyProp(entity => entity.PersonId)
-                .IgnoreProp(entity => entity.OtherAddress)
+                .IgnoreProp(entity => entity.OtherAddresses)
 
                 //add tag to generate indexed and sorted entities through rowKey
                 .AddTag(entity => entity.Created)
@@ -42,7 +42,7 @@ namespace TableClient.PerformanceSample
 
                 //add computed props to store and compute dynamically additional fields of the entity
                 .AddComputedProp("_IsInFrance", entity => entity.Address?.State == "France")
-                .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddress?.Count > 1)
+                .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddresses?.Count > 1)
                 .AddComputedProp("_CreatedNext6Month", entity => entity.Created > DateTimeOffset.UtcNow.AddMonths(-6))
                 .AddComputedProp("_FirstLastName3Chars", entity => entity.LastName?.ToLower()[..3])
 
