@@ -29,10 +29,9 @@ namespace TableClient.BasicSample
             , config =>
             {
                 config
-                .SetPartitionKey(p => p.TenantId)
-                .SetRowKeyProp(p => p.PersonId)
-                .IgnoreProp(p => p.OtherAddresses)
-
+                .SetPartitionKey(entity => entity.TenantId)
+                .SetRowKeyProp(entity => entity.PersonId)
+                .IgnoreProp(entity => entity.OtherAddress)
                 //add computed props to store and compute dynamically additional fields of the entity
                 .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
                 .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3]);

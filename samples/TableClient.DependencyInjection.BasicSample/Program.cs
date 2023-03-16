@@ -1,9 +1,7 @@
 ﻿using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Extensions;
 using Azure.EntityServices.Tables.Extensions.DependencyInjection;
 using Common.Samples;
 using Common.Samples.Models;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -35,11 +33,11 @@ namespace TableClient.DependencyInjection.BasicSample
                        options.CreateTableIfNotExists = true;
                    })
                    .ConfigureEntity((sp, config) => config
-                      .SetPartitionKey(p => p.TenantId)
-                      .SetRowKeyProp(p => p.PersonId)
-                      .IgnoreProp(p => p.OtherAddresses)
-                      .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                      .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddresses?.Count > 1) 
+                      .SetPartitionKey(entity => entity.TenantId)
+                      .SetRowKeyProp(entity => entity.PersonId)
+                      .IgnoreProp(entity => entity.OtherAddress)
+                      .AddComputedProp("_IsInFrance", entity => entity.Address?.State == "France")
+                      .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddress?.Count > 1) 
                       );
                });
            });

@@ -21,11 +21,11 @@ namespace BlobClient.BasicSample
             var client = EntityBlobClient.Create<DocumentEntity>(TestEnvironment.ConnectionString)
                 .Configure(options, config =>
              config
-                .SetBlobContentProp(p => p.Content)
-                .SetBlobPath(p => $"{p.Created:yyyy/MM/dd}")
-                .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
-                .AddTag(p => p.Reference)
-                .AddTag(p => p.Name));
+                .SetBlobContentProp(entity => entity.Content)
+                .SetBlobPath(entity => $"{entity.Created:yyyy/MM/dd}")
+                .SetBlobName(entity => $"{entity.Name}-{entity.Reference}.{entity.Extension}")
+                .AddTag(entity => entity.Reference)
+                .AddTag(entity => entity.Name));
 
             var faker = Fakers.CreateFakedDoc();
 

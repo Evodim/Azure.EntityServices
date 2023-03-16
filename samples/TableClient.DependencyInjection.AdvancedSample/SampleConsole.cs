@@ -44,8 +44,8 @@ namespace TableClient.DependencyInjection.AdvancedSample
                 Console.WriteLine($"from source table: {entity.LastName}");
             }
 
-            await foreach (var batch in _projectionClient.GetAsync(p =>
-            p
+            await foreach (var batch in _projectionClient.GetAsync(filter =>
+            filter
             .IncludeTags()
             .WherePartitionKey()
             .GreaterThanOrEqual("~")))

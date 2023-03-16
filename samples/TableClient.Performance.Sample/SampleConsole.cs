@@ -30,21 +30,21 @@ namespace TableClient.PerformanceSample
             , config =>
             {
                 config
-                .SetPartitionKey(p => p.TenantId)
-                .SetRowKeyProp(p => p.PersonId)
-                .IgnoreProp(p => p.OtherAddresses)
+                .SetPartitionKey(entity => entity.TenantId)
+                .SetRowKeyProp(entity => entity.PersonId)
+                .IgnoreProp(entity => entity.OtherAddress)
 
                 //add tag to generate indexed and sorted entities through rowKey
-                .AddTag(p => p.Created)
-                .AddTag(p => p.LastName)
-                .AddTag(p => p.Distance)
-                .AddTag(p => p.Enabled)
+                .AddTag(entity => entity.Created)
+                .AddTag(entity => entity.LastName)
+                .AddTag(entity => entity.Distance)
+                .AddTag(entity => entity.Enabled)
 
                 //add computed props to store and compute dynamically additional fields of the entity
-                .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddresses?.Count > 1)
-                .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
+                .AddComputedProp("_IsInFrance", entity => entity.Address?.State == "France")
+                .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddress?.Count > 1)
+                .AddComputedProp("_CreatedNext6Month", entity => entity.Created > DateTimeOffset.UtcNow.AddMonths(-6))
+                .AddComputedProp("_FirstLastName3Chars", entity => entity.LastName?.ToLower()[..3])
 
                 //computed props could also be tagged 
                 .AddTag("_FirstLastName3Chars")
@@ -96,7 +96,7 @@ namespace TableClient.PerformanceSample
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
                        filter => filter
-                        .Where(p => p.LastName)
+                        .Where(entity => entity.LastName)
                         .Equal(onePerson.LastName)
                         .AndPartitionKey()
                         .Equal("tenant1"))
@@ -114,7 +114,7 @@ namespace TableClient.PerformanceSample
                 var count = 0;
                 await foreach (var _ in entityClient.GetAsync(
                     filter => filter
-                    .WhereTag(p => p.LastName)
+                    .WhereTag(entity => entity.LastName)
                     .Equal(onePerson.LastName)
                     .AndPartitionKey()
                     .Equal("tenant1"))

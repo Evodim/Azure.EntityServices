@@ -31,18 +31,17 @@ namespace TableClient.LegacySample
                        options.CreateTableIfNotExists = true;
                    })
                    .ConfigureEntity(entityConfig => entityConfig
-                      .SetPartitionKey(p => p.TenantId)
-                      .SetRowKeyProp(p => p.PersonId)
+                      .SetPartitionKey(entity => entity.TenantId)
+                      .SetRowKeyProp(entity => entity.PersonId)
+                      .IgnoreProp(entity => entity.OtherAddress)
 
-                      .IgnoreProp(p => p.OtherAddresses)
+                      .AddComputedProp("_IsInFrance", entity => entity.Address?.State == "France")
+                      .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddress?.Count > 1)
+                      .AddComputedProp("_CreatedNext6Month", entity => entity.Created > DateTimeOffset.UtcNow.AddMonths(-6))
+                      .AddComputedProp("_FirstLastName3Chars", entity => entity.LastName?.ToLower()[..3])
 
-                      .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                      .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddresses?.Count > 1)
-                      .AddComputedProp("_CreatedNext6Month", p => p.Created > DateTimeOffset.UtcNow.AddMonths(-6))
-                      .AddComputedProp("_FirstLastName3Chars", p => p.LastName?.ToLower()[..3])
-
-                      .AddTag(p => p.Created)
-                      .AddTag(p => p.LastName)
+                      .AddTag(entity => entity.Created)
+                      .AddTag(entity => entity.LastName)
                       .AddTag("_FirstLastName3Chars"));
                });
 

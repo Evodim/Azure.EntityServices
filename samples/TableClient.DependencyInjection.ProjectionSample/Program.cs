@@ -30,8 +30,8 @@ namespace TableClient.DependencyInjection.ProjectionSample
                    .AddEntityTableClient<PersonEntity>(TestEnvironment.ConnectionString,
                    entityBuilder => entityBuilder
                    .ConfigureEntity(config => config
-                   .SetPartitionKey(p => $"~projection-{p.LastName?.ToLowerInvariant()[..3]}")
-                   .SetRowKey(p => $"{p.LastName}-{p.PersonId}"))
+                   .SetPartitionKey(entity => $"~projection-{entity.LastName?.ToLowerInvariant()[..3]}")
+                   .SetRowKey(entity => $"{entity.LastName}-{entity.PersonId}"))
                    .ConfigureOptions(options =>
                    {
                        options.TableName = $"{nameof(PersonEntity)}"; 
@@ -47,12 +47,12 @@ namespace TableClient.DependencyInjection.ProjectionSample
                        options.CreateTableIfNotExists = true;
                    })
                    .ConfigureEntity((sp, config) => config
-                   .SetPartitionKey(p => p.TenantId)
-                   .SetRowKeyProp(p => p.PersonId)
-                   .AddTag(p => p.LastName)
-                   .IgnoreProp(p => p.OtherAddresses)
-                   .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                   .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddresses?.Count > 1)
+                   .SetPartitionKey(entity => entity.TenantId)
+                   .SetRowKeyProp(entity => entity.PersonId)
+                   .AddTag(entity => entity.LastName)
+                   .IgnoreProp(entity => entity.OtherAddress)
+                   .AddComputedProp("_IsInFrance", entity => entity.Address?.State == "France")
+                   .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddress?.Count > 1)
                    ))
                    .WithName("Source");
                });
