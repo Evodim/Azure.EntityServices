@@ -35,9 +35,9 @@ namespace TableClient.DependencyInjection.BasicSample
                    .ConfigureEntity((sp, config) => config
                       .SetPartitionKey(entity => entity.TenantId)
                       .SetRowKeyProp(entity => entity.PersonId)
-                      .IgnoreProp(entity => entity.OtherAddress)
+                      .IgnoreProp(entity => entity.OtherAddresses)
                       .AddComputedProp("_IsInFrance", entity => entity.Address?.State == "France")
-                      .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddress?.Count > 1) 
+                      .AddComputedProp("_MoreThanOneAddress", entity => entity.OtherAddresses?.Count > 1) 
                       );
                });
            });
