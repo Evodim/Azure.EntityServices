@@ -50,9 +50,9 @@ namespace TableClient.DependencyInjection.ProjectionSample
                    .SetPartitionKey(p => p.TenantId)
                    .SetRowKeyProp(p => p.PersonId)
                    .AddTag(p => p.LastName)
-                   .IgnoreProp(p => p.OtherAddress)
+                   .IgnoreProp(p => p.OtherAddresses)
                    .AddComputedProp("_IsInFrance", p => p.Address?.State == "France")
-                   .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddress?.Count > 1)
+                   .AddComputedProp("_MoreThanOneAddress", p => p.OtherAddresses?.Count > 1)
                    ))
                    .WithName("Source");
                });
