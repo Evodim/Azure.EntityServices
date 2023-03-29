@@ -4,7 +4,7 @@
     <UserSecretsId>a8d98bdc-3fa5-43dd-879a-eb3b0060fcbf</UserSecretsId> 
   </PropertyGroup>
 	<PropertyGroup>
-		<IconUrl>https://evocdn.azureedge.net/entityservices-table.png</IconUrl>
+		<IconUrl>https://evocdn.azureedge.net/entityservices-tables.png</IconUrl>
 		<Company>Evodim</Company>
 		<Product>Azure.EntityServices.Tables.Extensions.DependencyInjection</Product>
 		<Authors>Evodim</Authors>
