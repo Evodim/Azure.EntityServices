@@ -3,7 +3,8 @@
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
-	<PropertyGroup> 
+	<PropertyGroup>
+		<IconUrl>https://evocdn.azureedge.net/entityservices-table.png</IconUrl>
 		<Company>Evodim</Company>
 		<Product>Azure.EntityServices</Product>
 		<Authors>Evodim</Authors>

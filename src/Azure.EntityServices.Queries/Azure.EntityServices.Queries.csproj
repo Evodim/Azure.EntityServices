@@ -9,6 +9,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>  
   </PropertyGroup>
 	<PropertyGroup>
+		<IconUrl>https://evocdn.azureedge.net/entityservices-query.png</IconUrl>
 		<Company>Evodim</Company>
 		<Product>Azure.EntityServices</Product>
 		<Authors>Evodim</Authors>
