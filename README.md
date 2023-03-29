@@ -2,6 +2,7 @@
 
 ![image](https://evocdn.azureedge.net/entityservices-blobs.png)
 ![image](https://evocdn.azureedge.net/entityservices-tables.png)
+![image](https://evocdn.azureedge.net/entityservices-queries.png)
 
 ## Manage your entities in Azure Storage without tears !
 
