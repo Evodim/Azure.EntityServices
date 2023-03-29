@@ -4,7 +4,7 @@
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 	<PropertyGroup>
-		<IconUrl>https://evocdn.azureedge.net/images/128/entityservices-tables.png</IconUrl>
+		<PackageIconUrl>https://evocdn.azureedge.net/images/128/entityservices-tables.png</PackageIconUrl>
 		<Company>Evodim</Company>
 		<Product>Azure.EntityServices</Product>
 		<Authors>Evodim</Authors>
