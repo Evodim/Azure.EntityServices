@@ -1,8 +1,8 @@
 # Azure Entity Services
 
-![image](https://evocdn.azureedge.net/entityservices-blobs.png)
-![image](https://evocdn.azureedge.net/entityservices-tables.png)
-![image](https://evocdn.azureedge.net/entityservices-queries.png)
+![image](https://evocdn.azureedge.net/images/entityservices-blobs.png)
+![image](https://evocdn.azureedge.net/images/entityservices-tables.png)
+![image](https://evocdn.azureedge.net/images/entityservices-queries.png)
 
 ## Manage your entities in Azure Storage without tears !
 
