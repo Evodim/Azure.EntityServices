@@ -47,6 +47,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common.Samples", "samples\C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TableClient.LegacySample", "samples\TableClient.Legacy.Sample\TableClient.LegacySample.csproj", "{9BBE86B6-F1B9-4379-A739-898388CDAA96}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{FA3A656C-3F60-4B0E-B665-AC71E259D8E3}"
+	ProjectSection(SolutionItems) = preProject
+		images\entityservices-blobs.png = images\entityservices-blobs.png
+		images\entityservices-queries.png = images\entityservices-queries.png
+		images\entityservices-tables.png = images\entityservices-tables.png
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
