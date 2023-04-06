@@ -33,7 +33,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.6.0" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.5.0" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Azure.EntityServices.Blobs\Azure.EntityServices.Blobs.csproj" />
