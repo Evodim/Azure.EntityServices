@@ -1,4 +1,9 @@
 # Azure Entity Services
+
+![image](https://evocdn.azureedge.net/images/128/entityservices-tables.png)
+![image](https://evocdn.azureedge.net/images/128/entityservices-blobs.png)
+![image](https://evocdn.azureedge.net/images/128/entityservices-queries.png)
+
 ## Manage your entities in Azure Storage without tears !
 
 ## What is Azure Entity Services?
@@ -7,7 +12,7 @@ Azure Entity Services is an abstraction layer library which help you to **store*
 
  This library was written in C# Core and based on official **Azure SDK**
   
-## Focused on performance and productity 
+## Focused on performance and productivity 
 
 The library was designed to offer optimized performance and memory consumption to allow batched reading and writing operations on large entities store
 
