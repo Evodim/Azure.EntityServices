@@ -523,5 +523,15 @@ namespace Azure.EntityServices.Tables
         {
             return ApplyBatchOperations(EntityOperation.Delete, entities, cancellationToken);
         }
+
+        public async Task DeleteByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
+        {
+            var entity = await GetByIdAsync(partition,id, cancellationToken);
+            if (entity != null)
+            {
+                await DeleteAsync(entity, cancellationToken);
+            }
+            
+        }
     }
 }
