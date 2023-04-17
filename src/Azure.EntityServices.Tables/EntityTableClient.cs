@@ -99,7 +99,7 @@ namespace Azure.EntityServices.Tables
             return false;
         }
 
-        private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken)
+        private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken, bool? iterateOnly = false)
         {
             var query = new TagFilterExpression<T>();
             filter?.Invoke(query);
@@ -115,9 +115,11 @@ namespace Azure.EntityServices.Tables
             var strQuery = new TableStorageQueryBuilder<T>(query).Build();
 
             return _retryPolicy.Execute(() => _configuredClient
-            .QueryAsync<TableEntity>(filter:string.IsNullOrWhiteSpace(strQuery)?null: strQuery,
+            .QueryAsync<TableEntity>(filter:string.IsNullOrWhiteSpace(strQuery)?null: strQuery, select: iterateOnly == true ? new string[]{ "PartitionKey","RowKey" } :null,
                                      cancellationToken: cancellationToken,
-                                     maxPerPage: maxPerPage)
+                                     maxPerPage: maxPerPage
+                                    
+                                     )
             .AsPages(nextPageToken));
         }
 
@@ -325,22 +327,52 @@ namespace Azure.EntityServices.Tables
 
         public async Task<EntityPage<T>> GetPagedAsync(
             Action<IQuery<T>> filter = default,
+            int? skip = 0,
             int? maxPerPage = null,
             string nextPageToken = null,
             CancellationToken cancellationToken = default
             )
         {
-            var pageEnumerator =
-                QueryEntities(filter, maxPerPage, nextPageToken, cancellationToken)
-                         .GetAsyncEnumerator(cancellationToken);
+            
+            IAsyncEnumerator<Page<TableEntity>> pageEnumerator = null;
+
             try
-            {
+            {   
+                if (skip.HasValue && skip > 0)
+                {    
+                    var remainToSkip = skip;
+                    var nextAvailable = true;
+                    string skippedNextPageToken = nextPageToken;
+                    while (remainToSkip > 0 && nextAvailable)
+                    {
+                        var pageVisitor = QueryEntities(filter, (remainToSkip < maxPerPage) ? remainToSkip : maxPerPage, skippedNextPageToken, cancellationToken, true)
+                                      .GetAsyncEnumerator(cancellationToken);
+
+                     
+                         
+                        nextAvailable = await pageVisitor.MoveNextAsync();
+                        remainToSkip -= pageVisitor.Current.Values.Count;
+                     
+                        skippedNextPageToken = pageVisitor.Current.ContinuationToken;
+                    }
+
+                    nextPageToken = skippedNextPageToken;
+
+
+                }
+
+               pageEnumerator = QueryEntities(filter, maxPerPage, nextPageToken, cancellationToken)
+                        .GetAsyncEnumerator(cancellationToken);
                 await pageEnumerator.MoveNextAsync();
+
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()), pageEnumerator.Current.ContinuationToken);
             }
             finally
             {
+                if (pageEnumerator != null)
+                { 
                 await pageEnumerator.DisposeAsync();
+                    }
             }
         }
 

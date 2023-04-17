@@ -67,100 +67,33 @@ namespace TableClient.PerformanceSample
             {
                 await entityClient.AddManyAsync(entities);
             }
+            string nextToken = "";
 
-            using (var mesure = counters.Mesure($"Add or replace many entities {ENTITY_COUNT} items"))
+            do
             {
-                await entityClient.AddOrReplaceManyAsync(entities);
-            }
+                var pages = await entityClient.GetPagedAsync(nextPageToken: nextToken, skip: 10000);
+                nextToken = pages.ContinuationToken;
 
-            using (var mesure = counters.Mesure($"Add one entity"))
+                Console.WriteLine("not skipped" + pages.Entities.Count());
+            }
+            while (!string.IsNullOrEmpty(nextToken));
+            nextToken = "";
+            do
             {
-                await entityClient.AddAsync(onePerson);
+                var pages = await entityClient.GetPagedAsync(nextPageToken: nextToken);
+                nextToken = pages.ContinuationToken;
+
+                Console.WriteLine("total " + pages.Entities.Count());
             }
+            while (!string.IsNullOrEmpty(nextToken));
 
-            using (var mesure = counters.Mesure($"Add or replace one entity"))
-            {
-                await entityClient.AddOrReplaceAsync(onePerson);
-            }
+            nextToken = string.Empty;
+          
 
-            Console.WriteLine($"Querying entities ...");
 
-            using (var mesure = counters.Mesure("Get By Id"))
-            {
-                _ = await entityClient.GetByIdAsync(onePerson.TenantId, onePerson.PersonId);
-                Console.WriteLine($"{mesure.Name}");
-            }
-
-            using (var mesure = counters.Mesure("Get with filter "))
-            {
-                var count = 0;
-                await foreach (var _ in entityClient.GetAsync(
-                       filter => filter
-                        .Where(entity => entity.LastName)
-                        .Equal(onePerson.LastName)
-                        .AndPartitionKey()
-                        .Equal("tenant1"))
-                        )
-                {
-                    count += _.Count();
-                    Console.WriteLine($"{mesure.Name} {count} iterated ");
-                    Console.CursorTop--;
-                }
-                Console.WriteLine();
-            }
-
-            using (var mesure = counters.Mesure("Get with filter indexed"))
-            {
-                var count = 0;
-                await foreach (var _ in entityClient.GetAsync(
-                    filter => filter
-                    .WhereTag(entity => entity.LastName)
-                    .Equal(onePerson.LastName)
-                    .AndPartitionKey()
-                    .Equal("tenant1"))
-                    )
-
-                {
-                    count += _.Count();
-                    Console.WriteLine($"{mesure.Name} {count} iterated");
-                    Console.CursorTop--;
-                }
-                Console.WriteLine();
-            }
-
-            using (var mesure = counters.Mesure("Get By dynamic prop"))
-            {
-                var count = 0;
-                await foreach (var _ in entityClient.GetAsync(
-                        filter => filter
-                        .WherePartitionKey()
-                        .Equal("tenant1")
-                        .And("_FirstLastName3Chars")
-                        .Equal("arm")))
-                {
-                    count += _.Count();
-                    Console.WriteLine($"{mesure.Name}  {count} iterated");
-                    Console.CursorTop--;
-                }
-                Console.WriteLine();
-            }
-
-            using (var mesure = counters.Mesure("Get by dynamic prop indexed"))
-            {
-                var count = 0;
-                await foreach (var _ in entityClient.GetAsync(
-                    filter => filter
-                    .WhereTag("_FirstLastName3Chars")
-                    .Equal("arm")
-                    .AndPartitionKey()
-                    .Equal("tenant1")))
-                {
-                    count += _.Count();
-                    Console.WriteLine($"{mesure.Name} {count} iterated");
-                    Console.CursorTop--;
-                }
-                Console.WriteLine();
-            }
+      
+            
+            
             Console.WriteLine("====================================");
             counters.WriteToConsole();
         }
