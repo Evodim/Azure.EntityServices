@@ -1002,7 +1002,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
 
-            person.TenantId = "/\\#?Tenant123!\n\t\r\0\u0007\u009f4"; ;
+            person.TenantId = "/\\#?Tenant123!\n\t\r\0\u0007\u009f4";
             person.Created = null;
             person.LocalCreated = null;
 
