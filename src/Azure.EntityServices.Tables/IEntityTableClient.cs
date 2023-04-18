@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Tables
 
         IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default);
 
-        Task<EntityPage<T>> GetPagedAsync(Action<IQuery<T>> filter = default, int? skipCount=0, int? maxPerPage = null, string nextPageToken = null, CancellationToken cancellationToken = default);
+        Task<EntityPage<T>> GetPagedAsync(Action<IQuery<T>> filter = default, int? skip=0, int? take = null, string nextPageToken = null, CancellationToken cancellationToken = default);
            
         Task<EntityPage<T>> GetPagedAsync(Action<IQuery<T>> filter = default, int? maxPerPage = null, string nextPageToken = null, CancellationToken cancellationToken = default);
 
