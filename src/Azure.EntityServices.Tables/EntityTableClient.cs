@@ -338,6 +338,7 @@ namespace Azure.EntityServices.Tables
             try
             {
                 var skipped = 0;
+                //if skipping is required, try to iterate quickly per page without fetching all entity properties
                 if (skip.HasValue && skip > 0 && string.IsNullOrEmpty(continuationToken))
                 {
                     var remainToSkip = skip;
@@ -347,6 +348,7 @@ namespace Azure.EntityServices.Tables
 
                     while (remainToSkip > 0 && nextAvailable)
                     {
+                        // iterator with dynamic paging to handle remaining entities to skip in a page
                         var pageVisitor = QueryEntities(filter, (remainToSkip <= take) ? remainToSkip : take, skippedNextPageToken, cancellationToken, true)
                                       .GetAsyncEnumerator(cancellationToken);
 
@@ -355,6 +357,7 @@ namespace Azure.EntityServices.Tables
                         skipped += pageVisitor.Current.Values.Count;
                         skippedNextPageToken = pageVisitor.Current.ContinuationToken;
                     }
+                    //in this case, there is no available data after skipping,therefore we return empty result
                     if (string.IsNullOrEmpty(skippedNextPageToken))
                     {
                         return new EntityPage<T>(Enumerable.Empty<T>(),
@@ -362,9 +365,10 @@ namespace Azure.EntityServices.Tables
                         true,
                         skippedNextPageToken);
                     }
+                    //set continuation token to next iterator
                     continuationToken = skippedNextPageToken;
                 }
-
+                //Create a new iterator after skipping entities to return next available entities 
                 pageEnumerator = QueryEntities(filter, take, continuationToken, cancellationToken)
                          .GetAsyncEnumerator(cancellationToken);
                 await pageEnumerator.MoveNextAsync();
