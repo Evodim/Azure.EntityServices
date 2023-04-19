@@ -1002,7 +1002,7 @@ namespace Azure.EntityServices.Table.Tests
         {
             var person = Fakers.CreateFakePerson().Generate(1).FirstOrDefault();
 
-            person.TenantId = "/\\#?Tenant123!\n\t\r\0\u0007\u009f4"; ;
+            person.TenantId = "/\\#?Tenant123!\n\t\r\0\u0007\u009f4";
             person.Created = null;
             person.LocalCreated = null;
 
@@ -1158,6 +1158,114 @@ namespace Azure.EntityServices.Table.Tests
                 var updatedEntity = await personClient.GetByIdAsync(person.TenantId, person.LastName);
                 updatedEntity.Address.Should()
                     .BeEquivalentTo(person.Address);
+            }
+            catch { throw; }
+            finally
+            {
+                await personClient.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Get_Paged_Entities()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(155);
+            var options = new EntityTableClientOptions() { };
+            _commonOptions.Invoke(options);
+
+            var personClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options,
+            c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.LastName)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await personClient.AddManyAsync(persons);
+
+                EntityPage<PersonEntity> page = default;
+                int entityCount = 0;
+
+                do
+                {
+                    page = await personClient.GetPagedAsync(take: 10, nextPageToken: page.ContinuationToken);
+
+                    if (page.isLastPage)
+                    {
+                        page.Entities.Count().Should().BeLessThanOrEqualTo(10);
+                    }
+                    else
+                    {
+                        page.Entities.Count().Should().Be(10);
+                    }
+                    entityCount += page.Entities.Count();
+                }
+                while (!page.isLastPage);
+
+                entityCount.Should().Be(155);
+            }
+            catch { throw; }
+            finally
+            {
+                await personClient.DropTableAsync();
+            }
+        }
+
+        //[DataRow[ available_entities, to_skip, to_take ]
+        [DataRow(10, 10, 20)] //skip more than available entities
+        [DataRow(158, 10, 20)]
+        [DataRow(122, 5, 100)]
+        [DataRow(1024, 500, 999)]
+        [DataRow(2012, 1200, 1000)]
+        [TestMethod]
+        public async Task Should_Get_Paged_Entities_By_Skipping_Entities(params int[] inputs)
+        {
+            int totalCount = inputs[0];
+            int skipCount = inputs[1];
+            int takeCount = inputs[2];
+
+            var persons = Fakers.CreateFakePerson().Generate(totalCount);
+            var options = new EntityTableClientOptions() { };
+            _commonOptions.Invoke(options);
+
+            var personClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options,
+            c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.LastName)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await personClient.AddManyAsync(persons);
+
+                EntityPage<PersonEntity> page = default;
+                int entityCount = 0;
+
+                do
+                {
+                    page = await personClient.GetPagedAsync(take: takeCount, skip: skipCount, nextPageToken: page.ContinuationToken);
+
+                    if (page.isLastPage)
+                    {
+                        page.Entities.Count().Should().BeLessThanOrEqualTo(takeCount);
+                    }
+                    else
+                    {
+                        page.Entities.Count().Should().Be(takeCount);
+                    }
+                    entityCount += page.Entities.Count();
+                }
+                while (!page.isLastPage);
+
+                entityCount.Should().Be(totalCount - skipCount);
             }
             catch { throw; }
             finally
