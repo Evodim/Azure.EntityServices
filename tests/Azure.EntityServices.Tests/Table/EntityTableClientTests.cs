@@ -1273,5 +1273,100 @@ namespace Azure.EntityServices.Table.Tests
                 await personClient.DropTableAsync();
             }
         }
+
+        //[DataRow[ available_entities, to_skip]
+        [DataRow(10, 10)] //skip more than available entities
+        [DataRow(158, 10)]
+        [DataRow(122, 5)]
+        [DataRow(1024, 500)]
+        [DataRow(2012, 1200)]
+        [TestMethod]
+        public async Task Should_Skip_Entities_With_AsyncEnumerableExtensions(params int[] inputs)
+        {
+            int totalCount = inputs[0];
+            int skipCount = inputs[1];
+
+            var persons = Fakers.CreateFakePerson().Generate(totalCount);
+            var options = new EntityTableClientOptions() { };
+            _commonOptions.Invoke(options);
+
+            var personClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options,
+            c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.LastName)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await personClient.AddManyAsync(persons);
+
+                var all = await personClient.GetAsync().ToListAsync();
+
+                var skipResult = await personClient
+                    .GetAsync()
+                    .SkipAsync(skipCount)
+                    .ToListAsync();
+
+                skipResult.Count.Should().Be(Math.Max(0, totalCount - skipCount));
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                await personClient.DropTableAsync();
+            }
+        }
+
+        //[DataRow[ available_entities, to_take ]
+        [DataRow(10, 20)] //skip more than available entities
+        [DataRow(158, 20)]
+        [DataRow(122, 100)]
+        [DataRow(1024, 999)]
+        [DataRow(2012, 1000)]
+        [TestMethod]
+        public async Task Should_Take_Entities_With_AsyncEnumerableExtensions(params int[] inputs)
+        {
+            int totalCount = inputs[0];
+            int takeCount = inputs[1];
+
+            var persons = Fakers.CreateFakePerson().Generate(totalCount);
+            var options = new EntityTableClientOptions() { };
+            _commonOptions.Invoke(options);
+
+            var personClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options,
+            c =>
+            {
+                c
+                .SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.LastName)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            try
+            {
+                await personClient.AddManyAsync(persons);
+
+                var all = await personClient.GetAsync().ToListAsync();
+
+                var takeResult = await personClient
+                    .GetAsync()
+                    .TakeAsync(takeCount)
+                    .ToListAsync();
+
+                takeResult.Count.Should().Be(Math.Min(totalCount, takeCount));
+            }
+            catch { throw; }
+            finally
+            {
+                await personClient.DropTableAsync();
+            }
+        }
     }
 }

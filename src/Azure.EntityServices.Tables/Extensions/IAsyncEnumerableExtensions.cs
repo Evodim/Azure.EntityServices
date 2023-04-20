@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -81,6 +82,61 @@ namespace Azure.EntityServices.Tables.Extensions
                 result.AddRange(asyncEntity);
             }
             return result;
+        }
+
+        public static async IAsyncEnumerable<IEnumerable<T>> SkipAsync<T>(this IAsyncEnumerable<IEnumerable<T>> asyncEnumerableEntity,
+            int skip,
+           [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var skipped = 0;
+            await foreach (var asyncEntity in asyncEnumerableEntity)
+            {
+                skipped += asyncEntity.Count();
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+                if (skipped >= skip)
+                {
+                    
+                    yield return asyncEntity.Skip(asyncEntity.Count() - (skipped - skip));
+                    skipped = skip;
+                }
+                else 
+                if (skipped == skip)
+                {
+                    yield return asyncEntity;
+                }
+            }
+        }
+
+        public static async IAsyncEnumerable<IEnumerable<T>> TakeAsync<T>(this IAsyncEnumerable<IEnumerable<T>> asyncEnumerableEntity,
+          int take,
+          [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var took = 0;
+            await foreach (var asyncEntity in asyncEnumerableEntity)
+            {
+                took = took + asyncEntity.Count();
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+                if (took < take)
+                {
+                    yield return asyncEntity;
+                }
+                else 
+                if (took >= take)
+                {
+                    yield return asyncEntity.Take(asyncEntity.Count()- (took - take) );
+                    
+                }
+                else 
+                yield break;
+            }
         }
     }
 }
