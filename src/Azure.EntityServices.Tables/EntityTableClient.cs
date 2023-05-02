@@ -326,8 +326,8 @@ namespace Azure.EntityServices.Tables
 
         public async Task<EntityPage<T>> GetPagedAsync(
             Action<IQuery<T>> filter = default,
-            int? skip = 0,
-            int? take = null,
+            int? iteratedCount = null,
+            int? maxPerPage = null,
             string nextPageToken = null,
             CancellationToken cancellationToken = default
             )
@@ -337,45 +337,16 @@ namespace Azure.EntityServices.Tables
 
             try
             {
-                var skipped = 0;
-                //if skipping is required, try to iterate quickly per page without fetching all entity properties
-                if (skip.HasValue && skip > 0 && string.IsNullOrEmpty(continuationToken))
-                {
-                    var remainToSkip = skip;
-                    var nextAvailable = true;
-                  
-                    string skippedNextPageToken = continuationToken;
-
-                    while (remainToSkip > 0 && nextAvailable)
-                    {
-                        // iterator with dynamic paging to handle remaining entities to skip in a page
-                        var pageVisitor = QueryEntities(filter, (remainToSkip <= take) ? remainToSkip : take, skippedNextPageToken, cancellationToken, true)
-                                      .GetAsyncEnumerator(cancellationToken);
-
-                        nextAvailable = await pageVisitor.MoveNextAsync();
-                        remainToSkip -= pageVisitor.Current.Values.Count;
-                        skipped += pageVisitor.Current.Values.Count;
-                        skippedNextPageToken = pageVisitor.Current.ContinuationToken;
-                    }
-                    //in this case, there is no available data after skipping,therefore we return empty result
-                    if (string.IsNullOrEmpty(skippedNextPageToken))
-                    {
-                        return new EntityPage<T>(Enumerable.Empty<T>(),
-                        skipped,
-                        true,
-                        skippedNextPageToken);
-                    }
-                    //set continuation token to next iterator
-                    continuationToken = skippedNextPageToken;
-                }
-                //Create a new iterator after skipping entities to return next available entities 
-                pageEnumerator = QueryEntities(filter, take, continuationToken, cancellationToken)
+                //Create a new iterator after skipping entities to return next available entities
+                pageEnumerator = QueryEntities(filter, maxPerPage, continuationToken, cancellationToken)
                          .GetAsyncEnumerator(cancellationToken);
                 await pageEnumerator.MoveNextAsync();
 
+                var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
+
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(
                     tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()),
-                    skipped,
+                    currentCount,
                     string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
                     pageEnumerator.Current.ContinuationToken);
             }
@@ -570,12 +541,11 @@ namespace Azure.EntityServices.Tables
 
         public async Task DeleteByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
         {
-            var entity = await GetByIdAsync(partition,id, cancellationToken);
+            var entity = await GetByIdAsync(partition, id, cancellationToken);
             if (entity != null)
             {
                 await DeleteAsync(entity, cancellationToken);
             }
-            
         }
     }
 }

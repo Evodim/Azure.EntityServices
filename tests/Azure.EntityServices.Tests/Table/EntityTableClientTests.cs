@@ -1192,7 +1192,7 @@ namespace Azure.EntityServices.Table.Tests
 
                 do
                 {
-                    page = await personClient.GetPagedAsync(take: 10, nextPageToken: page.ContinuationToken);
+                    page = await personClient.GetPagedAsync(nextPageToken: page.ContinuationToken);
 
                     if (page.isLastPage)
                     {
@@ -1215,18 +1215,16 @@ namespace Azure.EntityServices.Table.Tests
             }
         }
 
-        //[DataRow[ available_entities, to_skip, to_take ]
-        [DataRow(10, 10, 20)] //skip more than available entities
-        [DataRow(158, 10, 20)]
-        [DataRow(122, 5, 100)]
-        [DataRow(1024, 500, 999)]
-        [DataRow(2012, 1200, 1000)]
+        //[DataRow[ available_entities, to_skip, max_per_page ]
+        [DataRow(10, 20)] //skip more than available entities
+        [DataRow(158, 100)]
+        [DataRow(1024, 999)]
+        [DataRow(2012, 1000)]
         [TestMethod]
-        public async Task Should_Get_Paged_Entities_By_Skipping_Entities(params int[] inputs)
+        public async Task Should_Get_Paged_Entities_With_Custom_Max_Per_Page(params int[] inputs)
         {
-            int totalCount = inputs[0];
-            int skipCount = inputs[1];
-            int takeCount = inputs[2];
+            int totalCount = inputs[0]; 
+            int maxPerPage = inputs[1];
 
             var persons = Fakers.CreateFakePerson().Generate(totalCount);
             var options = new EntityTableClientOptions() { };
@@ -1251,21 +1249,22 @@ namespace Azure.EntityServices.Table.Tests
 
                 do
                 {
-                    page = await personClient.GetPagedAsync(take: takeCount, skip: skipCount, nextPageToken: page.ContinuationToken);
+                    page = await personClient.GetPagedAsync(maxPerPage: maxPerPage, iteratedCount: page.IteratedCount, nextPageToken: page.ContinuationToken);
 
                     if (page.isLastPage)
                     {
-                        page.Entities.Count().Should().BeLessThanOrEqualTo(takeCount);
+                        page.Entities.Count().Should().BeLessThanOrEqualTo(maxPerPage);
                     }
                     else
                     {
-                        page.Entities.Count().Should().Be(takeCount);
+                        page.Entities.Count().Should().Be(maxPerPage);
                     }
                     entityCount += page.Entities.Count();
                 }
                 while (!page.isLastPage);
 
-                entityCount.Should().Be(totalCount - skipCount);
+                entityCount.Should().Be(totalCount);
+                page.IteratedCount.Should().Be(entityCount);
             }
             catch { throw; }
             finally
