@@ -1207,7 +1207,7 @@ namespace Azure.EntityServices.Table.Tests
             }
         }
 
-        //[DataRow[ available_entities, to_skip, max_per_page ]
+        //[DataRow[ available_entities, max_per_page ]
         [DataRow(10, 20)] //skip more than available entities
         [DataRow(158, 100)]
         [DataRow(1024, 999)]
