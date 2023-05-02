@@ -1,5 +1,5 @@
-﻿using Azure.EntityServices.Queries; 
-using Azure.EntityServices.Tables; 
+﻿using Azure.EntityServices.Queries;
+using Azure.EntityServices.Tables;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,7 +21,7 @@ namespace TableClient.PerformanceSample
             //set here for your technical stuff: table name, connection, parallelization
             var entityClient = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
             .Configure(options =>
-            { 
+            {
                 options.TableName = $"{nameof(PersonEntity)}";
                 options.CreateTableIfNotExists = true;
             }
@@ -50,7 +50,7 @@ namespace TableClient.PerformanceSample
                 .AddTag("_FirstLastName3Chars")
 
                 //add an entity oberver to track entity changes and apply any action (projection, logging, etc.)
-                .AddObserver("EntityLoggerObserver",()=> new EntityLoggerObserver<PersonEntity>());
+                .AddObserver("EntityLoggerObserver", () => new EntityLoggerObserver<PersonEntity>());
             });
             //===============================================================================================
 
@@ -67,33 +67,100 @@ namespace TableClient.PerformanceSample
             {
                 await entityClient.AddManyAsync(entities);
             }
-            string nextToken = "";
 
-            do
+            using (var mesure = counters.Mesure($"Add or replace many entities {ENTITY_COUNT} items"))
             {
-                var pages = await entityClient.GetPagedAsync(nextPageToken: nextToken, skip: 10000);
-                nextToken = pages.ContinuationToken;
-
-                Console.WriteLine("not skipped" + pages.Entities.Count());
+                await entityClient.AddOrReplaceManyAsync(entities);
             }
-            while (!string.IsNullOrEmpty(nextToken));
-            nextToken = "";
-            do
+
+            using (var mesure = counters.Mesure($"Add one entity"))
             {
-                var pages = await entityClient.GetPagedAsync(nextPageToken: nextToken);
-                nextToken = pages.ContinuationToken;
-
-                Console.WriteLine("total " + pages.Entities.Count());
+                await entityClient.AddAsync(onePerson);
             }
-            while (!string.IsNullOrEmpty(nextToken));
 
-            nextToken = string.Empty;
-          
+            using (var mesure = counters.Mesure($"Add or replace one entity"))
+            {
+                await entityClient.AddOrReplaceAsync(onePerson);
+            }
 
+            Console.WriteLine($"Querying entities ...");
 
-      
-            
-            
+            using (var mesure = counters.Mesure("Get By Id"))
+            {
+                _ = await entityClient.GetByIdAsync(onePerson.TenantId, onePerson.PersonId);
+                Console.WriteLine($"{mesure.Name}");
+            }
+
+            using (var mesure = counters.Mesure("Get with filter "))
+            {
+                var count = 0;
+                await foreach (var _ in entityClient.GetAsync(
+                       filter => filter
+                        .Where(entity => entity.LastName)
+                        .Equal(onePerson.LastName)
+                        .AndPartitionKey()
+                        .Equal("tenant1"))
+                        )
+                {
+                    count += _.Count();
+                    Console.WriteLine($"{mesure.Name} {count} iterated ");
+                    Console.CursorTop--;
+                }
+                Console.WriteLine();
+            }
+
+            using (var mesure = counters.Mesure("Get with filter indexed"))
+            {
+                var count = 0;
+                await foreach (var _ in entityClient.GetAsync(
+                    filter => filter
+                    .WhereTag(entity => entity.LastName)
+                    .Equal(onePerson.LastName)
+                    .AndPartitionKey()
+                    .Equal("tenant1"))
+                    )
+
+                {
+                    count += _.Count();
+                    Console.WriteLine($"{mesure.Name} {count} iterated");
+                    Console.CursorTop--;
+                }
+                Console.WriteLine();
+            }
+
+            using (var mesure = counters.Mesure("Get By dynamic prop"))
+            {
+                var count = 0;
+                await foreach (var _ in entityClient.GetAsync(
+                        filter => filter
+                        .WherePartitionKey()
+                        .Equal("tenant1")
+                        .And("_FirstLastName3Chars")
+                        .Equal("arm")))
+                {
+                    count += _.Count();
+                    Console.WriteLine($"{mesure.Name}  {count} iterated");
+                    Console.CursorTop--;
+                }
+                Console.WriteLine();
+            }
+
+            using (var mesure = counters.Mesure("Get by dynamic prop indexed"))
+            {
+                var count = 0;
+                await foreach (var _ in entityClient.GetAsync(
+                    filter => filter
+                    .WhereTag("_FirstLastName3Chars")
+                    .Equal("arm")
+                    .AndPartitionKey()
+                    .Equal("tenant1")))
+                {
+                    count += _.Count();
+                    Console.WriteLine($"{mesure.Name} {count} iterated");
+                    Console.CursorTop--;
+                }
+                Console.WriteLine();
+            }
             Console.WriteLine("====================================");
             counters.WriteToConsole();
         }

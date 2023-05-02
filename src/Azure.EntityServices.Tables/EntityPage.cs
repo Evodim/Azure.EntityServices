@@ -2,16 +2,16 @@
 
 namespace Azure.EntityServices.Tables
 {
-    public record struct EntityPage<T>(IEnumerable<T> Entities,int skipped, bool isLastPage, string ContinuationToken)
+    public record struct EntityPage<T>(IEnumerable<T> Entities, int IteratedCount, bool isLastPage, string ContinuationToken)
     {
-        public static implicit operator (IEnumerable<T>,int skipped, bool isLastPage, string ContinuationToken)(EntityPage<T> value)
+        public static implicit operator (IEnumerable<T>, int iteratorCount, bool isLastPage, string ContinuationToken)(EntityPage<T> value)
         {
-            return (value.Entities, value.skipped, value.isLastPage, value.ContinuationToken);
+            return (value.Entities, value.IteratedCount, value.isLastPage, value.ContinuationToken);
         }
 
-        public static implicit operator EntityPage<T>((IEnumerable<T> Item1,int skipped, string ContinuationToken) value)
+        public static implicit operator EntityPage<T>((IEnumerable<T> Item1, int IteratorCount, string ContinuationToken) value)
         {
-            return new EntityPage<T>(value.Item1, value.skipped , string.IsNullOrEmpty(value.ContinuationToken), value.ContinuationToken);
+            return new EntityPage<T>(value.Item1, value.IteratorCount, string.IsNullOrEmpty(value.ContinuationToken), value.ContinuationToken);
         }
     }
 }
