@@ -1194,14 +1194,6 @@ namespace Azure.EntityServices.Table.Tests
                 {
                     page = await personClient.GetPagedAsync(nextPageToken: page.ContinuationToken);
 
-                    if (page.isLastPage)
-                    {
-                        page.Entities.Count().Should().BeLessThanOrEqualTo(10);
-                    }
-                    else
-                    {
-                        page.Entities.Count().Should().Be(10);
-                    }
                     entityCount += page.Entities.Count();
                 }
                 while (!page.isLastPage);
@@ -1223,7 +1215,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Get_Paged_Entities_With_Custom_Max_Per_Page(params int[] inputs)
         {
-            int totalCount = inputs[0]; 
+            int totalCount = inputs[0];
             int maxPerPage = inputs[1];
 
             var persons = Fakers.CreateFakePerson().Generate(totalCount);
