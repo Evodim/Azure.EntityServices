@@ -128,14 +128,11 @@ namespace Azure.EntityServices.Tables.Extensions
                 {
                     yield return asyncEntity;
                 }
-                else 
-                if (took >= take)
+                else
                 {
-                    yield return asyncEntity.Take(asyncEntity.Count()- (took - take) );
-                    
-                }
-                else 
-                yield break;
+                    yield return asyncEntity.Take(asyncEntity.Count() - (took - take));
+                    yield break;
+                } 
             }
         }
     }
