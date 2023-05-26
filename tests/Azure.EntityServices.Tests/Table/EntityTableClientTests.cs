@@ -1196,7 +1196,7 @@ namespace Azure.EntityServices.Table.Tests
 
                     entityCount += page.Entities.Count();
                 }
-                while (!page.isLastPage);
+                while (!page.IsLastPage);
 
                 entityCount.Should().Be(155);
             }
@@ -1243,7 +1243,7 @@ namespace Azure.EntityServices.Table.Tests
                 {
                     page = await personClient.GetPagedAsync(maxPerPage: maxPerPage, iteratedCount: page.IteratedCount, nextPageToken: page.ContinuationToken);
 
-                    if (page.isLastPage)
+                    if (page.IsLastPage)
                     {
                         page.Entities.Count().Should().BeLessThanOrEqualTo(maxPerPage);
                     }
@@ -1253,7 +1253,7 @@ namespace Azure.EntityServices.Table.Tests
                     }
                     entityCount += page.Entities.Count();
                 }
-                while (!page.isLastPage);
+                while (!page.IsLastPage);
 
                 entityCount.Should().Be(totalCount);
                 page.IteratedCount.Should().Be(entityCount);
