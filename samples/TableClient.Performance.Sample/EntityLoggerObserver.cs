@@ -49,13 +49,13 @@ namespace TableClient.PerformanceSample
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityBinderContext<T>> contextBatch)
+        public Task OnNextAsync(IEnumerable<IEntityContext<T>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
                 //ignore indexed tags changes
-                if (context.EntityBinder.RowKey.StartsWith("~") ||
-                    context.EntityBinder.PartitionKey.StartsWith("~"))
+                if (context.EntityAdapter.RowKey.StartsWith("~") ||
+                    context.EntityAdapter.PartitionKey.StartsWith("~"))
                 {
                     continue;
                 }

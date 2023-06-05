@@ -46,15 +46,15 @@ namespace TableClient.DependencyInjection.AdvancedSample
             return Task.CompletedTask;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityBinderContext<T>> contextBatch)
+        public Task OnNextAsync(IEnumerable<IEntityContext<T>> contextBatch)
         {
             foreach (var context in contextBatch)
             { 
-                if (!context.EntityBinder.RowKey.StartsWith("~"))
+                if (!context.EntityAdapter.RowKey.StartsWith("~"))
                   {
                     continue;
                    }
-                var entity = context.EntityBinder.UnBind();
+                var entity = context.EntityAdapter.ReadFromEntityModel();
                 
                 switch (context.EntityOperation)
                 {

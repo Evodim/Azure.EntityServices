@@ -2,9 +2,9 @@
 
 namespace Azure.EntityServices.Tables
 {
-    public interface IEntityBinderContext<T>
+    public interface IEntityContext<T>
     {
-        IEntityBinder<T> EntityBinder { get; }
+        IEntityAdapter<T> EntityAdapter { get; }
         EntityOperation EntityOperation { get; }
     }
 }

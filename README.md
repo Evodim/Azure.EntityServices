@@ -45,11 +45,11 @@ With this Library you can map any data entities (C# class) into a **table** or a
 
 ### How it works?
 
-EntityTableClient bind any classes (C# entities) to Entity table storage (IEntityTableClient)
+EntityTableClient use custom entity adapter to map any C# entity classes into Azure Table Entity Model (TableEntity)
 
-This binding allows to have more control when entity was stored of readed from the table storage
+This adapter allows to have more control when entity was stored of readed from the table storage
 
-Internally, it use Azure storage ETG feature (entity transaction group) to keep indexed tag synchronized with the main entity.
+To handle additional indexes (range tags), we use Azure storage ETG feature (entity transaction group) to keep indexed tags synchronized with the main entity.
 
 
 ### EntityTableClient configuration example

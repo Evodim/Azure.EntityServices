@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Azure.EntityServices.Tables.Core
 {
-    public interface IEntityBinder<T> 
+    public interface IEntityAdapter<T> 
     {
         string PartitionKey { get; }
         string RowKey { get; }
@@ -14,12 +14,12 @@ namespace Azure.EntityServices.Tables.Core
         IDictionary<string, object> Metadata { get; }  
         void BindDynamicProps(IDictionary<string, Func<T, object>> props, bool toDelete = false);
         void BindTags(Dictionary<string, PropertyInfo> tags, IList<string> computedTags); 
-        T UnBind();
+        T ReadFromEntityModel();
     }
-
-    public interface IEntityBinder<T,TEntityModel>: IEntityBinder<T>
+     
+    public interface IEntityAdapter<T,TEntityModel>: IEntityAdapter<T>
     {
-        TEntityModel Bind();
+        TEntityModel WriteToEntityModel();
         
     }
 }

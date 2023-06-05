@@ -30,30 +30,30 @@ namespace Azure.EntityServices.Table.Tests
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityBinderContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<IEntityContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
                 //ignore indexed tags changes
-                if (context.EntityBinder.RowKey.StartsWith("~") ||
-                    context.EntityBinder.PartitionKey.StartsWith("~"))
+                if (context.EntityAdapter.RowKey.StartsWith("~") ||
+                    context.EntityAdapter.PartitionKey.StartsWith("~"))
                 {
                     continue;
                 }
-                var entity = context.EntityBinder.UnBind();
+                var entity = context.EntityAdapter.ReadFromEntityModel();
 
                 switch (context.EntityOperation)
 
                 {
                     case EntityOperation.Delete:
-                        Persons.Remove(context.EntityBinder.PartitionKey + entity.PersonId, out var _);
+                        Persons.Remove(context.EntityAdapter.PartitionKey + entity.PersonId, out var _);
                         Interlocked.Increment(ref _deleted);
                         break;
 
                     case EntityOperation.Add:
                     case EntityOperation.AddOrMerge:
                     case EntityOperation.AddOrReplace:
-                        Persons.TryAdd(context.EntityBinder.PartitionKey + entity.PersonId, entity);
+                        Persons.TryAdd(context.EntityAdapter.PartitionKey + entity.PersonId, entity);
                         Interlocked.Increment(ref _upserted);
                         break;
 

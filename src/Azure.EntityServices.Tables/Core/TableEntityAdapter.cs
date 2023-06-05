@@ -9,10 +9,10 @@ using System.Text.Json;
 namespace Azure.EntityServices.Tables.Core
 {
     /// <summary>
-    /// Entity binder used to bind pure entity and his metadata to Azure tableEntity
+    /// Entity adapter used to map pure entity and his metadata to Azure tableEntity
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public sealed class TableEntityBinder<T> : IEntityBinder<T,TableEntity> where T : class, new()
+    public sealed class TableEntityAdapter<T> : IEntityAdapter<T,TableEntity> where T : class, new()
     {
         public string PartitionKey => TableEntity.PartitionKey;
         public string RowKey => TableEntity.RowKey;
@@ -36,14 +36,14 @@ namespace Azure.EntityServices.Tables.Core
 
         private List<PropertyInfo> FilterEntityProperties() => EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
 
-        public TableEntityBinder(T entity, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(T entity, JsonSerializerOptions serializerOptions = null)
         {
             Entity = entity;
             TableEntity = new TableEntity();
             _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(T entity, IEnumerable<string> propsToIgnore, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(T entity, IEnumerable<string> propsToIgnore, JsonSerializerOptions serializerOptions = null)
         {
             Entity = entity;
             TableEntity = new TableEntity();
@@ -53,13 +53,13 @@ namespace Azure.EntityServices.Tables.Core
             _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(TableEntity tableEntity, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(TableEntity tableEntity, JsonSerializerOptions serializerOptions = null)
         {
             TableEntity = tableEntity;
             _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(TableEntity tableEntity, IEnumerable<string> propsToIgnore, EntityTagBuilder<T> entityTagBuilder, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(TableEntity tableEntity, IEnumerable<string> propsToIgnore, EntityTagBuilder<T> entityTagBuilder, JsonSerializerOptions serializerOptions = null)
         {
             TableEntity = tableEntity;
             _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
@@ -68,7 +68,7 @@ namespace Azure.EntityServices.Tables.Core
             _serializerOptions = serializerOptions;
         }
 
-        public TableEntityBinder(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore = null, EntityTagBuilder<T> entityTagBuilder = null, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore = null, EntityTagBuilder<T> entityTagBuilder = null, JsonSerializerOptions serializerOptions = null)
         {
             Entity = entity;
             TableEntity = new TableEntity(partitionKey, rowKey);
@@ -78,7 +78,7 @@ namespace Azure.EntityServices.Tables.Core
             _serializerOptions = serializerOptions;
         }
 
-        public TableEntity Bind()
+        public TableEntity WriteToEntityModel()
         {
             foreach (var metadata in Metadata)
             {
@@ -112,7 +112,7 @@ namespace Azure.EntityServices.Tables.Core
             return TableEntity;
         }
 
-        public T UnBind()
+        public T ReadFromEntityModel()
         {
             Entity = new T();
             Metadata.Clear();
