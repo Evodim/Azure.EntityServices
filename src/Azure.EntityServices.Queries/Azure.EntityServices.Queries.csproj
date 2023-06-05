@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	 <PropertyGroup>
+	 <LangVersion>latest</LangVersion>
+		 </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<NoWarn>1701;1702;1705;1591</NoWarn>		
+	</PropertyGroup>
+  <PropertyGroup> 
+    <TargetFramework>netstandard2.1</TargetFramework>  
+  </PropertyGroup>
+	<PropertyGroup>
+		<PackageIconUrl>https://evocdn.azureedge.net/images/128/entityservices-queries.png</PackageIconUrl>
+		<Company>Evodim</Company>
+		<Product>Azure.EntityServices</Product>
+		<Authors>Evodim</Authors>
+		<Copyright>Evodim Solutions - 2023</Copyright>
+		<PackageId>AzureEntityServices.Queries</PackageId>
+		<PackageLicenseExpression></PackageLicenseExpression>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<RepositoryUrl>https://github.com/Evodim/Azure.EntityServices</RepositoryUrl>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageProjectUrl>https://github.com/Evodim/Azure.EntityServices</PackageProjectUrl>
+		<PackageTags>entiy, azure, storage, services, queries</PackageTags>
+		<Description>Entity Query services for Azure storage</Description>
+		<Title>Azure entity services</Title>
+	</PropertyGroup>
+	<PropertyGroup> 
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
+	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="4.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>
