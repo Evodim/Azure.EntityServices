@@ -44,11 +44,11 @@ namespace Azure.EntityServices.Tables
 
         private EntityTagBuilder<T> _entityTagBuilder;
 
-        private IEntityBinder<T, TableEntity> CreatePrimaryEntityBinderFromEntity(T entity)
-          => new TableEntityBinder<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
+        private IEntityAdapter<T, TableEntity> CreatePrimaryEntityBinderFromEntity(T entity)
+          => new TableEntityAdapter<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
 
-        private IEntityBinder<T, TableEntity> CreateEntityBinderFromTableEntity(TableEntity tableEntity)
-            => new TableEntityBinder<T>(tableEntity, _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
+        private IEntityAdapter<T, TableEntity> CreateEntityBinderFromTableEntity(TableEntity tableEntity)
+            => new TableEntityAdapter<T>(tableEntity, _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
 
         private TableBatchClient CreateTableBatchClient()
         {
@@ -134,7 +134,7 @@ namespace Azure.EntityServices.Tables
                 entityBinder.BindDynamicProps(_config.DynamicProps);
                 entityBinder.BindTags(_config.Tags, _config.ComputedTags);
 
-                var tableEntity = entityBinder.Bind();
+                var tableEntity = entityBinder.WriteToEntityModel();
                 switch (operation)
                 {
                     case EntityOperation.Add:
@@ -174,7 +174,7 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        protected async Task NotifyChangeAsync(IEnumerable<IEntityBinderContext<T>> context)
+        protected async Task NotifyChangeAsync(IEnumerable<IEntityContext<T>> context)
         {
             foreach (var observer in _observerInstances)
             {
@@ -239,7 +239,7 @@ namespace Azure.EntityServices.Tables
             _config = config;
 
             _pipelineObserver = transactions => NotifyChangeAsync(transactions.Select(
-                transaction => new EntityBinderContext<T>(CreateEntityBinderFromTableEntity(transaction.Entity as TableEntity),
+                transaction => new EntityContext<T>(CreateEntityBinderFromTableEntity(transaction.Entity as TableEntity),
                 transaction.ActionType.MapToEntityOperation())));
 
             _indextedTags =
@@ -299,7 +299,7 @@ namespace Azure.EntityServices.Tables
                 {
                     return null;
                 }
-                return CreateEntityBinderFromTableEntity(response.Value).UnBind();
+                return CreateEntityBinderFromTableEntity(response.Value).ReadFromEntityModel();
             }
             catch (RequestFailedException ex)
             {
@@ -320,7 +320,7 @@ namespace Azure.EntityServices.Tables
         {
             await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
             {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind());
+                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel());
             }
         }
 
@@ -345,7 +345,7 @@ namespace Azure.EntityServices.Tables
                 var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
 
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(
-                    tableEntity => CreateEntityBinderFromTableEntity(tableEntity).UnBind()),
+                    tableEntity => CreateEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel()),
                     currentCount,
                     string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
                     pageEnumerator.Current.ContinuationToken);
@@ -415,19 +415,19 @@ namespace Azure.EntityServices.Tables
                 switch (operation)
                 {
                     case EntityOperation.Add:
-                        batchedClient.Insert(entityBinder.Bind());
+                        batchedClient.Insert(entityBinder.WriteToEntityModel());
                         break;
 
                     case EntityOperation.AddOrMerge:
-                        batchedClient.InsertOrMerge(entityBinder.Bind());
+                        batchedClient.InsertOrMerge(entityBinder.WriteToEntityModel());
                         break;
 
                     case EntityOperation.AddOrReplace:
-                        batchedClient.InsertOrReplace(entityBinder.Bind());
+                        batchedClient.InsertOrReplace(entityBinder.WriteToEntityModel());
                         break;
 
                     case EntityOperation.Delete:
-                        batchedClient.Delete(entityBinder.Bind());
+                        batchedClient.Delete(entityBinder.WriteToEntityModel());
                         break;
                 }
 
@@ -448,17 +448,17 @@ namespace Azure.EntityServices.Tables
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var binder = CreateEntityBinderFromTableEntity(tableEntity);
-                    var entity = binder.UnBind();
+                    var adapter = CreateEntityBinderFromTableEntity(tableEntity);
+                    var entity = adapter.ReadFromEntityModel();
 
                     updateAction.Invoke(entity);
 
-                    binder.BindDynamicProps(_config.DynamicProps);
-                    binder.BindTags(_config.Tags, _config.ComputedTags);
+                    adapter.BindDynamicProps(_config.DynamicProps);
+                    adapter.BindTags(_config.Tags, _config.ComputedTags);
 
-                    batchedClient.InsertOrMerge(binder.Bind());
+                    batchedClient.InsertOrMerge(adapter.WriteToEntityModel());
 
-                    await batchedClient.SubmitToPipelineAsync(binder.PartitionKey, cancellationToken);
+                    await batchedClient.SubmitToPipelineAsync(adapter.PartitionKey, cancellationToken);
                     count++;
                 }
 #if DEBUG
@@ -484,7 +484,7 @@ namespace Azure.EntityServices.Tables
             {
                 var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
                 var entityBinder = CreateEntityBinderFromTableEntity(response.Value);
-                entityBinder.UnBind();
+                entityBinder.ReadFromEntityModel();
                 return entityBinder?.Metadata ?? new Dictionary<string, object>();
             }
             catch (RequestFailedException ex)
