@@ -73,11 +73,11 @@ namespace TableClient.DependencyInjection.AdvancedSample
             return Task.CompletedTask;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityBinderContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<IEntityContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
-                var entity = context.EntityBinder.UnBind();
+                var entity = context.EntityAdapter.ReadFromEntityModel();
 
                 switch (context.EntityOperation)
                 {
