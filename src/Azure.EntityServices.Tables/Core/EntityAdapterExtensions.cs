@@ -1,10 +1,7 @@
-﻿using Azure.Data.Tables;
-
-namespace Azure.EntityServices.Tables.Core
+﻿namespace Azure.EntityServices.Tables.Core
 {
     internal static class EntityAdapterExtensions
     {
-        
         public static IEntityAdapter<T> CopyMetadataTo<T>(this IEntityAdapter<T> source, IEntityAdapter<T> target)
             where T : class, new()
         {
