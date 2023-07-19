@@ -323,9 +323,9 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Override_Entity_Prop_With_Computed_Prop()
         {
-          
+
             var person = Fakers.CreateFakePerson().Generate();
-            
+
             //arrange entity  
             var CreatedDate = DateTimeOffset.UtcNow;
             //
@@ -333,7 +333,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
-                c.AddComputedProp(nameof(person.Created),p=> CreatedDate);
+                c.AddComputedProp(nameof(person.Created), p => CreatedDate);
             });
             try
             {
@@ -362,7 +362,7 @@ namespace Azure.EntityServices.Table.Tests
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
-                c.AddComputedProp(nameof(person.Created), p=>p.Created ?? CreatedDate);
+                c.AddComputedProp(nameof(person.Created), p => p.Created ?? CreatedDate);
             });
             try
             {
@@ -403,7 +403,7 @@ namespace Azure.EntityServices.Table.Tests
                 created.Created.Should().Be(createdDate);
 
 
-                var personPatch = new PersonEntity() { TenantId= person.TenantId, PersonId= person.PersonId };
+                var personPatch = new PersonEntity() { TenantId = person.TenantId, PersonId = person.PersonId };
                 await tableEntity.MergeAsync(person);
                 var patched = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
 
@@ -415,6 +415,66 @@ namespace Azure.EntityServices.Table.Tests
 
                 created.Created.Should().Be(createdDate);
                 replaced.Updated.Should().BeAfter(created.Updated);
+            }
+            catch { throw; }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Initialize_Computed_Prop_Only_Once_For_Many_Entities()
+        {
+            var createdDate = DateTimeOffset.UtcNow;
+
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
+            {
+                c.SetPartitionKey(p => p.TenantId);
+                c.SetRowKeyProp(p => p.PersonId);
+                c.AddComputedProp(nameof(PersonEntity.Created), p => p.Created ?? createdDate);
+                c.AddComputedProp(nameof(PersonEntity.Updated), p => DateTimeOffset.UtcNow);
+            });
+
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+           
+            foreach (var person in persons)
+            {
+                person.Created = null;
+            }
+
+             try
+            {
+                await tableEntity.AddOrReplaceManyAsync(persons);
+                foreach (var person in persons)
+                {
+                    var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                    created.Created.Should().Be(createdDate);
+                } 
+
+                var personsPatch = persons.Select(person => new PersonEntity() { TenantId = person.TenantId, PersonId = person.PersonId });
+
+                await tableEntity.AddOrMergeManyAsync(persons);
+
+                foreach (var person in persons)
+                {
+                    var patched = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                    
+                    patched.Created.Should().Be(createdDate);
+                    patched.Updated.Should().BeAfter(createdDate); 
+                }
+
+                await tableEntity.AddOrReplaceManyAsync(persons);
+
+                foreach (var person in persons)
+                {
+                    var replaced = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                 
+                    replaced.Created.Should().Be(createdDate);
+                    replaced.Updated.Should().BeAfter(createdDate); 
+                }
+
             }
             catch { throw; }
             finally
