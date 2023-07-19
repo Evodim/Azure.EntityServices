@@ -13,7 +13,7 @@ env:
   BUILD_CONFIGURATION: 'Release'    # set this to the appropriate build configuration
   DOTNET_VERSION: '6.x' 
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
-  MinVerMinimumMajorMinor: '1.0'
+  MinVerMinimumMajorMinor: '1.1'
   MinVerTagPrefix: 'v'
   MinVerDefaultPreReleaseIdentifiers : 'preview.0'
 
