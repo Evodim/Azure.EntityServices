@@ -3,10 +3,9 @@ name: PR internal deployment
 on:
   pull_request:
     branches: [ main ]      
-    paths: [src/**, .github/**]
+    paths: [src/**]
 env:
-  GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json
-  AZURE_ARTIFACTS_FEED_URL: https://pkgs.dev.azure.com/evodim/_packaging/evodim-feed/nuget/v3/index.json    
+  GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json  
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
   DOTNET_VERSION: '6.x' 
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
