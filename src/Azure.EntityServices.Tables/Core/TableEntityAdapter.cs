@@ -80,10 +80,7 @@ namespace Azure.EntityServices.Tables.Core
 
         public TableEntity WriteToEntityModel()
         {
-            foreach (var metadata in Metadata)
-            {
-                TableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value, _serializerOptions));
-            }
+           
             if (Entity is TableEntity tbe)
             {
                 foreach (var property in tbe.Where(e => !_propsToIgnore.Contains(e.Key)))
@@ -108,6 +105,10 @@ namespace Azure.EntityServices.Tables.Core
             foreach (var property in Properties)
             {
                 TableEntity.AddOrUpdate(property.Key, EntityValueAdapter.WriteValue(property.Value, _serializerOptions));
+            }
+            foreach (var metadata in Metadata)
+            {
+                TableEntity.AddOrUpdate(metadata.Key, EntityValueAdapter.WriteValue(metadata.Value, _serializerOptions));
             }
             return TableEntity;
         }

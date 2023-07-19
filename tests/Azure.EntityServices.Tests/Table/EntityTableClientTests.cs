@@ -321,6 +321,110 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
+        public async Task Should_Override_Entity_Prop_With_Computed_Prop()
+        {
+          
+            var person = Fakers.CreateFakePerson().Generate();
+            
+            //arrange entity  
+            var CreatedDate = DateTimeOffset.UtcNow;
+            //
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
+            {
+                c.SetPartitionKey(p => p.TenantId);
+                c.SetRowKeyProp(p => p.PersonId);
+                c.AddComputedProp(nameof(person.Created),p=> CreatedDate);
+            });
+            try
+            {
+                await tableEntity.AddOrReplaceAsync(person);
+                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                created.Created.Should().Be(CreatedDate);
+            }
+            catch { throw; }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Use_Entity_Prop_as_Computed_Prop()
+        {
+
+            var person = Fakers.CreateFakePerson().Generate();
+
+            //arrange entity  
+            var CreatedDate = DateTimeOffset.UtcNow;
+            person.Created = null;
+
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
+            {
+                c.SetPartitionKey(p => p.TenantId);
+                c.SetRowKeyProp(p => p.PersonId);
+                c.AddComputedProp(nameof(person.Created), p=>p.Created ?? CreatedDate);
+            });
+            try
+            {
+                await tableEntity.AddOrReplaceAsync(person);
+                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                created.Created.Should().Be(CreatedDate);
+            }
+            catch { throw; }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Initialize_Computed_Prop_Only_Once()
+        {
+
+            var person = Fakers.CreateFakePerson().Generate();
+
+            //arrange entity  
+            var createdDate = DateTimeOffset.UtcNow;
+
+            person.Created = null;
+
+
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
+            {
+                c.SetPartitionKey(p => p.TenantId);
+                c.SetRowKeyProp(p => p.PersonId);
+                c.AddComputedProp(nameof(person.Created), p => p.Created ?? createdDate);
+                c.AddComputedProp(nameof(person.Updated), p => DateTimeOffset.UtcNow);
+            });
+            try
+            {
+                await tableEntity.AddOrReplaceAsync(person);
+                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                created.Created.Should().Be(createdDate);
+
+
+                var personPatch = new PersonEntity() { TenantId= person.TenantId, PersonId= person.PersonId };
+                await tableEntity.MergeAsync(person);
+                var patched = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+
+                created.Created.Should().Be(createdDate);
+                created.Updated.Should().BeAfter(createdDate);
+
+                await tableEntity.ReplaceAsync(person);
+                var replaced = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+
+                created.Created.Should().Be(createdDate);
+                replaced.Updated.Should().BeAfter(created.Updated);
+            }
+            catch { throw; }
+            finally
+            {
+                await tableEntity.DropTableAsync();
+            }
+        }
+
+
+        [TestMethod]
         public async Task Should_Remove_Tags_OnDelete()
         {
             static string First3Char(string s) => s.ToLower()[..3];
