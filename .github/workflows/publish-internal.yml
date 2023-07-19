@@ -5,6 +5,7 @@ on:
     branches: [ main ]      
     paths: [src/**]
 env:
+  GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json
   AZURE_ARTIFACTS_FEED_URL: https://pkgs.dev.azure.com/evodim/_packaging/evodim-feed/nuget/v3/index.json    
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
   DOTNET_VERSION: '6.x' 
@@ -30,15 +31,10 @@ jobs:
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
 
       # Setup .NET Core SDK dqsdqs
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-          source-url: ${{ env.AZURE_ARTIFACTS_FEED_URL }}
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.AZURE_ARTIFACTS_PAT }} 
-
-      # Run dotnet build and package
+      - name: dotnet add nuget source
+        run: |
+          dotnet nuget add source --username medevod --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github '${{ env.GITHUB_PACKAGES_URL }}'
+        
       - name: dotnet build and publish
         run: |
           dotnet restore
@@ -47,4 +43,4 @@ jobs:
 
       # Publish the package to Azure Artifacts
       - name: 'dotnet publish'        
-        run: dotnet nuget push --api-key AzureArtifacts src/Azure.EntityServices.*/bin/Release/*.nupkg
+        run: dotnet nuget push --api-key ${{ secrets.INTERNAL_PKG_NUGET_PAT }} --source "github" src/Azure.EntityServices.*/bin/Release/*.nupkg
