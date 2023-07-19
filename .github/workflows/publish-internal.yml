@@ -10,7 +10,7 @@ env:
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
   DOTNET_VERSION: '6.x' 
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
-  MinVerMinimumMajorMinor: '1.0'
+  MinVerMinimumMajorMinor: '1.1'
   MinVerTagPrefix: 'v'
   MinVerDefaultPreReleaseIdentifiers : 'alpha-${{ github.run_number }}'  
 
