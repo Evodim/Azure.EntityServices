@@ -15,7 +15,7 @@ env:
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
   MinVerMinimumMajorMinor: '1.0'
   MinVerTagPrefix: 'v'
-  MinVerDefaultPreReleasePhase: 'preview'
+  MinVerDefaultPreReleaseIdentifiers : 'preview.0'
 
 jobs:
   build:
