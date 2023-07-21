@@ -1,4 +1,4 @@
-name: pull-request alpha build and deploy
+name: pull-request alpha publish
 on:
   workflow_dispatch:
     inputs:
