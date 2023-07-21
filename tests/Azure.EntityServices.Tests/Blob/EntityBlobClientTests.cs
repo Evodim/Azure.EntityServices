@@ -39,18 +39,12 @@ namespace Azure.EntityServices.Blob.Tests
                  .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                  .AddTag(p => p.Reference)
                  .AddTag(p => p.Name));
-            try
-            {
-                await client.AddOrReplaceAsync(doc);
-                var reference = client.GetEntityReference(doc);
-                var result = await client.GetAsync(reference);
 
-                doc.Should().BeEquivalentTo(result, options => options.Excluding(e => e.Content));
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+            await client.AddOrReplaceAsync(doc);
+            var reference = client.GetEntityReference(doc);
+            var result = await client.GetAsync(reference);
+
+            doc.Should().BeEquivalentTo(result, options => options.Excluding(e => e.Content));
         }
 
         [TestMethod]
@@ -66,24 +60,18 @@ namespace Azure.EntityServices.Blob.Tests
                 .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                 .AddTag(p => p.Reference)
                 .AddTag(p => p.Name));
-            try
+
+            foreach (var doc in docs)
             {
-                foreach (var doc in docs)
-                {
-                    await client.AddOrReplaceAsync(doc);
-                }
-                var result = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync($"{nameof(DocumentEntity)}/{DateTimeOffset.UtcNow:yyyy/MM/dd}"))
-                {
-                    result.AddRange(doc);
-                }
-                result.Count.Should().Be(docs.Count);
-                result.Should().BeEquivalentTo(docs, options => options.Excluding(e => e.Content));
+                await client.AddOrReplaceAsync(doc);
             }
-            finally
+            var result = new List<DocumentEntity>();
+            await foreach (var doc in client.ListAsync($"{nameof(DocumentEntity)}/{DateTimeOffset.UtcNow:yyyy/MM/dd}"))
             {
-                await client.DropContainerAsync();
+                result.AddRange(doc);
             }
+            result.Count.Should().Be(docs.Count);
+            result.Should().BeEquivalentTo(docs, options => options.Excluding(e => e.Content));
         }
 
         [TestMethod]
@@ -99,17 +87,11 @@ namespace Azure.EntityServices.Blob.Tests
                .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                .AddTag(p => p.Reference)
                .AddTag(p => p.Name));
-            try
-            {
-                await client.AddOrReplaceAsync(doc);
-                var reference = client.GetEntityReference(doc);
-                var created = await client.GetContentAsync(reference);
-                doc.Content.ToMD5().Should().Be(created.ToMD5());
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+
+            await client.AddOrReplaceAsync(doc);
+            var reference = client.GetEntityReference(doc);
+            var created = await client.GetContentAsync(reference);
+            doc.Content.ToMD5().Should().Be(created.ToMD5());
         }
 
         [TestMethod]
@@ -123,18 +105,12 @@ namespace Azure.EntityServices.Blob.Tests
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
                 .AddComputedProp("MD5", e => e.Body.ToMD5()));
-            try
-            {
-                await client.AddOrReplaceAsync(trace);
-                var createdContent = await client.GetContentAsync(trace);
 
-                createdContent.Should().NotBeNull();
-                createdContent.ToMD5().Should().Be(createdContent.ToMD5());
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+            await client.AddOrReplaceAsync(trace);
+            var createdContent = await client.GetContentAsync(trace);
+
+            createdContent.Should().NotBeNull();
+            createdContent.ToMD5().Should().Be(createdContent.ToMD5());
         }
 
         [TestMethod]
@@ -151,18 +127,12 @@ namespace Azure.EntityServices.Blob.Tests
                 .IgnoreProp(e => e.Body)
 
                 );
-            try
-            {
-                await client.AddOrReplaceAsync(trace);
-                var createdContent = await client.GetContentAsync(trace);
 
-                createdContent.Should().NotBeNull();
-                createdContent.ToString().Should().Be(trace.BodyString);
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+            await client.AddOrReplaceAsync(trace);
+            var createdContent = await client.GetContentAsync(trace);
+
+            createdContent.Should().NotBeNull();
+            createdContent.ToString().Should().Be(trace.BodyString);
         }
 
         [TestMethod]
@@ -182,19 +152,13 @@ namespace Azure.EntityServices.Blob.Tests
                 .IgnoreProp(e => e.Body)
 
                 );
-            try
-            {
-                await client.AddOrReplaceAsync(trace);
-                var createdContent = await client.GetContentAsync(trace);
 
-                createdContent.Should().NotBeNull();
-                var contentAsPerson = createdContent.ToObjectFromJson<List<PersonEntity>>();
-                contentAsPerson.Should().BeEquivalentTo(person);
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+            await client.AddOrReplaceAsync(trace);
+            var createdContent = await client.GetContentAsync(trace);
+
+            createdContent.Should().NotBeNull();
+            var contentAsPerson = createdContent.ToObjectFromJson<List<PersonEntity>>();
+            contentAsPerson.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -208,18 +172,12 @@ namespace Azure.EntityServices.Blob.Tests
                 .SetBlobPath(e => $"traces/{trace.Timestamp.Year}")
                 .SetBlobName(e => $"{trace.Name}-{trace.OperationId}")
                 .AddComputedProp("MD5", e => e.Body.ToMD5()));
-            try
-            {
-                await client.AddOrReplaceAsync(trace);
-                var reference = client.GetEntityReference(trace);
-                var props = await client.GetPropsAsync(reference);
-                props.Should().ContainKey("MD5");
-                props["MD5"].Should().Be(trace.Body.ToMD5());
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+
+            await client.AddOrReplaceAsync(trace);
+            var reference = client.GetEntityReference(trace);
+            var props = await client.GetPropsAsync(reference);
+            props.Should().ContainKey("MD5");
+            props["MD5"].Should().Be(trace.Body.ToMD5());
         }
 
         [TestMethod]
@@ -235,26 +193,20 @@ namespace Azure.EntityServices.Blob.Tests
                .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                .AddTag(p => p.Reference)
                .AddTag(p => p.Name));
-            try
+
+            foreach (var doc in docs)
             {
-                foreach (var doc in docs)
-                {
-                    await client.AddOrReplaceAsync(doc);
-                }
-                Task.Delay(2000).Wait();
-                var readedEntities = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync(p => p.Where(p => p.Reference)
-                .Equal(docs.First().Reference)))
-                {
-                    readedEntities.AddRange(doc);
-                }
-                readedEntities.Count.Should().Be(1);
-                readedEntities.First().Should().BeEquivalentTo(docs.First(), options => options.Excluding(e => e.Content));
+                await client.AddOrReplaceAsync(doc);
             }
-            finally
+            Task.Delay(2000).Wait();
+            var readedEntities = new List<DocumentEntity>();
+            await foreach (var doc in client.ListAsync(p => p.Where(p => p.Reference)
+            .Equal(docs.First().Reference)))
             {
-                await client.DropContainerAsync();
+                readedEntities.AddRange(doc);
             }
+            readedEntities.Count.Should().Be(1);
+            readedEntities.First().Should().BeEquivalentTo(docs.First(), options => options.Excluding(e => e.Content));
         }
 
         [TestMethod]
@@ -269,29 +221,23 @@ namespace Azure.EntityServices.Blob.Tests
                 .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                 .AddTag(p => p.Reference)
                 .AddTag(p => p.Name));
-            try
-            {
-                foreach (var doc in docs)
-                {
-                    await client.AddOrReplaceAsync(doc);
-                }
-                Task.Delay(3000).Wait();
-                var readedEntities = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync(p => p
-                .Where(p => p.Name)
-                .Equal(docs.First().Name)
-                .And(p => p.Reference)
-                .Equal(docs.First().Reference)))
 
-                {
-                    readedEntities.AddRange(doc);
-                }
-                readedEntities.Count.Should().Be(1);
-            }
-            finally
+            foreach (var doc in docs)
             {
-                await client.DropContainerAsync();
+                await client.AddOrReplaceAsync(doc);
             }
+            Task.Delay(3000).Wait();
+            var readedEntities = new List<DocumentEntity>();
+            await foreach (var doc in client.ListAsync(p => p
+            .Where(p => p.Name)
+            .Equal(docs.First().Name)
+            .And(p => p.Reference)
+            .Equal(docs.First().Reference)))
+
+            {
+                readedEntities.AddRange(doc);
+            }
+            readedEntities.Count.Should().Be(1);
         }
 
         [TestMethod]
@@ -309,27 +255,21 @@ namespace Azure.EntityServices.Blob.Tests
                 .AddTag(p => p.Reference)
                 .AddTag(p => p.Name)
                 .AddTag("_CreatedSince6Month"));
-            try
-            {
-                foreach (var doc in docs)
-                {
-                    await client.AddOrReplaceAsync(doc);
-                }
-                Task.Delay(3000).Wait();
-                var readedEntities = new List<DocumentEntity>();
-                await foreach (var doc in client.ListAsync(p => p
-                                .Where("_CreatedSince6Month")
-                                .Equal(false)))
 
-                {
-                    readedEntities.AddRange(doc);
-                }
-                readedEntities.Count.Should().Be(2);
-            }
-            finally
+            foreach (var doc in docs)
             {
-                await client.DropContainerAsync();
+                await client.AddOrReplaceAsync(doc);
             }
+            Task.Delay(3000).Wait();
+            var readedEntities = new List<DocumentEntity>();
+            await foreach (var doc in client.ListAsync(p => p
+                            .Where("_CreatedSince6Month")
+                            .Equal(false)))
+
+            {
+                readedEntities.AddRange(doc);
+            }
+            readedEntities.Count.Should().Be(2);
         }
 
         [TestMethod]
@@ -344,21 +284,15 @@ namespace Azure.EntityServices.Blob.Tests
                .SetBlobName(p => $"{p.Name}-{p.Reference}.{p.Extension}")
                .AddTag(p => p.Reference)
                .AddTag(p => p.Name));
-            try
-            {
-                await client.AddOrReplaceAsync(doc);
 
-                var reference = client.GetEntityReference(doc);
+            await client.AddOrReplaceAsync(doc);
 
-                var props = await client.GetPropsAsync(reference);
+            var reference = client.GetEntityReference(doc);
 
-                props["_EntityPath"].Should().Be($"{nameof(DocumentEntity)}/{DateTimeOffset.UtcNow:yyyy/MM/dd}");
-                props["_EntityName"].Should().Be($"{doc.Name}-{doc.Reference}.{doc.Extension}");
-            }
-            finally
-            {
-                await client.DropContainerAsync();
-            }
+            var props = await client.GetPropsAsync(reference);
+
+            props["_EntityPath"].Should().Be($"{nameof(DocumentEntity)}/{DateTimeOffset.UtcNow:yyyy/MM/dd}");
+            props["_EntityName"].Should().Be($"{doc.Name}-{doc.Reference}.{doc.Extension}");
         }
     }
 }

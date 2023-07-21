@@ -1,9 +1,16 @@
-name: PR internal deployment
-
+name: pull-request alpha build and deploy
 on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
   pull_request:
-    branches: [ main ]      
-    paths: [src/**]
+    branches: [ main ]
+    paths: [src/**, tests/**]          
 env:
   GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json  
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
@@ -28,8 +35,13 @@ jobs:
           APP_VERSION=`minver`
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
-
-      # Setup .NET Core SDK dqsdqs
+        # Install Azure sorage emulator
+      - name: Install Azurite
+        id: azuright
+        uses: potatoqualitee/azuright@v1.1
+        with:
+          self-signed-cert: true
+      # Setup .NET Core SDK
       - name: dotnet add nuget source
         run: |
           dotnet nuget add source --username medevod --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github '${{ env.GITHUB_PACKAGES_URL }}'
@@ -38,6 +50,7 @@ jobs:
         run: |
           dotnet restore
           dotnet build --configuration '${{ env.BUILD_CONFIGURATION }}'  --version-suffix '${{ env.APP_VERSION }}'
+          dotnet test --configuration '${{ env.BUILD_CONFIGURATION }}' -v n
           dotnet pack -c '${{ env.BUILD_CONFIGURATION }}' --no-build --version-suffix '${{ env.APP_VERSION }}'
 
       # Publish the package to Azure Artifacts

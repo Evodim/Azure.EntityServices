@@ -6,6 +6,9 @@
 
 ## Manage your entities in Azure Storage without tears !
 
+![internal](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-internal.yml/badge.svg)
+![public](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-public.yml/badge.svg)
+
 ## What is Azure Entity Services?
 
 Azure Entity Services is an abstraction layer library which help you to **store**, **query**, **update** any entities classes in Azure Storage Table and Blob
