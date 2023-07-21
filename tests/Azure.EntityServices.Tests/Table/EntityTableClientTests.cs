@@ -149,28 +149,21 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddManyAsync(persons);
 
-                var person = persons.First();
-                //get all entities both primary and projected
-                await foreach (var resultPage in entityTable.GetAsync(
-                    filter => filter
-                    .WhereTag(p => p.Created)
-                    .Equal(person.Created)
-                    .And(p => p.Rank)
-                    .Equal(person.Rank)
-                    .AndPartitionKey()
-                    .Equal(person.TenantId)))
-                {
-                    resultPage.First().Should().BeEquivalentTo(person);
-                }
-            }
-            catch { throw; }
-            finally
+            await entityTable.AddManyAsync(persons);
+
+            var person = persons.First();
+            //get all entities both primary and projected
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .WhereTag(p => p.Created)
+                .Equal(person.Created)
+                .And(p => p.Rank)
+                .Equal(person.Rank)
+                .AndPartitionKey()
+                .Equal(person.TenantId)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.First().Should().BeEquivalentTo(person);
             }
         }
 
@@ -187,28 +180,21 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddManyAsync(persons);
 
-                var person = persons.First();
-                //get all entities both primary and projected
-                await foreach (var resultPage in entityTable.GetAsync(
-                    filter => filter
-                    .WhereTag(p => p.Created)
-                    .Equal(person.Created)
-                    .AndPartitionKey()
-                    .Equal(person.TenantId)
-                    .And(p => p.Rank)
-                    .Equal(person.Rank)))
-                {
-                    resultPage.First().Should().BeEquivalentTo(person);
-                }
-            }
-            catch { throw; }
-            finally
+            await entityTable.AddManyAsync(persons);
+
+            var person = persons.First();
+            //get all entities both primary and projected
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .WhereTag(p => p.Created)
+                .Equal(person.Created)
+                .AndPartitionKey()
+                .Equal(person.TenantId)
+                .And(p => p.Rank)
+                .Equal(person.Rank)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.First().Should().BeEquivalentTo(person);
             }
         }
 
@@ -221,17 +207,10 @@ namespace Azure.EntityServices.Table.Tests
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
             });
-            try
-            {
-                await tableEntity.AddOrReplaceAsync(person);
-                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                created.Should().BeEquivalentTo(person);
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+
+            await tableEntity.AddOrReplaceAsync(person);
+            var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+            created.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -244,22 +223,15 @@ namespace Azure.EntityServices.Table.Tests
                 c.SetRowKeyProp(p => p.PersonId);
                 c.AddTag(p => p.LastName);
             });
-            try
+
+            await tableEntity.AddOrReplaceAsync(person);
+            await foreach (var resultPage in tableEntity.GetAsync(
+                   filter => filter
+                .WhereTag(p => p.LastName)
+                .Equal(person.LastName).AndPartitionKey().Equal(person.TenantId)))
             {
-                await tableEntity.AddOrReplaceAsync(person);
-                await foreach (var resultPage in tableEntity.GetAsync(
-                       filter => filter
-                    .WhereTag(p => p.LastName)
-                    .Equal(person.LastName).AndPartitionKey().Equal(person.TenantId)))
-                {
-                    resultPage.Count().Should().Be(1);
-                    resultPage.First().Should().BeEquivalentTo(person);
-                }
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
+                resultPage.Count().Should().Be(1);
+                resultPage.First().Should().BeEquivalentTo(person);
             }
         }
 
@@ -275,17 +247,10 @@ namespace Azure.EntityServices.Table.Tests
                 c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
             });
-            try
-            {
-                await tableEntity.AddOrReplaceAsync(person);
-                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                First3Char(created.LastName).Should().Be(First3Char(person.LastName));
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+
+            await tableEntity.AddOrReplaceAsync(person);
+            var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+            First3Char(created.LastName).Should().Be(First3Char(person.LastName));
         }
 
         [TestMethod]
@@ -301,23 +266,16 @@ namespace Azure.EntityServices.Table.Tests
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
                 c.AddTag("_FirstLastName3Chars");
             });
-            try
+
+            await tableEntity.AddOrReplaceAsync(person);
+            await foreach (var resultPage in tableEntity.GetAsync(
+                 filter => filter
+                .WhereTag("_FirstLastName3Chars")
+                .Equal(First3Char(person.LastName))
+                .AndPartitionKey()
+                .Equal(person.TenantId)))
             {
-                await tableEntity.AddOrReplaceAsync(person);
-                await foreach (var resultPage in tableEntity.GetAsync(
-                     filter => filter
-                    .WhereTag("_FirstLastName3Chars")
-                    .Equal(First3Char(person.LastName))
-                    .AndPartitionKey()
-                    .Equal(person.TenantId)))
-                {
-                    First3Char(resultPage.FirstOrDefault()?.LastName ?? "").Should().Be(First3Char(person.LastName));
-                }
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
+                First3Char(resultPage.FirstOrDefault()?.LastName ?? "").Should().Be(First3Char(person.LastName));
             }
         }
 
@@ -335,17 +293,10 @@ namespace Azure.EntityServices.Table.Tests
                 c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp(nameof(person.Created), p => CreatedDate);
             });
-            try
-            {
-                await tableEntity.AddOrReplaceAsync(person);
-                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                created.Created.Should().Be(CreatedDate);
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+
+            await tableEntity.AddOrReplaceAsync(person);
+            var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+            created.Created.Should().Be(CreatedDate);
         }
 
         [TestMethod]
@@ -363,17 +314,10 @@ namespace Azure.EntityServices.Table.Tests
                 c.SetRowKeyProp(p => p.PersonId);
                 c.AddComputedProp(nameof(person.Created), p => p.Created ?? CreatedDate);
             });
-            try
-            {
-                await tableEntity.AddOrReplaceAsync(person);
-                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                created.Created.Should().Be(CreatedDate);
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+
+            await tableEntity.AddOrReplaceAsync(person);
+            var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+            created.Created.Should().Be(CreatedDate);
         }
 
         [TestMethod]
@@ -391,34 +335,27 @@ namespace Azure.EntityServices.Table.Tests
                 c.AddComputedProp(nameof(person.CreatedEntity), p => p.CreatedEntity ?? DateTimeOffset.UtcNow);
                 c.AddComputedProp(nameof(person.Updated), p => DateTimeOffset.UtcNow);
             });
-            try
+
+            await tableEntity.AddOrReplaceAsync(person);
+            var createdEntity = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+            createdEntity.Created.Should().NotBeNull();
+
+            var personPatch = new PersonEntity()
             {
-                await tableEntity.AddOrReplaceAsync(person);
-                var createdEntity = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                createdEntity.Created.Should().NotBeNull();
+                TenantId = person.TenantId,
+                PersonId = person.PersonId
+            };
+            await tableEntity.MergeAsync(personPatch);
+            var mergedEntity = await tableEntity.GetByIdAsync(personPatch.TenantId, personPatch.PersonId);
 
-                var personPatch = new PersonEntity()
-                {
-                    TenantId = person.TenantId,
-                    PersonId = person.PersonId
-                };
-                await tableEntity.MergeAsync(personPatch);
-                var mergedEntity = await tableEntity.GetByIdAsync(personPatch.TenantId, personPatch.PersonId);
+            mergedEntity.CreatedEntity.Should().Be(createdEntity.CreatedEntity);
+            mergedEntity.Updated.Should().BeAfter(createdEntity.CreatedEntity ?? default);
 
-                mergedEntity.CreatedEntity.Should().Be(createdEntity.CreatedEntity);
-                mergedEntity.Updated.Should().BeAfter(createdEntity.CreatedEntity ?? default);
+            await tableEntity.ReplaceAsync(person);
+            var replacedEntity = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
 
-                await tableEntity.ReplaceAsync(person);
-                var replacedEntity = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-
-                replacedEntity.CreatedEntity.Should().Be(createdEntity.CreatedEntity);
-                replacedEntity.Updated.Should().BeAfter(mergedEntity.Updated);
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+            replacedEntity.CreatedEntity.Should().Be(createdEntity.CreatedEntity);
+            replacedEntity.Updated.Should().BeAfter(mergedEntity.Updated);
         }
 
         [TestMethod]
@@ -436,37 +373,30 @@ namespace Azure.EntityServices.Table.Tests
                 c.AddTag(p => p.LastName);
                 c.AddComputedProp("_FirstLastName3Chars", p => First3Char(p.LastName));
             });
-            try
+
+            await tableEntity.AddOrReplaceAsync(person);
+            var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+            await tableEntity.DeleteAsync(created);
+
+            (await tableEntity.GetByIdAsync(person.TenantId, person.PersonId)).Should().BeNull();
+            await foreach (var resultPage in tableEntity.GetAsync(
+                filter => filter
+                .WhereTag("_FirstLastName3Chars")
+                .Equal(First3Char(person.LastName))
+                .AndPartitionKey()
+                .Equal(person.TenantId)))
             {
-                await tableEntity.AddOrReplaceAsync(person);
-                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                await tableEntity.DeleteAsync(created);
-
-                (await tableEntity.GetByIdAsync(person.TenantId, person.PersonId)).Should().BeNull();
-                await foreach (var resultPage in tableEntity.GetAsync(
-                    filter => filter
-                    .WhereTag("_FirstLastName3Chars")
-                    .Equal(First3Char(person.LastName))
-                    .AndPartitionKey()
-                    .Equal(person.TenantId)))
-                {
-                    resultPage.Should().BeEmpty();
-                }
-
-                await foreach (var resultPage in tableEntity.GetAsync(
-                    filter => filter
-                     .WhereTag(p => p.LastName)
-                    .Equal(person.LastName)
-                    .AndPartitionKey()
-                    .Equal(person.TenantId)))
-                {
-                    resultPage.Should().BeEmpty();
-                }
+                resultPage.Should().BeEmpty();
             }
-            catch { throw; }
-            finally
+
+            await foreach (var resultPage in tableEntity.GetAsync(
+                filter => filter
+                 .WhereTag(p => p.LastName)
+                .Equal(person.LastName)
+                .AndPartitionKey()
+                .Equal(person.TenantId)))
             {
-                await tableEntity.DropTableAsync();
+                resultPage.Should().BeEmpty();
             }
         }
 
@@ -483,21 +413,14 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddObserver(nameof(DummyObserver), () => observer);
             });
-            try
-            {
-                await tableEntity.AddManyAsync(persons);
 
-                await tableEntity.DeleteAsync(persons.Skip(1).First());
+            await tableEntity.AddManyAsync(persons);
 
-                observer.Persons.Should().HaveCount(9);
-                observer.CreatedCount.Should().Be(10);
-                observer.DeletedCount.Should().Be(1);
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+            await tableEntity.DeleteAsync(persons.Skip(1).First());
+
+            observer.Persons.Should().HaveCount(9);
+            observer.CreatedCount.Should().Be(10);
+            observer.DeletedCount.Should().Be(1);
         }
 
         [TestMethod]
@@ -517,23 +440,16 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await tableEntity.AddManyAsync(persons);
 
-                //get all entities both primary and projected
-                await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter
-                .WherePartitionKey()
-                .Equal(persons.First().TenantId)))
-                {
-                    pagedResult.Should().HaveCount(130);
-                }
-            }
-            catch { throw; }
-            finally
+            await tableEntity.AddManyAsync(persons);
+
+            //get all entities both primary and projected
+            await foreach (var pagedResult in tableEntity.GetAsync(
+            filter => filter
+            .WherePartitionKey()
+            .Equal(persons.First().TenantId)))
             {
-                await tableEntity.DropTableAsync();
+                pagedResult.Should().HaveCount(130);
             }
         }
 
@@ -554,30 +470,23 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await tableEntity.AddManyAsync(persons);
 
-                await tableEntity.UpdateManyAsync(person =>
-                {
-                    person.LastName += "_updated";
-                });
+            await tableEntity.AddManyAsync(persons);
 
-                //get all entities both primary and projected
-                await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter
-                .IgnoreTags()
-                .AndPartitionKey()
-                .Equal(persons.First().TenantId)))
-                {
-                    pagedResult.Should().HaveCount(130);
-                    pagedResult.All(person => person.LastName.EndsWith("_updated")).Should().BeTrue();
-                }
-            }
-            catch { throw; }
-            finally
+            await tableEntity.UpdateManyAsync(person =>
             {
-                await tableEntity.DropTableAsync();
+                person.LastName += "_updated";
+            });
+
+            //get all entities both primary and projected
+            await foreach (var pagedResult in tableEntity.GetAsync(
+            filter => filter
+            .IgnoreTags()
+            .AndPartitionKey()
+            .Equal(persons.First().TenantId)))
+            {
+                pagedResult.Should().HaveCount(130);
+                pagedResult.All(person => person.LastName.EndsWith("_updated")).Should().BeTrue();
             }
         }
 
@@ -598,20 +507,13 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
+
+            await tableEntity.CreateTableAsync();
+            var updated = await tableEntity.UpdateManyAsync(person =>
             {
-                await tableEntity.CreateTableAsync();
-                var updated = await tableEntity.UpdateManyAsync(person =>
-                {
-                    person.LastName += "updated";
-                });
-                updated.Should().Be(0);
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
+                person.LastName += "updated";
+            });
+            updated.Should().Be(0);
         }
 
         [TestMethod]
@@ -631,26 +533,19 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
+
+            var latestPerson = persons.Last();
+            latestPerson.Altitude = -100;
+            await tableEntity.AddManyAsync(persons);
+            //get all entities both primary and projected
+            await foreach (var pagedResult in tableEntity.GetAsync(
+            filter => filter
+            .WherePartitionKey()
+            .Equal(persons.First().TenantId)
+            .And(p => p.Altitude)
+            .Equal(latestPerson.Altitude)))
             {
-                var latestPerson = persons.Last();
-                latestPerson.Altitude = -100;
-                await tableEntity.AddManyAsync(persons);
-                //get all entities both primary and projected
-                await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter
-                .WherePartitionKey()
-                .Equal(persons.First().TenantId)
-                .And(p => p.Altitude)
-                .Equal(latestPerson.Altitude)))
-                {
-                    pagedResult.Should().HaveCount(1);
-                }
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
+                pagedResult.Should().HaveCount(1);
             }
         }
 
@@ -673,37 +568,30 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
+
+            var latestPerson = persons.Last();
+            latestPerson.BankAmount = null;
+            latestPerson.Altitude = null;
+            latestPerson.Situation = null;
+            latestPerson.Enabled = true;
+            await tableEntity.AddManyAsync(persons);
+            //get all entities both primary and projected
+            await foreach (var pagedResult in tableEntity.GetAsync(
+            filter => filter
+            .WherePartitionKey()
+                .Equal(persons.First().TenantId)
+                .And(p => p.BankAmount)
+                .Equal(null)
+                .And(p => p.Altitude)
+                .Equal(null)
+                .And(p => p.Situation)
+                .Equal(null)
+                .And(p => p.Enabled)
+                .NotEqual(null))
+                )
             {
-                var latestPerson = persons.Last();
-                latestPerson.BankAmount = null;
-                latestPerson.Altitude = null;
-                latestPerson.Situation = null;
-                latestPerson.Enabled = true;
-                await tableEntity.AddManyAsync(persons);
-                //get all entities both primary and projected
-                await foreach (var pagedResult in tableEntity.GetAsync(
-                filter => filter
-                .WherePartitionKey()
-                    .Equal(persons.First().TenantId)
-                    .And(p => p.BankAmount)
-                    .Equal(null)
-                    .And(p => p.Altitude)
-                    .Equal(null)
-                    .And(p => p.Situation)
-                    .Equal(null)
-                    .And(p => p.Enabled)
-                    .NotEqual(null))
-                    )
-                {
-                    pagedResult.Should().HaveCount(1);
-                    pagedResult.First().Should().BeEquivalentTo(latestPerson);
-                }
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
+                pagedResult.Should().HaveCount(1);
+                pagedResult.First().Should().BeEquivalentTo(latestPerson);
             }
         }
 
@@ -720,24 +608,17 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddManyAsync(persons);
 
-                var person = persons.Last();
+            await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetAsync(
-                filter => filter
-                .WhereTag(p => p.Created)
-                .Equal(person.Created)))
-                {
-                    resultPage.First().Should().BeEquivalentTo(person);
-                }
-            }
-            catch { throw; }
-            finally
+            var person = persons.Last();
+
+            await foreach (var resultPage in entityTable.GetAsync(
+            filter => filter
+            .WhereTag(p => p.Created)
+            .Equal(person.Created)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.First().Should().BeEquivalentTo(person);
             }
         }
 
@@ -754,23 +635,16 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var oldestDate = persons.Min(p => p.Created.Value);
-                var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
-                olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
-                persons.Add(olderPerson);
-                await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetAsync(filter => filter.WhereTag("Created").GreaterThanOrEqual(oldestDate)))
-                {
-                    resultPage.Should().BeEquivalentTo(persons.Where(p => p != olderPerson));
-                }
-            }
-            catch { throw; }
-            finally
+            var oldestDate = persons.Min(p => p.Created.Value);
+            var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
+            olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
+            persons.Add(olderPerson);
+            await entityTable.AddManyAsync(persons);
+
+            await foreach (var resultPage in entityTable.GetAsync(filter => filter.WhereTag("Created").GreaterThanOrEqual(oldestDate)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.Should().BeEquivalentTo(persons.Where(p => p != olderPerson));
             }
         }
 
@@ -787,26 +661,19 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var oldestDate = persons.Min(p => p.Created.Value);
-                var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
-                olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
-                persons.Add(olderPerson);
-                await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetAsync(
-                    filter => filter
-                    .WhereTag("Created").GreaterThan(oldestDate)))
-                {
-                    resultPage.Select(p => p.Created).All(p => p.Value > oldestDate).Should().BeTrue();
-                    resultPage.Should().NotContain(olderPerson);
-                }
-            }
-            catch { throw; }
-            finally
+            var oldestDate = persons.Min(p => p.Created.Value);
+            var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
+            olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
+            persons.Add(olderPerson);
+            await entityTable.AddManyAsync(persons);
+
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .WhereTag("Created").GreaterThan(oldestDate)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.Select(p => p.Created).All(p => p.Value > oldestDate).Should().BeTrue();
+                resultPage.Should().NotContain(olderPerson);
             }
         }
 
@@ -823,27 +690,20 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var latestDate = persons.Max(p => p.Created);
-                var lastestPerson = Fakers.CreateFakePerson().Generate(1).First();
-                lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
-                persons.Add(lastestPerson);
-                await entityTable.AddManyAsync(persons);
 
-                await foreach (var resultPage in entityTable.GetAsync(
-                    filter => filter
-                    .WhereTag(p => p.Created)
-                    .LessThan(latestDate)))
-                {
-                    resultPage.Select(p => p.Created).All(p => p.Value < latestDate).Should().BeTrue();
-                    resultPage.Should().NotContain(lastestPerson);
-                }
-            }
-            catch { throw; }
-            finally
+            var latestDate = persons.Max(p => p.Created);
+            var lastestPerson = Fakers.CreateFakePerson().Generate(1).First();
+            lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
+            persons.Add(lastestPerson);
+            await entityTable.AddManyAsync(persons);
+
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .WhereTag(p => p.Created)
+                .LessThan(latestDate)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.Select(p => p.Created).All(p => p.Value < latestDate).Should().BeTrue();
+                resultPage.Should().NotContain(lastestPerson);
             }
         }
 
@@ -860,26 +720,19 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var latestDate = persons.Max(p => p.Created);
-                var lastestPerson = Fakers.CreateFakePerson().Generate(1).First();
-                lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
-                persons.Add(lastestPerson);
-                await entityTable.AddManyAsync(persons);
-                await foreach (var resultPage in entityTable.GetAsync(
 
-                    filter => filter
-                    .WhereTag("Created")
-                    .LessThanOrEqual(latestDate)))
-                {
-                    resultPage.Should().BeEquivalentTo(persons.Where(p => p != lastestPerson));
-                }
-            }
-            catch { throw; }
-            finally
+            var latestDate = persons.Max(p => p.Created);
+            var lastestPerson = Fakers.CreateFakePerson().Generate(1).First();
+            lastestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
+            persons.Add(lastestPerson);
+            await entityTable.AddManyAsync(persons);
+            await foreach (var resultPage in entityTable.GetAsync(
+
+                filter => filter
+                .WhereTag("Created")
+                .LessThanOrEqual(latestDate)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.Should().BeEquivalentTo(persons.Where(p => p != lastestPerson));
             }
         }
 
@@ -896,35 +749,28 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var latestDate = persons.Max(p => p.Created);
-                var latestPerson = Fakers.CreateFakePerson().Generate(1).First();
-                latestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
-                persons.Add(latestPerson);
 
-                var oldestDate = persons.Min(p => p.Created.Value);
-                var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
-                olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
-                persons.Add(olderPerson);
+            var latestDate = persons.Max(p => p.Created);
+            var latestPerson = Fakers.CreateFakePerson().Generate(1).First();
+            latestPerson.Created = latestDate + TimeSpan.FromSeconds(1);
+            persons.Add(latestPerson);
 
-                await entityTable.AddManyAsync(persons);
-                await foreach (var resultPage in entityTable.GetAsync(
-                    filter =>
-                    filter
-                    .WhereTag(p => p.Created)
-                    .Between(oldestDate, latestDate)))
-                {
-                    resultPage.Should().BeEquivalentTo(persons
-                        .Where(p => p.Created > olderPerson.Created
-                        &&
-                        p.Created < latestPerson.Created));
-                }
-            }
-            catch { throw; }
-            finally
+            var oldestDate = persons.Min(p => p.Created.Value);
+            var olderPerson = Fakers.CreateFakePerson().Generate(1).First();
+            olderPerson.Created = oldestDate - TimeSpan.FromSeconds(1);
+            persons.Add(olderPerson);
+
+            await entityTable.AddManyAsync(persons);
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter =>
+                filter
+                .WhereTag(p => p.Created)
+                .Between(oldestDate, latestDate)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.Should().BeEquivalentTo(persons
+                    .Where(p => p.Created > olderPerson.Created
+                    &&
+                    p.Created < latestPerson.Created));
             }
         }
 
@@ -941,31 +787,24 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                persons.Last().Created = DateTimeOffset.UtcNow;
-                persons.Last().Altitude = -100;
 
-                await entityTable.AddManyAsync(persons);
-                //Query by Created Tag
-                await foreach (var resultPage in entityTable.GetAsync(
-                    filter =>
-                        filter
-                        .WhereTag(p => p.Created)
-                        .GreaterThanOrEqual(persons.Last().Created)
-                        .And(p => p.Altitude)
-                        .LessThanOrEqual(-100)
+            persons.Last().Created = DateTimeOffset.UtcNow;
+            persons.Last().Altitude = -100;
 
-                    ))
-                {
-                    resultPage.Count().Should().BePositive();
-                    resultPage.Select(p => p.Altitude).All(p => p <= 100).Should().BeTrue();
-                }
-            }
-            catch { throw; }
-            finally
+            await entityTable.AddManyAsync(persons);
+            //Query by Created Tag
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter =>
+                    filter
+                    .WhereTag(p => p.Created)
+                    .GreaterThanOrEqual(persons.Last().Created)
+                    .And(p => p.Altitude)
+                    .LessThanOrEqual(-100)
+
+                ))
             {
-                await entityTable.DropTableAsync();
+                resultPage.Count().Should().BePositive();
+                resultPage.Select(p => p.Altitude).All(p => p <= 100).Should().BeTrue();
             }
         }
 
@@ -982,25 +821,18 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var person = persons.Last();
-                person.Created = null;
 
-                await entityTable.AddManyAsync(persons);
+            var person = persons.Last();
+            person.Created = null;
 
-                await foreach (var resultPage in entityTable.GetAsync(
-                filter => filter
-                .WhereTag(p => p.Created)
-                .Equal(null)))
-                {
-                    resultPage.First().Should().BeEquivalentTo(person);
-                }
-            }
-            catch { throw; }
-            finally
+            await entityTable.AddManyAsync(persons);
+
+            await foreach (var resultPage in entityTable.GetAsync(
+            filter => filter
+            .WhereTag(p => p.Created)
+            .Equal(null)))
             {
-                await entityTable.DropTableAsync();
+                resultPage.First().Should().BeEquivalentTo(person);
             }
         }
 
@@ -1017,24 +849,17 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                var person = persons.Last();
-                person.LastName = string.Empty;
 
-                await entityTable.AddManyAsync(persons);
-                await foreach (var resultPage in entityTable.GetAsync(
-                filter => filter
-                .WhereTag(p => p.LastName)
-                .Equal("")))
-                {
-                    resultPage.First().Should().BeEquivalentTo(person);
-                }
-            }
-            catch { throw; }
-            finally
+            var person = persons.Last();
+            person.LastName = string.Empty;
+
+            await entityTable.AddManyAsync(persons);
+            await foreach (var resultPage in entityTable.GetAsync(
+            filter => filter
+            .WhereTag(p => p.LastName)
+            .Equal("")))
             {
-                await entityTable.DropTableAsync();
+                resultPage.First().Should().BeEquivalentTo(person);
             }
         }
 
@@ -1056,17 +881,10 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddOrReplaceAsync(person);
-                var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-                added.Should().BeEquivalentTo(person);
-            }
-            catch { throw; }
-            finally
-            {
-                await entityTable.DropTableAsync();
-            }
+
+            await entityTable.AddOrReplaceAsync(person);
+            var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            added.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -1085,17 +903,10 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddOrReplaceAsync(person);
-                var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-                added.Should().BeEquivalentTo(person);
-            }
-            catch { throw; }
-            finally
-            {
-                await entityTable.DropTableAsync();
-            }
+
+            await entityTable.AddOrReplaceAsync(person);
+            var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            added.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -1115,20 +926,13 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddOrReplaceAsync(person);
-                var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-                added.Should().BeEquivalentTo(person);
 
-                var direct = await entityTable.GetAsync(f => f.WherePartitionKey().Equal("*Tenant123!*4")).FirstAsync();
-                direct.Should().BeEquivalentTo(person);
-            }
-            catch { throw; }
-            finally
-            {
-                await entityTable.DropTableAsync();
-            }
+            await entityTable.AddOrReplaceAsync(person);
+            var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+            added.Should().BeEquivalentTo(person);
+
+            var direct = await entityTable.GetAsync(f => f.WherePartitionKey().Equal("*Tenant123!*4")).FirstAsync();
+            direct.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -1148,25 +952,18 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await entityTable.AddOrReplaceAsync(person);
-                var added = await entityTable.GetByIdAsync(person.TenantId, person.LastName);
-                added.Should().BeEquivalentTo(person);
-                var mainRow = await entityTable.GetAsync(f => f.WhereRowKey().Equal("*Person123!*4")).FirstOrDefaultAsync();
-                mainRow.Should().BeEquivalentTo(person);
 
-                var createdRow = await entityTable.GetAsync(f => f.WhereTag("LastName").Equal(person.LastName)).FirstOrDefaultAsync();
-                createdRow.Should().BeEquivalentTo(person);
+            await entityTable.AddOrReplaceAsync(person);
+            var added = await entityTable.GetByIdAsync(person.TenantId, person.LastName);
+            added.Should().BeEquivalentTo(person);
+            var mainRow = await entityTable.GetAsync(f => f.WhereRowKey().Equal("*Person123!*4")).FirstOrDefaultAsync();
+            mainRow.Should().BeEquivalentTo(person);
 
-                var lastNameRow = await entityTable.GetAsync(f => f.WhereTag("Created").Equal(person.Created)).FirstOrDefaultAsync();
-                lastNameRow.Should().BeEquivalentTo(person);
-            }
-            catch { throw; }
-            finally
-            {
-                await entityTable.DropTableAsync();
-            }
+            var createdRow = await entityTable.GetAsync(f => f.WhereTag("LastName").Equal(person.LastName)).FirstOrDefaultAsync();
+            createdRow.Should().BeEquivalentTo(person);
+
+            var lastNameRow = await entityTable.GetAsync(f => f.WhereTag("Created").Equal(person.Created)).FirstOrDefaultAsync();
+            lastNameRow.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -1195,27 +992,20 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await personClient.AddOrReplaceAsync(person);
 
-                var genericEntity = await genericClient.GetByIdAsync(person.TenantId, person.LastName);
-                var serializedAddressIncludingEnum = JsonSerializer.Serialize(person.Address, new JsonSerializerOptions
-                {
-                    Converters = {
+            await personClient.AddOrReplaceAsync(person);
+
+            var genericEntity = await genericClient.GetByIdAsync(person.TenantId, person.LastName);
+            var serializedAddressIncludingEnum = JsonSerializer.Serialize(person.Address, new JsonSerializerOptions
+            {
+                Converters = {
                         new JsonStringEnumConverter()
                     }
-                });
-                genericEntity.GetString("Address")?.Should().Be(serializedAddressIncludingEnum);
+            });
+            genericEntity.GetString("Address")?.Should().Be(serializedAddressIncludingEnum);
 
-                var updatedEntity = await personClient.GetByIdAsync(person.TenantId, person.LastName);
-                updatedEntity.Address.Should().BeEquivalentTo(person.Address);
-            }
-            catch { throw; }
-            finally
-            {
-                await personClient.DropTableAsync();
-            }
+            var updatedEntity = await personClient.GetByIdAsync(person.TenantId, person.LastName);
+            updatedEntity.Address.Should().BeEquivalentTo(person.Address);
         }
 
         [TestMethod]
@@ -1243,28 +1033,21 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await personClient.AddOrReplaceAsync(person);
 
-                var genericEntity = await genericClient.GetByIdAsync(person.TenantId, person.LastName);
+            await personClient.AddOrReplaceAsync(person);
 
-                var serializedAddress = JsonSerializer.Serialize(person.Address);
+            var genericEntity = await genericClient.GetByIdAsync(person.TenantId, person.LastName);
 
-                genericEntity.GetString("Address")?.Should().Be(
-                    serializedAddress,
-                    because: "By default, AdressType will be serialized as integer");
+            var serializedAddress = JsonSerializer.Serialize(person.Address);
 
-                // deserializer should map json integer value with related enum value
-                var updatedEntity = await personClient.GetByIdAsync(person.TenantId, person.LastName);
-                updatedEntity.Address.Should()
-                    .BeEquivalentTo(person.Address);
-            }
-            catch { throw; }
-            finally
-            {
-                await personClient.DropTableAsync();
-            }
+            genericEntity.GetString("Address")?.Should().Be(
+                serializedAddress,
+                because: "By default, AdressType will be serialized as integer");
+
+            // deserializer should map json integer value with related enum value
+            var updatedEntity = await personClient.GetByIdAsync(person.TenantId, person.LastName);
+            updatedEntity.Address.Should()
+                .BeEquivalentTo(person.Address);
         }
 
         [TestMethod]
@@ -1284,28 +1067,21 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
+
+            await personClient.AddManyAsync(persons);
+
+            EntityPage<PersonEntity> page = default;
+            int entityCount = 0;
+
+            do
             {
-                await personClient.AddManyAsync(persons);
+                page = await personClient.GetPagedAsync(nextPageToken: page.ContinuationToken);
 
-                EntityPage<PersonEntity> page = default;
-                int entityCount = 0;
-
-                do
-                {
-                    page = await personClient.GetPagedAsync(nextPageToken: page.ContinuationToken);
-
-                    entityCount += page.Entities.Count();
-                }
-                while (!page.IsLastPage);
-
-                entityCount.Should().Be(155);
+                entityCount += page.Entities.Count();
             }
-            catch { throw; }
-            finally
-            {
-                await personClient.DropTableAsync();
-            }
+            while (!page.IsLastPage);
+
+            entityCount.Should().Be(155);
         }
 
         //[DataRow[ available_entities, max_per_page ]
@@ -1333,37 +1109,30 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
+
+            await personClient.AddManyAsync(persons);
+
+            EntityPage<PersonEntity> page = default;
+            int entityCount = 0;
+
+            do
             {
-                await personClient.AddManyAsync(persons);
+                page = await personClient.GetPagedAsync(maxPerPage: maxPerPage, iteratedCount: page.IteratedCount, nextPageToken: page.ContinuationToken);
 
-                EntityPage<PersonEntity> page = default;
-                int entityCount = 0;
-
-                do
+                if (page.IsLastPage)
                 {
-                    page = await personClient.GetPagedAsync(maxPerPage: maxPerPage, iteratedCount: page.IteratedCount, nextPageToken: page.ContinuationToken);
-
-                    if (page.IsLastPage)
-                    {
-                        page.Entities.Count().Should().BeLessThanOrEqualTo(maxPerPage);
-                    }
-                    else
-                    {
-                        page.Entities.Count().Should().Be(maxPerPage);
-                    }
-                    entityCount += page.Entities.Count();
+                    page.Entities.Count().Should().BeLessThanOrEqualTo(maxPerPage);
                 }
-                while (!page.IsLastPage);
+                else
+                {
+                    page.Entities.Count().Should().Be(maxPerPage);
+                }
+                entityCount += page.Entities.Count();
+            }
+            while (!page.IsLastPage);
 
-                entityCount.Should().Be(totalCount);
-                page.IteratedCount.Should().Be(entityCount);
-            }
-            catch { throw; }
-            finally
-            {
-                await personClient.DropTableAsync();
-            }
+            entityCount.Should().Be(totalCount);
+            page.IteratedCount.Should().Be(entityCount);
         }
 
         //[DataRow[ available_entities, to_skip]
@@ -1392,27 +1161,17 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await personClient.AddManyAsync(persons);
 
-                var all = await personClient.GetAsync().ToListAsync();
+            await personClient.AddManyAsync(persons);
 
-                var skipResult = await personClient
-                    .GetAsync()
-                    .SkipAsync(skipCount)
-                    .ToListAsync();
+            var all = await personClient.GetAsync().ToListAsync();
 
-                skipResult.Count.Should().Be(Math.Max(0, totalCount - skipCount));
-            }
-            catch
-            {
-                throw;
-            }
-            finally
-            {
-                await personClient.DropTableAsync();
-            }
+            var skipResult = await personClient
+                .GetAsync()
+                .SkipAsync(skipCount)
+                .ToListAsync();
+
+            skipResult.Count.Should().Be(Math.Max(0, totalCount - skipCount));
         }
 
         //[DataRow[ available_entities, to_take ]
@@ -1441,24 +1200,17 @@ namespace Azure.EntityServices.Table.Tests
                 .AddTag(p => p.LastName)
                 .AddTag(p => p.Created);
             });
-            try
-            {
-                await personClient.AddManyAsync(persons);
 
-                var all = await personClient.GetAsync().ToListAsync();
+            await personClient.AddManyAsync(persons);
 
-                var takeResult = await personClient
-                    .GetAsync()
-                    .TakeAsync(takeCount)
-                    .ToListAsync();
+            var all = await personClient.GetAsync().ToListAsync();
 
-                takeResult.Count.Should().Be(Math.Min(totalCount, takeCount));
-            }
-            catch { throw; }
-            finally
-            {
-                await personClient.DropTableAsync();
-            }
+            var takeResult = await personClient
+                .GetAsync()
+                .TakeAsync(takeCount)
+                .ToListAsync();
+
+            takeResult.Count.Should().Be(Math.Min(totalCount, takeCount));
         }
     }
 }

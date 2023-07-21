@@ -351,3 +351,4 @@ MigrationBackup/
 **/launchSettings.json 
  
 /.vscode
+__azurite_db_*
