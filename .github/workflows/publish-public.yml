@@ -1,4 +1,4 @@
-name: MAIN public deployment
+name: preview and release build and deploy
 
 
 on:  

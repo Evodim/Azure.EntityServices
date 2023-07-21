@@ -1,4 +1,4 @@
-name: PR internal deployment
+name: pull-request alpha build and deploy
 
 on:
   workflow_dispatch:
