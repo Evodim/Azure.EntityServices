@@ -1,6 +1,14 @@
 name: PR internal deployment
 
 on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
   pull_request:
     branches: [ main ]      
     paths: [src/**]
@@ -28,7 +36,12 @@ jobs:
           APP_VERSION=`minver`
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
-
+        # Install Azure sorage emulator
+      - name: Install Azurite
+        id: azuright
+        uses: potatoqualitee/azuright@v1.1
+        with:
+          self-signed-cert: true
       # Setup .NET Core SDK dqsdqs
       - name: dotnet add nuget source
         run: |
@@ -38,6 +51,7 @@ jobs:
         run: |
           dotnet restore
           dotnet build --configuration '${{ env.BUILD_CONFIGURATION }}'  --version-suffix '${{ env.APP_VERSION }}'
+          dotnet test --configuration '${{ env.BUILD_CONFIGURATION }}' -v n
           dotnet pack -c '${{ env.BUILD_CONFIGURATION }}' --no-build --version-suffix '${{ env.APP_VERSION }}'
 
       # Publish the package to Azure Artifacts
