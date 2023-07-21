@@ -9,7 +9,8 @@ on:
       tags:
         description: 'Test scenario tags'  
   pull_request:
-    branches: [ main ]          
+    branches: [ main ]
+    paths: [src/**, tests/**]          
 env:
   GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json  
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
