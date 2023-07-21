@@ -1,5 +1,4 @@
 name: pull-request alpha build and deploy
-
 on:
   workflow_dispatch:
     inputs:
@@ -42,7 +41,7 @@ jobs:
         uses: potatoqualitee/azuright@v1.1
         with:
           self-signed-cert: true
-      # Setup .NET Core SDK dqsdqs
+      # Setup .NET Core SDK
       - name: dotnet add nuget source
         run: |
           dotnet nuget add source --username medevod --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github '${{ env.GITHUB_PACKAGES_URL }}'
