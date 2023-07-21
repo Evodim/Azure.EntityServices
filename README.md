@@ -13,9 +13,11 @@
   
 - AzureEntityServices.Tables.Extensions.DependencyInjection ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Tables.Extensions.DependencyInjection)
   
+- AzureEntityServices.Blobs ![AzureEntityServices.Blobs](https://img.shields.io/nuget/v/AzureEntityServices.Blobs)
+
+- AzureEntityServices.Blobs.Extensions.DependencyInjection ![AzureEntityServices.Blobs.Extensions.DependencyInjection](https://img.shields.io/nuget/v/AzureEntityServices.Blobs.Extensions.DependencyInjection)
+
 - AzureEntityServices.Queries ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Queries)
-  
-- AzureEntityServices.Blobs ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Blobs)
 
 ## What is Azure Entity Services?
 
