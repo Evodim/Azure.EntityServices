@@ -10,12 +10,11 @@ on:
         description: 'Test scenario tags'  
   pull_request:
     branches: [ main ]
-    paths: [src/**, tests/**]          
+    paths: [src/**, tests/**, .github/**]          
 env:
   GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json  
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
   DOTNET_VERSION: '6.x' 
-  TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
   MinVerMinimumMajorMinor: '1.1'
   MinVerTagPrefix: 'v'
   MinVerDefaultPreReleaseIdentifiers : 'alpha-${{ github.run_number }}'  
