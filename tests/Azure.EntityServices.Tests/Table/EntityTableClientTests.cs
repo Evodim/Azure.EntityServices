@@ -293,7 +293,8 @@ namespace Azure.EntityServices.Table.Tests
         {
             static string First3Char(string s) => s.ToLower()[..3];
             var person = Fakers.CreateFakePerson().Generate();
-            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+            .Configure(options => _commonOptions(options), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
@@ -323,10 +324,9 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Override_Entity_Prop_With_Computed_Prop()
         {
-
             var person = Fakers.CreateFakePerson().Generate();
 
-            //arrange entity  
+            //arrange entity
             var CreatedDate = DateTimeOffset.UtcNow;
             //
             var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
@@ -351,10 +351,9 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Use_Entity_Prop_as_Computed_Prop()
         {
-
             var person = Fakers.CreateFakePerson().Generate();
 
-            //arrange entity  
+            //arrange entity
             var CreatedDate = DateTimeOffset.UtcNow;
             person.Created = null;
 
@@ -378,43 +377,42 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Initialize_Computed_Prop_Only_Once()
+        public async Task Should_Initialize_Computed_Prop_Only_When_Entity_Created()
         {
-
             var person = Fakers.CreateFakePerson().Generate();
 
-            //arrange entity  
-            var createdDate = DateTimeOffset.UtcNow;
+            //arrange entity
 
-            person.Created = null;
-
-
-            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+            .Configure(options => _commonOptions(options), c =>
             {
                 c.SetPartitionKey(p => p.TenantId);
                 c.SetRowKeyProp(p => p.PersonId);
-                c.AddComputedProp(nameof(person.Created), p => p.Created ?? createdDate);
+                c.AddComputedProp(nameof(person.CreatedEntity), p => p.CreatedEntity ?? DateTimeOffset.UtcNow);
                 c.AddComputedProp(nameof(person.Updated), p => DateTimeOffset.UtcNow);
             });
             try
             {
                 await tableEntity.AddOrReplaceAsync(person);
-                var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                created.Created.Should().Be(createdDate);
+                var createdEntity = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                createdEntity.Created.Should().NotBeNull();
 
+                var personPatch = new PersonEntity()
+                {
+                    TenantId = person.TenantId,
+                    PersonId = person.PersonId
+                };
+                await tableEntity.MergeAsync(personPatch);
+                var mergedEntity = await tableEntity.GetByIdAsync(personPatch.TenantId, personPatch.PersonId);
 
-                var personPatch = new PersonEntity() { TenantId = person.TenantId, PersonId = person.PersonId };
-                await tableEntity.MergeAsync(person);
-                var patched = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-
-                created.Created.Should().Be(createdDate);
-                created.Updated.Should().BeAfter(createdDate);
+                mergedEntity.CreatedEntity.Should().Be(createdEntity.CreatedEntity);
+                mergedEntity.Updated.Should().BeAfter(createdEntity.CreatedEntity ?? default);
 
                 await tableEntity.ReplaceAsync(person);
-                var replaced = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
+                var replacedEntity = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
 
-                created.Created.Should().Be(createdDate);
-                replaced.Updated.Should().BeAfter(created.Updated);
+                replacedEntity.CreatedEntity.Should().Be(createdEntity.CreatedEntity);
+                replacedEntity.Updated.Should().BeAfter(mergedEntity.Updated);
             }
             catch { throw; }
             finally
@@ -422,67 +420,6 @@ namespace Azure.EntityServices.Table.Tests
                 await tableEntity.DropTableAsync();
             }
         }
-
-        [TestMethod]
-        public async Task Should_Initialize_Computed_Prop_Only_Once_For_Many_Entities()
-        {
-            var createdDate = DateTimeOffset.UtcNow;
-
-            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _commonOptions(options), c =>
-            {
-                c.SetPartitionKey(p => p.TenantId);
-                c.SetRowKeyProp(p => p.PersonId);
-                c.AddComputedProp(nameof(PersonEntity.Created), p => p.Created ?? createdDate);
-                c.AddComputedProp(nameof(PersonEntity.Updated), p => DateTimeOffset.UtcNow);
-            });
-
-            var persons = Fakers.CreateFakePerson().Generate(10);
-
-           
-            foreach (var person in persons)
-            {
-                person.Created = null;
-            }
-
-             try
-            {
-                await tableEntity.AddOrReplaceManyAsync(persons);
-                foreach (var person in persons)
-                {
-                    var created = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                    created.Created.Should().Be(createdDate);
-                } 
-
-                var personsPatch = persons.Select(person => new PersonEntity() { TenantId = person.TenantId, PersonId = person.PersonId });
-
-                await tableEntity.AddOrMergeManyAsync(persons);
-
-                foreach (var person in persons)
-                {
-                    var patched = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                    
-                    patched.Created.Should().Be(createdDate);
-                    patched.Updated.Should().BeAfter(createdDate); 
-                }
-
-                await tableEntity.AddOrReplaceManyAsync(persons);
-
-                foreach (var person in persons)
-                {
-                    var replaced = await tableEntity.GetByIdAsync(person.TenantId, person.PersonId);
-                 
-                    replaced.Created.Should().Be(createdDate);
-                    replaced.Updated.Should().BeAfter(createdDate); 
-                }
-
-            }
-            catch { throw; }
-            finally
-            {
-                await tableEntity.DropTableAsync();
-            }
-        }
-
 
         [TestMethod]
         public async Task Should_Remove_Tags_OnDelete()

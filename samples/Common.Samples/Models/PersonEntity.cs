@@ -46,6 +46,7 @@ namespace Common.Samples.Models
     public class PersonEntity
     {
         public string TenantId { get; set; }
+        public DateTimeOffset? CreatedEntity { get;  }
         public DateTimeOffset? Created { get; set; }
         public DateTime? LocalCreated { get; set; } 
         public DateTimeOffset Updated { get; set; } 
