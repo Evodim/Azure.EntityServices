@@ -9,6 +9,14 @@
 ![internal](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-internal.yml/badge.svg)
 ![public](https://github.com/evodim/Azure.EntityServices/actions/workflows/publish-public.yml/badge.svg)
 
+- AzureEntityServices.Tables ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Tables)
+  
+- AzureEntityServices.Tables.Extensions.DependencyInjection ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Tables.Extensions.DependencyInjection)
+  
+- AzureEntityServices.Queries ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Queries)
+  
+- AzureEntityServices.Blobs ![AzureEntityServices.Tables](https://img.shields.io/nuget/v/AzureEntityServices.Blobs)
+
 ## What is Azure Entity Services?
 
 Azure Entity Services is an abstraction layer library which help you to **store**, **query**, **update** any entities classes in Azure Storage Table and Blob
