@@ -34,7 +34,7 @@ jobs:
           APP_VERSION=`minver`
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
-        # Install Azure sorage emulator
+     # Install Azure sorage emulator
       - name: Setup Node.js environment
         uses: actions/setup-node@v2.5.1
       - name: Install & run Azurite
@@ -48,8 +48,6 @@ jobs:
           dotnet nuget add source --username medevod --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github '${{ env.GITHUB_PACKAGES_URL }}'
         
       - name: dotnet build and publish
-        env: 
-         TEST_STORAGE_CONNECTION_STRING: '${{ steps.azuright.outputs.connstring }}'
         run: |
           dotnet restore
           dotnet build --configuration '${{ env.BUILD_CONFIGURATION }}'  --version-suffix '${{ env.APP_VERSION }}'
