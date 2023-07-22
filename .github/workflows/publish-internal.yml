@@ -35,13 +35,13 @@ jobs:
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
         # Install Azure sorage emulator
-      - name: Install Azurite
-        id: azuright
-        uses: potatoqualitee/azuright@v1.1
-        with:
-          self-signed-cert: true
-          loose: true
-          oauth: basic
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.5.1
+      - name: Install & run Azurite
+        run: npm install -g azurite
+      - name: Run Azurite in Background
+        shell: bash
+        run: azurite -L &
       # Setup .NET Core SDK
       - name: dotnet add nuget source
         run: |
