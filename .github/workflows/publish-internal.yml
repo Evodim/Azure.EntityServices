@@ -41,6 +41,7 @@ jobs:
         with:
           self-signed-cert: true
           loose: true
+          oauth: basic
       # Setup .NET Core SDK
       - name: dotnet add nuget source
         run: |
