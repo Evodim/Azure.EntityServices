@@ -38,11 +38,13 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       # Install Azure sorage emulator
-      - name: Install Azurite
-        id: azuright
-        uses: potatoqualitee/azuright@v1.1
-        with:
-         self-signed-cert: true
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.5.1
+      - name: Install & run Azurite
+        run: npm install -g azurite
+      - name: Run Azurite in Background
+        shell: bash
+        run: azurite -L &
       # Run dotnet build and package
       - name: dotnet build and test
         run: |
