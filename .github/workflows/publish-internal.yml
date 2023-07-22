@@ -40,6 +40,7 @@ jobs:
         uses: potatoqualitee/azuright@v1.1
         with:
           self-signed-cert: true
+          loose: true
       # Setup .NET Core SDK
       - name: dotnet add nuget source
         run: |
