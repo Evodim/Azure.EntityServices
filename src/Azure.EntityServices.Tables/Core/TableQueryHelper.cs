@@ -10,6 +10,7 @@ namespace Azure.EntityServices.Tables.Core
         /// <summary>
         /// Escape characters disallowed in Azure Storage key fields
         /// https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model
+        /// https://learn.microsoft.com/en-us/rest/api/storageservices/understanding-the-table-service-data-model#characters-disallowed-in-key-fields
         /// The forward slash(/) character
         /// The backslash(\) character
         /// The number sign(#) character
@@ -22,7 +23,7 @@ namespace Azure.EntityServices.Tables.Core
         /// <summary>
 
         /// <returns></returns>
-        internal static string EscapeDisallowedChars(this string input)
+        internal static string EscapeDisallowedKeyValue(this string input)
         {
             if (string.IsNullOrWhiteSpace(input))
             {
@@ -39,14 +40,43 @@ namespace Azure.EntityServices.Tables.Core
             return input;
         }
 
+        /// <summary>
+        /// Encode not supported characters in Azure Storage query expression (odata)
+        /// https://learn.microsoft.com/en-us/rest/api/storageservices/querying-tables-and-entities#query-string-encoding
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        internal static string EncodeWhenCharNotSupportedInQuery(this string input)
+        {
+            //following charecters will are encoded on a downstream by storage sdk
+            /*
+            Forward slash (/)
+            Question mark (?)
+            Colon (:)
+            'At' symbol (@)
+            Ampersand (&)
+            Equals sign (=)
+            Plus sign (+)
+            Comma (,)
+            Dollar sign ($)
+            */
+
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input;
+            }
+
+            return input.Replace("'", "''");
+        }
+
         public static string ToPartitionKey(string value) =>
-          value.EscapeDisallowedChars();
+          value.EscapeDisallowedKeyValue();
 
         public static string ToPrimaryRowKey<P>(P value) =>
-           KeyValueToString(value).EscapeDisallowedChars();
+           KeyValueToString(value).EscapeDisallowedKeyValue();
 
         public static string ToTagRowKeyPrefix<P>(string tagName, P value) =>
-            $"~{tagName}-{KeyValueToString(value)}$".EscapeDisallowedChars();
+            $"~{tagName}-{KeyValueToString(value)}$".EscapeDisallowedKeyValue();
 
         public static string ValueToString<P>(P givenValue)
         {
@@ -63,7 +93,7 @@ namespace Azure.EntityServices.Tables.Core
                 DateTimeOffset v => string.Format("datetime'{0}'", (v == default) ? new DateTimeOffset(TableConstants.DateTimeStorageDefault).UtcDateTime.ToString("o") : v.UtcDateTime.ToString("o")),
                 Guid v => string.Format("guid'{0}'", v),
                 BinaryData v => string.Format("X'{0}'", v),
-                _ => givenValue == null ? "null" : $"'{givenValue}'"
+                _ => givenValue == null ? "null" : $"'{EncodeWhenCharNotSupportedInQuery(givenValue.ToString())}'"
             };
         }
 

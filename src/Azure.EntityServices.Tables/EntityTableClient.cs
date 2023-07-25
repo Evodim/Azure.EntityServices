@@ -302,7 +302,7 @@ namespace Azure.EntityServices.Tables
             var rowKey = ResolvePrimaryKey(id);
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityIfExistsAsync<TableEntity>(partition.EscapeDisallowedChars(), rowKey, select: new string[] { }, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityIfExistsAsync<TableEntity>(partition.EscapeDisallowedKeyValue(), rowKey, select: new string[] { }, cancellationToken));
                 if (!response.HasValue)
                 {
                     return null;

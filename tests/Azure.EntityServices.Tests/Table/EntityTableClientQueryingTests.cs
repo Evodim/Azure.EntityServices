@@ -532,5 +532,31 @@ namespace Azure.EntityServices.Table.Tests
 
             takeResult.Count.Should().Be(Math.Min(totalCount, takeCount));
         }
+
+        [TestMethod]
+        public async Task Should_Encode_Not_Supported_Chars_In_Query()
+        {
+            const string lastName = "O'Con/nor Mac'Leod?:+=,$&@";
+            var persons = Fakers.CreateFakePerson().Generate(10);
+            persons.Last().LastName = lastName;
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            await entityTable.AddManyAsync(persons);
+
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .Where(p => p.LastName).Equal(lastName)))
+            {
+                resultPage.Count().Should().Be(1);
+                resultPage.First().Should().BeEquivalentTo(persons.Last());
+            }
+        }
     }
 }
