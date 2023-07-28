@@ -32,9 +32,9 @@ namespace Azure.EntityServices.Tables
 
         Task<EntityPage<T>> GetPagedAsync(Action<IQuery<T>> filter = default, int? iteratorCount = null, int? maxPerPage = null, string nextPageToken = null, CancellationToken cancellationToken = default);
 
-        Task DeleteByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
+        Task<bool> DeleteByIdAsync(string partition, object id, CancellationToken cancellationToken = default);
 
-        Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default);
 
         Task DeleteManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
