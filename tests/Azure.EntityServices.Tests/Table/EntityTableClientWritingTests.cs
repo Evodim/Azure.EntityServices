@@ -110,97 +110,6 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Partially_Delete_Entity_After_Partial_Merge()
-        {
-            var persons = Fakers.CreateFakePerson().Generate(1);
-            var person = persons.First();
-
-            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
-                .Configure(options => _defaultOptions(options), c =>
-                {
-                    c.
-                     SetPartitionKey(p => p.TenantId)
-                    .SetRowKeyProp(p => p.PersonId)
-                    .AddTag(p => p.LastName)
-                    .AddTag(p => p.Created);
-                });
-            await entityTable.AddOrMergeAsync(person);
-
-            var personToMerge = new PersonEntity()
-            {
-                PersonId = person.PersonId,
-                TenantId = person.TenantId
-            };
-
-            await entityTable.MergeAsync(personToMerge);
-
-            await entityTable.DeleteByIdAsync(person.TenantId, person.PersonId);
-
-            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-
-            deleted.Should().BeNull();
-        }
-
-        [TestMethod]
-        public async Task Should_DeleteById_Entity()
-        {
-            var persons = Fakers.CreateFakePerson().Generate(1);
-            var person = persons.First();
-
-            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
-                .Configure(options => _defaultOptions(options), c =>
-                {
-                    c.
-                     SetPartitionKey(p => p.TenantId)
-                    .SetRowKeyProp(p => p.PersonId)
-                    .AddTag(p => p.LastName)
-                    .AddTag(p => p.Created);
-                });
-            await entityTable.AddOrMergeAsync(person);
-
-            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-
-            person.Enabled = !person.Enabled;
-
-            await entityTable.MergeAsync(person);
-
-            await entityTable.DeleteByIdAsync(person.TenantId, person.PersonId);
-            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-
-            deleted.Should().BeNull();
-        }
-
-        [TestMethod]
-        public async Task Should_DeleteBy_Entity()
-        {
-            var persons = Fakers.CreateFakePerson().Generate(1);
-            var person = persons.First();
-
-            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
-                .Configure(options => _defaultOptions(options), c =>
-                {
-                    c.
-                     SetPartitionKey(p => p.TenantId)
-                    .SetRowKeyProp(p => p.PersonId)
-                    .AddTag(p => p.LastName)
-                    .AddTag(p => p.Created);
-                });
-            await entityTable.AddOrMergeAsync(person);
-
-            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-
-            person.Enabled = !person.Enabled;
-
-            await entityTable.MergeAsync(person);
-
-            await entityTable.DeleteAsync(person);
-
-            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
-
-            deleted.Should().BeNull();
-        }
-
-        [TestMethod]
         public async Task Should_Update_Tag_When_Value_Updated()
         {
             var persons = Fakers.CreateFakePerson().Generate(1);
@@ -856,6 +765,190 @@ namespace Azure.EntityServices.Table.Tests
             var updatedEntity = await personClient.GetByIdAsync(person.TenantId, person.LastName);
             updatedEntity.Address.Should()
                 .BeEquivalentTo(person.Address);
+        }
+
+        [TestMethod]
+        public async Task Should_Partially_Delete_Entity_After_Partial_Merge()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKeyProp(p => p.PersonId)
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+            await entityTable.AddOrMergeAsync(person);
+
+            var personToMerge = new PersonEntity()
+            {
+                PersonId = person.PersonId,
+                TenantId = person.TenantId
+            };
+
+            await entityTable.MergeAsync(personToMerge);
+
+            await entityTable.DeleteByIdAsync(person.TenantId, person.PersonId);
+
+            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+
+            deleted.Should().BeNull();
+        }
+
+        [TestMethod]
+        public async Task Should_DeleteById_Entity()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKeyProp(p => p.PersonId)
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+            await entityTable.AddOrMergeAsync(person);
+
+            var created = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+
+            person.Enabled = !person.Enabled;
+
+            await entityTable.MergeAsync(person);
+
+            await entityTable.DeleteByIdAsync(person.TenantId, person.PersonId);
+            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+
+            deleted.Should().BeNull();
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_Entity()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKeyProp(p => p.PersonId)
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+            await entityTable.AddAsync(person);
+
+            var isDeleted = await entityTable.DeleteAsync(person);
+
+            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+
+            isDeleted.Should().BeTrue();
+            deleted.Should().BeNull();
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_When_Entity_Not_Found()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKeyProp(p => p.PersonId)
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+            await entityTable.AddAsync(person);
+
+            var isDeleted = await entityTable.DeleteAsync(person);
+
+            isDeleted.Should().BeTrue();
+
+            var isAlreadyDeleted = await entityTable.DeleteAsync(person);
+
+            isAlreadyDeleted.Should().BeFalse();
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_By_Id_When_Entity_Not_Found()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKeyProp(p => p.PersonId)
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+            await entityTable.AddAsync(person);
+
+            var isDeleted = await entityTable.DeleteByIdAsync(person.TenantId, person.PersonId);
+
+            isDeleted.Should().BeTrue();
+
+            var isAlreadyDeleted = await entityTable.DeleteAsync(person);
+
+            isAlreadyDeleted.Should().BeFalse();
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_By_Id_With_Composite_RowKey()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKey(p => $"{p.PersonId}-{p.Created:aammdd}")
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+
+            await entityTable.AddAsync(person);
+
+            var isDeleted = await entityTable.DeleteByIdAsync(person.TenantId, $"{person.PersonId}-{person.Created:aammdd}");
+
+            isDeleted.Should().BeTrue();
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_Entity_With_Composite_RowKey()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
+                    .SetRowKey(p => $"{p.PersonId}-{p.Created:aammdd}")
+                    .AddTag(p => p.LastName)
+                    .AddTag(p => p.Created);
+                });
+
+            await entityTable.AddAsync(person);
+
+            var isDeleted = await entityTable.DeleteAsync(person);
+
+            isDeleted.Should().BeTrue();
         }
     }
 }
