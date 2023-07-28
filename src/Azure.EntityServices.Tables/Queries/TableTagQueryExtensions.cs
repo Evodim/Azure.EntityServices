@@ -10,6 +10,11 @@ namespace Azure.EntityServices.Tables
     /// </summary>
     public static class TableTagQueryExtensions
     {
+        /// <summary>
+        /// Only retrieve non tagged entities, tagged entities partitionKey and rowKey does not start with reserved '~' character
+        /// Replicated rows are isolated by this keyword
+        /// By default, tagged entities was already ignored 
+        /// </summary>
         public static IFilterOperator<T> IgnoreTags<T>(this IQuery<T> query)
 
          => (query as IQueryCompose<T>)
@@ -19,7 +24,8 @@ namespace Azure.EntityServices.Tables
                .LessThan("~");
 
         /// <summary>
-        /// Use this extension to include tagged entities (replicated partitions and rows)
+        /// Include tagged entities (replicated partitions and rows)
+        /// By default, tagged entities was ignored 
         /// </summary>
         public static IQuery<T> IncludeTags<T>(this IQuery<T> query)
         {
@@ -29,7 +35,7 @@ namespace Azure.EntityServices.Tables
         }
 
         /// <summary>
-        /// Filter only tagged partitions and rows
+        /// Get only tagged partitions and rows that start with "~" character 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="query"></param>
@@ -46,7 +52,7 @@ namespace Azure.EntityServices.Tables
         }
 
         /// <summary>
-        /// Allow to retrieve all entities for a given tag
+        /// Allow to retrieve all entities for a specific tag (tagged entities)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="query"></param>

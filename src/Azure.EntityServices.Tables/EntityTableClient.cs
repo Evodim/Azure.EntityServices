@@ -71,7 +71,7 @@ namespace Azure.EntityServices.Tables
         private IEntityAdapter<T, TableEntity> CreatePrimaryEntityBinderFromEntity(T entity)
           => new TableEntityAdapter<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
 
-        private IEntityAdapter<T, TableEntity> CreateEntityBinderFromTableEntity(TableEntity tableEntity)
+        private IEntityAdapter<T, TableEntity> CreateSecondaryEntityBinderFromTableEntity(TableEntity tableEntity)
             => new TableEntityAdapter<T>(tableEntity, _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
 
         private TableBatchClient CreateTableBatchClient()
@@ -239,7 +239,7 @@ namespace Azure.EntityServices.Tables
             _config = config;
 
             _pipelineObserver = transactions => NotifyChangeAsync(transactions.Select(
-                transaction => new EntityContext<T>(CreateEntityBinderFromTableEntity(transaction.Entity as TableEntity),
+                transaction => new EntityContext<T>(CreateSecondaryEntityBinderFromTableEntity(transaction.Entity as TableEntity),
                 transaction.ActionType.MapToEntityOperation())));
 
             _indextedTags =
@@ -307,7 +307,7 @@ namespace Azure.EntityServices.Tables
                 {
                     return null;
                 }
-                return CreateEntityBinderFromTableEntity(response.Value).ReadFromEntityModel();
+                return CreateSecondaryEntityBinderFromTableEntity(response.Value).ReadFromEntityModel();
             }
             catch (RequestFailedException ex)
             {
@@ -328,7 +328,7 @@ namespace Azure.EntityServices.Tables
         {
             await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
             {
-                yield return page.Values.Select(tableEntity => CreateEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel());
+                yield return page.Values.Select(tableEntity => CreateSecondaryEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel());
             }
         }
 
@@ -353,7 +353,7 @@ namespace Azure.EntityServices.Tables
                 var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
 
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(
-                    tableEntity => CreateEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel()),
+                    tableEntity => CreateSecondaryEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel()),
                     currentCount,
                     string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
                     pageEnumerator.Current.ContinuationToken);
@@ -418,7 +418,7 @@ namespace Azure.EntityServices.Tables
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var adapter = CreateEntityBinderFromTableEntity(tableEntity);
+                    var adapter = CreateSecondaryEntityBinderFromTableEntity(tableEntity);
                     var entity = adapter.ReadFromEntityModel();
 
                     updateAction.Invoke(entity);
@@ -441,11 +441,6 @@ namespace Azure.EntityServices.Tables
             return count;
         }
 
-        public Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
-        {
-            return UpdateEntity(entity, EntityOperation.Delete, cancellationToken);
-        }
-
         public async Task<IDictionary<string, object>> GetEntityMetadatasAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default)
         {
             var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => _entityTagBuilder.CreateTagName(k));
@@ -453,7 +448,7 @@ namespace Azure.EntityServices.Tables
             try
             {
                 var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
-                var entityBinder = CreateEntityBinderFromTableEntity(response.Value);
+                var entityBinder = CreateSecondaryEntityBinderFromTableEntity(response.Value);
                 entityBinder.ReadFromEntityModel();
                 return entityBinder?.Metadata ?? new Dictionary<string, object>();
             }
@@ -509,13 +504,24 @@ namespace Azure.EntityServices.Tables
             return ApplyBatchOperations(EntityOperation.Delete, entities, cancellationToken);
         }
 
-        public async Task DeleteByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
+        public Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
+        {
+            var partitionKey = ResolvePartitionKey(entity);
+            var rowKey = ResolvePrimaryKey(entity);
+
+            return DeleteByIdAsync(partitionKey, rowKey, cancellationToken);
+        }
+
+        public async Task<bool> DeleteByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
         {
             var entity = await GetByIdAsync(partition, id, cancellationToken);
-            if (entity != null)
+            if (entity == null)
             {
-                await DeleteAsync(entity, cancellationToken);
+                return false;
             }
+
+            await UpdateEntity(entity, EntityOperation.Delete, cancellationToken);
+            return true;
         }
 
         protected async Task ApplyBatchOperations(EntityOperation operation, IEnumerable<T> entities, CancellationToken cancellationToken)
