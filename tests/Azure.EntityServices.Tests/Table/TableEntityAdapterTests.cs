@@ -1,4 +1,5 @@
 ﻿using Azure.Data.Tables;
+using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Extensions;
 using Common.Samples;
@@ -14,17 +15,15 @@ using System.Threading.Tasks;
 namespace Azure.EntityServices.Table.Tests
 {
     [TestClass]
-    public class EntityBinderTests
+    public class TableEntityAdapterTests
     {
-        public EntityBinderTests()
-        {
-        }
+        //define an entity model with tenanid as partition key and personId as primary key
+        private readonly EntityKeyBuilder<PersonEntity> _entityKeyBuilder
+            = new(e => e.TenantId, e => e.PersonId);
 
         [TestMethod]
-        public async Task Should_Bind_Extented_Storage_Types()
-        {
-            var partitionName = Guid.NewGuid().ToShortGuid();
-
+        public async Task Should_Adapt_Entity_Extented_Storage_Types()
+        { 
             var person = Fakers.CreateFakePerson().Generate();
             //decimal
             person.Altitude = 1.6666666666666666666666666667M;
@@ -33,14 +32,14 @@ namespace Azure.EntityServices.Table.Tests
             //enum
             person.Situation = Situation.Divorced;
 
-            var tableEntity = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var tableEntity = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             await client.CreateIfNotExistsAsync();
 
             var result = await UpsertAndGetEntity(client, tableEntity.WriteToEntityModel());
 
-            var adapterResult = new TableEntityAdapter<PersonEntity>(result);
+            var adapterResult = new TableEntityAdapter<PersonEntity>(result, _entityKeyBuilder);
 
             var entity = adapterResult.ReadFromEntityModel();
 
@@ -50,14 +49,12 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_InsertOrMerge()
+        public async Task Should_Adapt_Entity_InsertOrMerge()
         {
-            var partitionName = Guid.NewGuid().ToString();
-
             var person = Fakers.CreateFakePerson().Generate();
             person.Enabled = true;
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
 
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
@@ -66,18 +63,17 @@ namespace Azure.EntityServices.Table.Tests
             await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
             adapter = new TableEntityAdapter<PersonEntity>(new PersonEntity()
             {
+                TenantId = person.TenantId,
                 PersonId = person.PersonId,
                 FirstName = "John Do",
                 LocalCreated = null,
                 LocalUpdated = default,
                 Updated = default,
                 Enabled = false
-            }, partitionName,
-
-            person.PersonId.ToString());
+            }, _entityKeyBuilder);
 
             var merged = await MergeThenRetrieveAsync(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(merged);
+            var adapterResult = new TableEntityAdapter<PersonEntity>(merged, _entityKeyBuilder);
             var entity = adapterResult.ReadFromEntityModel();
 
             //Only Nullable value and reference types are preserved in merge operation
@@ -96,19 +92,17 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_On_Update()
+        public async Task Should_Adapt_Entity_On_Update()
         {
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             await client.CreateIfNotExistsAsync();
 
-            var partitionName = Guid.NewGuid().ToString();
-
             var person = Fakers.CreateFakePerson().Generate();
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
 
             var replaced = await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(replaced);
+            var adapterResult = new TableEntityAdapter<PersonEntity>(replaced, _entityKeyBuilder);
 
             adapterResult.ReadFromEntityModel();
 
@@ -117,25 +111,24 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_Metadatas_On_Update()
+        public async Task Should_Adapt_Entity_Metadatas_On_Update()
         {
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             await client.CreateIfNotExistsAsync();
 
-            var partitionName = Guid.NewGuid().ToString();
             var person = Fakers.CreateFakePerson().Generate();
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapter.Metadata.Add("_HasChildren", true);
             adapter.Metadata.Add("_Deleted", false);
 
             await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapter.Metadata.Add("_HasChildren", false);
 
             var replaced = await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(replaced);
+            var adapterResult = new TableEntityAdapter<PersonEntity>(replaced, _entityKeyBuilder);
             adapterResult.ReadFromEntityModel();
 
             adapterResult.Entity.Should().BeEquivalentTo(person);
@@ -144,28 +137,26 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_Metadatas_On_Merge()
+        public async Task Should_Adapt_Entity_Metadatas_On_Merge()
         {
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             await client.CreateIfNotExistsAsync();
 
-            var partitionName = Guid.NewGuid().ToString();
-
             var person = Fakers.CreateFakePerson().Generate();
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapter.Metadata.Add("_HasChildren", true);
             adapter.Metadata.Add("_Deleted", true);
             adapter.WriteToEntityModel();
 
             await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
 
-            adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapter.Metadata.Add("_HasChildren", false);
 
             var merged = await MergeThenRetrieveAsync(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(merged);
+            var adapterResult = new TableEntityAdapter<PersonEntity>(merged, _entityKeyBuilder);
 
             adapterResult.ReadFromEntityModel();
 
@@ -176,18 +167,17 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_DynamicProps()
+        public async Task Should_Adapt_Entity_DynamicProps()
         {
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             var dynamicProps = new Dictionary<string, Func<PersonEntity, object>>() { ["_distance_less_than_500m"] = (e) => e.Distance < 500 };
             await client.CreateIfNotExistsAsync();
 
-            var partitionName = Guid.NewGuid().ToString();
             var person = Fakers.CreateFakePerson().Generate();
 
             person.Distance = 250;
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapter.BindDynamicProps(dynamicProps);
 
             var added = await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
@@ -195,7 +185,7 @@ namespace Azure.EntityServices.Table.Tests
             (added["_distance_less_than_500m"] as bool?)?.Should().BeTrue();
 
             person.Distance = 501;
-            var adapterToUpdate = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapterToUpdate = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapterToUpdate.BindDynamicProps(dynamicProps);
 
             var replaced = await UpsertAndGetEntity(client, adapterToUpdate.WriteToEntityModel());
@@ -205,9 +195,8 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Interpolate_String_Entity_Types()
+        public async Task Should_Adapt_Entity_With_String_Interpolation()
         {
-            var partitionName = Guid.NewGuid().ToString();
             var person = new PersonEntity();
 
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
@@ -218,7 +207,7 @@ namespace Azure.EntityServices.Table.Tests
             var localOffsetDate = DateTimeOffset.Now;
             var utcOffsetDate = DateTimeOffset.UtcNow;
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
             adapter.Properties.Add("LocalCreated", localDate.ToString("O", CultureInfo.InvariantCulture));
             adapter.Properties.Add("LocalUpdated", utcDate.ToString("O", CultureInfo.InvariantCulture));
             adapter.Properties.Add("Created", localOffsetDate.ToString("O", CultureInfo.InvariantCulture));
@@ -233,9 +222,8 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
-        public async Task Should_Bind_Nullable_Types()
+        public async Task Should_Adapt_Entity_Nullable_Types()
         {
-            var partitionName = Guid.NewGuid().ToString();
             var person = Fakers.CreateFakePerson().Generate();
 
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
@@ -247,12 +235,12 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.Situation = null;
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, partitionName, person.PersonId.ToString());
+            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
 
             await client.UpsertEntityAsync(adapter.WriteToEntityModel());
             var created = await client.GetEntityAsync<TableEntity>(adapter.PartitionKey, adapter.RowKey);
 
-            var createdEntity = new TableEntityAdapter<PersonEntity>(created).ReadFromEntityModel();
+            var createdEntity = new TableEntityAdapter<PersonEntity>(created, _entityKeyBuilder).ReadFromEntityModel();
 
             createdEntity.Altitude.Should().Be(person.Altitude);
             createdEntity?.Distance.Should().Be(person.Distance);
@@ -273,6 +261,6 @@ namespace Azure.EntityServices.Table.Tests
             return await client.GetEntityAsync<TableEntity>(tableEntity.PartitionKey, tableEntity.RowKey);
         }
 
-        private static string NewTableName() => $"{nameof(EntityBinderTests)}{Guid.NewGuid():N}".ToLowerInvariant();
+        private static string NewTableName() => $"{nameof(TableEntityAdapterTests)}{Guid.NewGuid():N}".ToLowerInvariant();
     }
 }
