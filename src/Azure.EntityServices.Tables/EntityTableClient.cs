@@ -66,13 +66,13 @@ namespace Azure.EntityServices.Tables
 
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
-        private EntityTagBuilder<T> _entityTagBuilder;
+        private EntityKeyBuilder<T> _entityKeyBuilder;
 
         private IEntityAdapter<T, TableEntity> CreatePrimaryEntityBinderFromEntity(T entity)
-          => new TableEntityAdapter<T>(entity, ResolvePartitionKey(entity), ResolvePrimaryKey(entity), _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
+          => new TableEntityAdapter<T>(entity, _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
 
         private IEntityAdapter<T, TableEntity> CreateSecondaryEntityBinderFromTableEntity(TableEntity tableEntity)
-            => new TableEntityAdapter<T>(tableEntity, _config.IgnoredProps, _entityTagBuilder, _options.SerializerOptions);
+            => new TableEntityAdapter<T>(tableEntity, _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
 
         private TableBatchClient CreateTableBatchClient()
         {
@@ -219,16 +219,15 @@ namespace Azure.EntityServices.Tables
             }
 
             _config = config;
-            _config.PartitionKeyResolver ??= (e) => $"_{ResolvePrimaryKey(e).ToShortHash()}";
+            _config.RowKeyResolver ??= (e) => _config.RowKeyProp.GetValue(e);
+            _config.PartitionKeyResolver ??= (e) => $"_{_config.RowKeyResolver(e).ToInvariantString().ToShortHash()}";
+            _entityKeyBuilder = new EntityKeyBuilder<T>(_config.PartitionKeyResolver, _config.RowKeyResolver);
+
             _client ??= _tableServiceClient.GetTableClient(options.TableName);
             _observerInstances = _config.Observers.Select(o => o.Value.Invoke()).ToList();
 
-            _entityTagBuilder = new EntityTagBuilder<T>(ResolvePrimaryKey);
             //PrimaryKey required
-            if (_config.RowKeyResolver == null && _config.RowKeyProp == null)
-            {
-                throw new InvalidOperationException($"One of PrimaryKeyProp or PrimaryKeyResolver was required and must be set");
-            }
+            _ = _config.RowKeyResolver ?? throw new InvalidOperationException($"at least one of RowKeyResolver or PrimaryKeyResolver was required and must be set");
 
             var basePolicy = Policy.Handle<RequestFailedException>(ex => HandleStorageException(options.TableName, _tableServiceClient, options.CreateTableIfNotExists, ex));
 
@@ -245,8 +244,8 @@ namespace Azure.EntityServices.Tables
             _indextedTags =
               _config.Tags.Keys
               .Union(_config.ComputedTags)
-              .Select(t => _entityTagBuilder.CreateTagName(t))
-              .Where(t => t.EndsWith(_entityTagBuilder.IndexedTagSuffix));
+              .Select(t => _entityKeyBuilder.CreateTagName(t))
+              .Where(t => t.EndsWith(_entityKeyBuilder.IndexedTagSuffix));
 
             _pipelinePreProcessor = async transaction =>
             {
@@ -299,7 +298,7 @@ namespace Azure.EntityServices.Tables
 
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
         {
-            var rowKey = ResolvePrimaryKey(id);
+            var rowKey = _entityKeyBuilder.ResolvePrimaryKey(id);
             try
             {
                 var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityIfExistsAsync<TableEntity>(partition.EscapeDisallowedKeyValue(), rowKey, select: new string[] { }, cancellationToken));
@@ -443,7 +442,7 @@ namespace Azure.EntityServices.Tables
 
         public async Task<IDictionary<string, object>> GetEntityMetadatasAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default)
         {
-            var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => _entityTagBuilder.CreateTagName(k));
+            var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => _entityKeyBuilder.CreateTagName(k));
 
             try
             {
@@ -465,18 +464,6 @@ namespace Azure.EntityServices.Tables
             {
                 throw new EntityTableClientException($"An error occured during the request, partition:{partitionKey} rowkey:{rowKey}", ex);
             }
-        }
-
-        public string ResolvePartitionKey(T entity) => TableQueryHelper.ToPartitionKey(_config.PartitionKeyResolver(entity));
-
-        public string ResolvePrimaryKey(T entity)
-        {
-            return TableQueryHelper.ToPrimaryRowKey(_config.RowKeyResolver?.Invoke(entity) ?? _config.RowKeyProp.GetValue(entity));
-        }
-
-        public string ResolvePrimaryKey(object value)
-        {
-            return TableQueryHelper.ToPrimaryRowKey(value);
         }
 
         public void AddObserver(string name, Func<IEntityObserver<T>> observerFactory)
@@ -506,8 +493,8 @@ namespace Azure.EntityServices.Tables
 
         public Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
         {
-            var partitionKey = ResolvePartitionKey(entity);
-            var rowKey = ResolvePrimaryKey(entity);
+            var partitionKey = _entityKeyBuilder.ResolvePartitionKey(entity);
+            var rowKey = _entityKeyBuilder.ResolvePrimaryKey(entity);
 
             return DeleteByIdAsync(partitionKey, rowKey, cancellationToken);
         }

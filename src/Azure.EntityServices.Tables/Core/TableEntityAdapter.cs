@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Tables.Core
     /// Entity adapter used to map pure entity and his metadata to Azure tableEntity
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public sealed class TableEntityAdapter<T> : IEntityAdapter<T,TableEntity> where T : class, new()
+    public sealed class TableEntityAdapter<T> : IEntityAdapter<T, TableEntity> where T : class, new()
     {
         public string PartitionKey => TableEntity.PartitionKey;
         public string RowKey => TableEntity.RowKey;
@@ -31,56 +31,39 @@ namespace Azure.EntityServices.Tables.Core
             BindingFlags.SetProperty);
 
         private readonly IEnumerable<PropertyInfo> _filteredEntityProperties = EntityProperties.ToList();
-        private readonly EntityTagBuilder<T> _entityTagBuilder;
+        private readonly EntityKeyBuilder<T> _entityKeyBuilder;
         private readonly IEnumerable<string> _propsToIgnore = Enumerable.Empty<string>();
 
         private List<PropertyInfo> FilterEntityProperties() => EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
 
-        public TableEntityAdapter(T entity, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(TableEntity tableEntity, EntityKeyBuilder<T> entityKeyBuilder, IEnumerable<string> propsToIgnore = null, JsonSerializerOptions serializerOptions = null)
         {
-            Entity = entity;
-            TableEntity = new TableEntity();
-            _serializerOptions = serializerOptions;
-        }
+            _ = entityKeyBuilder ?? throw new ArgumentNullException(nameof(entityKeyBuilder));
 
-        public TableEntityAdapter(T entity, IEnumerable<string> propsToIgnore, JsonSerializerOptions serializerOptions = null)
-        {
-            Entity = entity;
-            TableEntity = new TableEntity();
-            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
-            _filteredEntityProperties = FilterEntityProperties();
-            _propsToIgnore = propsToIgnore.ToList();
-            _serializerOptions = serializerOptions;
-        }
-
-        public TableEntityAdapter(TableEntity tableEntity, JsonSerializerOptions serializerOptions = null)
-        {
-            TableEntity = tableEntity;
-            _serializerOptions = serializerOptions;
-        }
-
-        public TableEntityAdapter(TableEntity tableEntity, IEnumerable<string> propsToIgnore, EntityTagBuilder<T> entityTagBuilder, JsonSerializerOptions serializerOptions = null)
-        {
             TableEntity = tableEntity;
             _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
             _filteredEntityProperties = FilterEntityProperties();
-            _entityTagBuilder = entityTagBuilder;
+            _entityKeyBuilder = entityKeyBuilder;
             _serializerOptions = serializerOptions;
         }
 
-        public TableEntityAdapter(T entity, string partitionKey, string rowKey, IEnumerable<string> propsToIgnore = null, EntityTagBuilder<T> entityTagBuilder = null, JsonSerializerOptions serializerOptions = null)
+        public TableEntityAdapter(T entity, EntityKeyBuilder<T> entityKeyBuilder, IEnumerable<string> propsToIgnore = null, JsonSerializerOptions serializerOptions = null)
         {
+            _ = entityKeyBuilder ?? throw new ArgumentNullException(nameof(entityKeyBuilder));
+
             Entity = entity;
+            var partitionKey = entityKeyBuilder.ResolvePartitionKey(entity);
+            var rowKey = entityKeyBuilder.ResolvePrimaryKey(entity);
+
             TableEntity = new TableEntity(partitionKey, rowKey);
             _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
             _filteredEntityProperties = FilterEntityProperties();
-            _entityTagBuilder = entityTagBuilder;
+            _entityKeyBuilder = entityKeyBuilder;
             _serializerOptions = serializerOptions;
         }
 
         public TableEntity WriteToEntityModel()
         {
-           
             if (Entity is TableEntity tbe)
             {
                 foreach (var property in tbe.Where(e => !_propsToIgnore.Contains(e.Key)))
@@ -164,11 +147,11 @@ namespace Azure.EntityServices.Tables.Core
         {
             foreach (var propInfo in tags)
             {
-                Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(propInfo.Key), _entityTagBuilder.CreateTagRowKey(propInfo.Value, Entity));
+                Metadata.AddOrUpdate(_entityKeyBuilder.CreateTagName(propInfo.Key), _entityKeyBuilder.CreateTagRowKey(propInfo.Value, Entity));
             }
             foreach (var tagPrefix in computedTags)
             {
-                Metadata.AddOrUpdate(_entityTagBuilder.CreateTagName(tagPrefix), _entityTagBuilder.CreateTagRowKey(tagPrefix, Metadata[$"{tagPrefix}"], Entity));
+                Metadata.AddOrUpdate(_entityKeyBuilder.CreateTagName(tagPrefix), _entityKeyBuilder.CreateTagRowKey(tagPrefix, Metadata[$"{tagPrefix}"], Entity));
             }
         }
     }
