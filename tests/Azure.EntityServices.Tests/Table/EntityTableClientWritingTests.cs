@@ -635,7 +635,8 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.LocalCreated = null;
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+            .Configure(options => _defaultOptions(options), c =>
             {
                 c
                 .SetPartitionKey(p => p.TenantId)
@@ -648,7 +649,7 @@ namespace Azure.EntityServices.Table.Tests
             var added = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
             added.Should().BeEquivalentTo(person);
 
-            var direct = await entityTable.GetAsync(f => f.WherePartitionKey().Equal("*Tenant123!*4")).FirstAsync();
+            var direct = await entityTable.GetAsync(f => f.WherePartitionKey().Equal("****Tenant123!******4")).FirstAsync();
             direct.Should().BeEquivalentTo(person);
         }
 
@@ -674,7 +675,7 @@ namespace Azure.EntityServices.Table.Tests
             await entityTable.AddOrReplaceAsync(person);
             var added = await entityTable.GetByIdAsync(person.TenantId, person.LastName);
             added.Should().BeEquivalentTo(person);
-            var mainRow = await entityTable.GetAsync(f => f.WhereRowKey().Equal("*Person123!*4")).FirstOrDefaultAsync();
+            var mainRow = await entityTable.GetAsync(f => f.WhereRowKey().Equal("****Person123!******4")).FirstOrDefaultAsync();
             mainRow.Should().BeEquivalentTo(person);
 
             var createdRow = await entityTable.GetAsync(f => f.WhereTag("LastName").Equal(person.LastName)).FirstOrDefaultAsync();
