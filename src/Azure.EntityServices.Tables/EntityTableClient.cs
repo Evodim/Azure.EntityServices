@@ -150,15 +150,10 @@ namespace Azure.EntityServices.Tables
         private async Task UpdateEntity(T entity, EntityOperation operation, CancellationToken cancellationToken = default)
         {
             var client = CreateTableBatchClient();
-
-            var entityAdapter = CreateEntityAdapterFromEntity(entity);
-
+              
             try
-            {
-                entityAdapter.BindDynamicProps(_config.DynamicProps);
-                entityAdapter.BindTags(_config.Tags, _config.ComputedTags);
-
-                var tableEntity = entityAdapter.WriteToEntityModel();
+            { 
+                var tableEntity = _entityAdapter.WriteToEntityModel(entity);
                 switch (operation)
                 {
                     case EntityOperation.Add:
@@ -194,7 +189,7 @@ namespace Azure.EntityServices.Tables
             catch (Exception ex)
             {
                 await NotifyExceptionAsync(ex);
-                throw new EntityTableClientException($"An error occured during the request, partition:{entityAdapter?.PartitionKey} rowkey:{entityAdapter?.RowKey}", ex);
+                throw new EntityTableClientException($"An error occured during the request, partition:{_entityKeyBuilder.ResolvePartitionKey(entity)} rowkey:{_entityKeyBuilder.ResolvePrimaryKey(entity)}", ex);
             }
         }
 
@@ -295,7 +290,13 @@ namespace Azure.EntityServices.Tables
                 return transaction;
             };
 
-            _entityAdapter = new TableEntityAdapter<T>( _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
+            _entityAdapter = new TableEntityAdapter<T>(
+                _entityKeyBuilder,
+                _config.ComputedProps,
+                _config.Tags,
+                _config.ComputedTags,
+                _config.IgnoredProps,
+                _options.SerializerOptions);
             return this;
         }
 
@@ -309,7 +310,7 @@ namespace Azure.EntityServices.Tables
                 {
                     return null;
                 }
-                return CreateEntityAdapterFromTable(response.Value).ReadFromEntityModel();
+                return _entityAdapter.ReadFromEntityModel(response.Value);
             }
             catch (RequestFailedException ex)
             {
@@ -330,7 +331,7 @@ namespace Azure.EntityServices.Tables
         {
             await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
             {
-                yield return page.Values.Select(tableEntity => CreateEntityAdapterFromTable(tableEntity).ReadFromEntityModel());
+                yield return page.Values.Select(tableEntity => _entityAdapter.ReadFromEntityModel(tableEntity));
             }
         }
 
@@ -355,7 +356,7 @@ namespace Azure.EntityServices.Tables
                 var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
 
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(
-                    tableEntity => CreateEntityAdapterFromTable(tableEntity).ReadFromEntityModel()),
+                    tableEntity => _entityAdapter.ReadFromEntityModel(tableEntity)),
                     currentCount,
                     string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
                     pageEnumerator.Current.ContinuationToken);
@@ -420,17 +421,13 @@ namespace Azure.EntityServices.Tables
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var adapter = CreateEntityAdapterFromTable(tableEntity);
-                    var entity = adapter.ReadFromEntityModel();
+                    var entity = _entityAdapter.ReadFromEntityModel(tableEntity); 
 
-                    updateAction.Invoke(entity);
+                    updateAction.Invoke(entity); 
 
-                    adapter.BindDynamicProps(_config.DynamicProps);
-                    adapter.BindTags(_config.Tags, _config.ComputedTags);
+                    batchedClient.InsertOrMerge(_entityAdapter.WriteToEntityModel(entity));
 
-                    batchedClient.InsertOrMerge(adapter.WriteToEntityModel());
-
-                    await batchedClient.SubmitToPipelineAsync(adapter.PartitionKey, cancellationToken);
+                    await batchedClient.SubmitToPipelineAsync(_entityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
                     count++;
                 }
 #if DEBUG
@@ -522,31 +519,26 @@ namespace Azure.EntityServices.Tables
             {
                 if (cancellationToken.IsCancellationRequested) break;
 
-                var entityAdapter = CreateEntityAdapterFromEntity(entity);
-
-                entityAdapter.BindDynamicProps(_config.DynamicProps);
-                entityAdapter.BindTags(_config.Tags, _config.ComputedTags);
-
                 switch (operation)
                 {
                     case EntityOperation.Add:
-                        batchedClient.Insert(entityAdapter.WriteToEntityModel());
+                        batchedClient.Insert(_entityAdapter.WriteToEntityModel(entity));
                         break;
 
                     case EntityOperation.AddOrMerge:
-                        batchedClient.InsertOrMerge(entityAdapter.WriteToEntityModel());
+                        batchedClient.InsertOrMerge(_entityAdapter.WriteToEntityModel(entity));
                         break;
 
                     case EntityOperation.AddOrReplace:
-                        batchedClient.InsertOrReplace(entityAdapter.WriteToEntityModel());
+                        batchedClient.InsertOrReplace(_entityAdapter.WriteToEntityModel(entity));
                         break;
 
                     case EntityOperation.Delete:
-                        batchedClient.Delete(entityAdapter.WriteToEntityModel());
+                        batchedClient.Delete(_entityAdapter.WriteToEntityModel(entity));
                         break;
                 }
 
-                await batchedClient.SubmitToPipelineAsync(entityAdapter.PartitionKey, cancellationToken);
+                await batchedClient.SubmitToPipelineAsync(_entityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
             }
             await batchedClient.CommitTransactionAsync();
             await NotifyCompleteAsync();
