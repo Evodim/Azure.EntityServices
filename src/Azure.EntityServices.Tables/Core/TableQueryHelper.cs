@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Tables.Core
                 return input;
             }
 
-            var exp = new Regex(@"([\/\\#\?\t\n\r\u0000-\u001f\u007f-\u009f]+)", RegexOptions.CultureInvariant);
+            var exp = new Regex(@"([\/\\#\?\t\n\r\u0000-\u001f\u007f-\u009f]{1})", RegexOptions.CultureInvariant);
 
             var matches = exp.Matches(input);
             foreach (var match in matches)
