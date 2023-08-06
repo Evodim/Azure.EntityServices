@@ -16,8 +16,9 @@ namespace Azure.EntityServices.Tests.Table
             var person = new Faker<PersonEntity>().Generate(1).First();
             person.LastName = "\u008fName used as key /\\#?Person123!\n\t\r\0\a\u009f1";
 
-            var encodedKey = TableQueryHelper.ToPartitionKey(person.LastName); 
-        
+            var encodedKey = TableQueryHelper.ToPartitionKey(person.LastName);
+
+            encodedKey.Length.Should().Be(person.LastName.Length);
             encodedKey.Should().Be("*Name used as key ****Person123!******1");
         }
         [TestMethod]
@@ -28,6 +29,7 @@ namespace Azure.EntityServices.Tests.Table
 
             var encodedKey = TableQueryHelper.ToPrimaryRowKey(person.LastName);
 
+            encodedKey.Length.Should().Be(person.LastName.Length);
             encodedKey.Should().Be("*Name used as key ****Person123!******2");
         }
         [TestMethod]
@@ -39,6 +41,7 @@ namespace Azure.EntityServices.Tests.Table
             var encodedKey = TableQueryHelper.ToTagRowKeyPrefix("lastname", person.LastName);
 
             encodedKey.Should().Be("~lastname-*Name used as key ****Person123!******3$");
+            
         }
     }
 }
