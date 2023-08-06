@@ -36,6 +36,13 @@ namespace Azure.EntityServices.Tables.Core
 
         private List<PropertyInfo> FilterEntityProperties() => EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
 
+        public TableEntityAdapter(EntityKeyBuilder<T> entityKeyBuilder, IEnumerable<string> propsToIgnore = null, JsonSerializerOptions serializerOptions = null)
+        {
+            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
+            _filteredEntityProperties = FilterEntityProperties();
+            _entityKeyBuilder = entityKeyBuilder;
+            _serializerOptions = serializerOptions;
+        }
         public TableEntityAdapter(TableEntity tableEntity, EntityKeyBuilder<T> entityKeyBuilder, IEnumerable<string> propsToIgnore = null, JsonSerializerOptions serializerOptions = null)
         {
             _ = entityKeyBuilder ?? throw new ArgumentNullException(nameof(entityKeyBuilder));
@@ -61,7 +68,7 @@ namespace Azure.EntityServices.Tables.Core
             _entityKeyBuilder = entityKeyBuilder;
             _serializerOptions = serializerOptions;
         }
-
+        
         public TableEntity WriteToEntityModel()
         {
             if (Entity is TableEntity tbe)

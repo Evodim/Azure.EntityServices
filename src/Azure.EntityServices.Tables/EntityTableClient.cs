@@ -57,7 +57,7 @@ namespace Azure.EntityServices.Tables
         private TableClient _configuredClient => _client ?? throw new InvalidOperationException("EntityTableClient was not configured");
 
         private readonly TableServiceClient _tableServiceClient;
-
+        private TableEntityAdapter<T> _entityAdapter;
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
         private IEnumerable<string> _indextedTags;
@@ -200,6 +200,7 @@ namespace Azure.EntityServices.Tables
 
         public EntityTableClient()
         {
+          
         }
 
         internal EntityTableClient(TableServiceClient tableService)
@@ -293,6 +294,8 @@ namespace Azure.EntityServices.Tables
                 }
                 return transaction;
             };
+
+            _entityAdapter = new TableEntityAdapter<T>( _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
             return this;
         }
 
