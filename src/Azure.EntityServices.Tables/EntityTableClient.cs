@@ -68,10 +68,10 @@ namespace Azure.EntityServices.Tables
 
         private EntityKeyBuilder<T> _entityKeyBuilder;
 
-        private IEntityAdapter<T, TableEntity> CreatePrimaryEntityBinderFromEntity(T entity)
+        private IEntityAdapter<T, TableEntity> CreateEntityAdapterFromEntity(T entity)
           => new TableEntityAdapter<T>(entity, _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
 
-        private IEntityAdapter<T, TableEntity> CreateSecondaryEntityBinderFromTableEntity(TableEntity tableEntity)
+        private IEntityAdapter<T, TableEntity> CreateEntityAdapterFromTable(TableEntity tableEntity)
             => new TableEntityAdapter<T>(tableEntity, _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
 
         private TableBatchClient CreateTableBatchClient()
@@ -151,14 +151,14 @@ namespace Azure.EntityServices.Tables
         {
             var client = CreateTableBatchClient();
 
-            var entityBinder = CreatePrimaryEntityBinderFromEntity(entity);
+            var entityAdapter = CreateEntityAdapterFromEntity(entity);
 
             try
             {
-                entityBinder.BindDynamicProps(_config.DynamicProps);
-                entityBinder.BindTags(_config.Tags, _config.ComputedTags);
+                entityAdapter.BindDynamicProps(_config.DynamicProps);
+                entityAdapter.BindTags(_config.Tags, _config.ComputedTags);
 
-                var tableEntity = entityBinder.WriteToEntityModel();
+                var tableEntity = entityAdapter.WriteToEntityModel();
                 switch (operation)
                 {
                     case EntityOperation.Add:
@@ -194,7 +194,7 @@ namespace Azure.EntityServices.Tables
             catch (Exception ex)
             {
                 await NotifyExceptionAsync(ex);
-                throw new EntityTableClientException($"An error occured during the request, partition:{entityBinder?.PartitionKey} rowkey:{entityBinder?.RowKey}", ex);
+                throw new EntityTableClientException($"An error occured during the request, partition:{entityAdapter?.PartitionKey} rowkey:{entityAdapter?.RowKey}", ex);
             }
         }
 
@@ -238,7 +238,7 @@ namespace Azure.EntityServices.Tables
             _config = config;
 
             _pipelineObserver = transactions => NotifyChangeAsync(transactions.Select(
-                transaction => new EntityContext<T>(CreateSecondaryEntityBinderFromTableEntity(transaction.Entity as TableEntity),
+                transaction => new EntityContext<T>(CreateEntityAdapterFromTable(transaction.Entity as TableEntity),
                 transaction.ActionType.MapToEntityOperation())));
 
             _indextedTags =
@@ -306,7 +306,7 @@ namespace Azure.EntityServices.Tables
                 {
                     return null;
                 }
-                return CreateSecondaryEntityBinderFromTableEntity(response.Value).ReadFromEntityModel();
+                return CreateEntityAdapterFromTable(response.Value).ReadFromEntityModel();
             }
             catch (RequestFailedException ex)
             {
@@ -327,7 +327,7 @@ namespace Azure.EntityServices.Tables
         {
             await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
             {
-                yield return page.Values.Select(tableEntity => CreateSecondaryEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel());
+                yield return page.Values.Select(tableEntity => CreateEntityAdapterFromTable(tableEntity).ReadFromEntityModel());
             }
         }
 
@@ -352,7 +352,7 @@ namespace Azure.EntityServices.Tables
                 var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
 
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(
-                    tableEntity => CreateSecondaryEntityBinderFromTableEntity(tableEntity).ReadFromEntityModel()),
+                    tableEntity => CreateEntityAdapterFromTable(tableEntity).ReadFromEntityModel()),
                     currentCount,
                     string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
                     pageEnumerator.Current.ContinuationToken);
@@ -417,7 +417,7 @@ namespace Azure.EntityServices.Tables
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var adapter = CreateSecondaryEntityBinderFromTableEntity(tableEntity);
+                    var adapter = CreateEntityAdapterFromTable(tableEntity);
                     var entity = adapter.ReadFromEntityModel();
 
                     updateAction.Invoke(entity);
@@ -447,9 +447,9 @@ namespace Azure.EntityServices.Tables
             try
             {
                 var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
-                var entityBinder = CreateSecondaryEntityBinderFromTableEntity(response.Value);
-                entityBinder.ReadFromEntityModel();
-                return entityBinder?.Metadata ?? new Dictionary<string, object>();
+                var entityAdapter = CreateEntityAdapterFromTable(response.Value);
+                entityAdapter.ReadFromEntityModel();
+                return entityAdapter?.Metadata ?? new Dictionary<string, object>();
             }
             catch (RequestFailedException ex)
             {
@@ -519,31 +519,31 @@ namespace Azure.EntityServices.Tables
             {
                 if (cancellationToken.IsCancellationRequested) break;
 
-                var entityBinder = CreatePrimaryEntityBinderFromEntity(entity);
+                var entityAdapter = CreateEntityAdapterFromEntity(entity);
 
-                entityBinder.BindDynamicProps(_config.DynamicProps);
-                entityBinder.BindTags(_config.Tags, _config.ComputedTags);
+                entityAdapter.BindDynamicProps(_config.DynamicProps);
+                entityAdapter.BindTags(_config.Tags, _config.ComputedTags);
 
                 switch (operation)
                 {
                     case EntityOperation.Add:
-                        batchedClient.Insert(entityBinder.WriteToEntityModel());
+                        batchedClient.Insert(entityAdapter.WriteToEntityModel());
                         break;
 
                     case EntityOperation.AddOrMerge:
-                        batchedClient.InsertOrMerge(entityBinder.WriteToEntityModel());
+                        batchedClient.InsertOrMerge(entityAdapter.WriteToEntityModel());
                         break;
 
                     case EntityOperation.AddOrReplace:
-                        batchedClient.InsertOrReplace(entityBinder.WriteToEntityModel());
+                        batchedClient.InsertOrReplace(entityAdapter.WriteToEntityModel());
                         break;
 
                     case EntityOperation.Delete:
-                        batchedClient.Delete(entityBinder.WriteToEntityModel());
+                        batchedClient.Delete(entityAdapter.WriteToEntityModel());
                         break;
                 }
 
-                await batchedClient.SubmitToPipelineAsync(entityBinder.PartitionKey, cancellationToken);
+                await batchedClient.SubmitToPipelineAsync(entityAdapter.PartitionKey, cancellationToken);
             }
             await batchedClient.CommitTransactionAsync();
             await NotifyCompleteAsync();
