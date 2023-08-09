@@ -54,8 +54,8 @@ namespace TableClient.PerformanceSample
             foreach (var context in contextBatch)
             {
                 //ignore indexed tags changes
-                if (context.EntityAdapter.RowKey.StartsWith("~") ||
-                    context.EntityAdapter.PartitionKey.StartsWith("~"))
+                if (context.RowKey.StartsWith("~") ||
+                    context.PartitionKey.StartsWith("~"))
                 {
                     continue;
                 }

@@ -2,9 +2,11 @@
 
 namespace Azure.EntityServices.Tables
 {
-    public interface IEntityContext<T>
+    public interface IEntityContext<T> 
     {
-        IEntityAdapter<T> EntityAdapter { get; }
+        string PartitionKey { get; }
+        string RowKey { get; }
+        IEntityDataReader<T> EntityDataReader { get; }
         EntityOperation EntityOperation { get; }
     }
 }

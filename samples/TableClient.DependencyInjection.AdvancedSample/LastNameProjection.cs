@@ -77,7 +77,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
         {
             foreach (var context in contextBatch)
             {
-                var entity = context.EntityAdapter.ReadFromEntityModel();
+                var entity = context.EntityDataReader.Read();
 
                 switch (context.EntityOperation)
                 {

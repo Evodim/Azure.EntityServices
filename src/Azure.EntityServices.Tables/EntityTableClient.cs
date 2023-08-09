@@ -6,7 +6,9 @@ using Polly;
 using Polly.Retry;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,13 +69,7 @@ namespace Azure.EntityServices.Tables
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
         private EntityKeyBuilder<T> _entityKeyBuilder;
-
-        private IEntityAdapter<T, TableEntity> CreateEntityAdapterFromEntity(T entity)
-          => new TableEntityAdapter<T>(entity, _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
-
-        private IEntityAdapter<T, TableEntity> CreateEntityAdapterFromTable(TableEntity tableEntity)
-            => new TableEntityAdapter<T>(tableEntity, _entityKeyBuilder, _config.IgnoredProps, _options.SerializerOptions);
-
+         
         private TableBatchClient CreateTableBatchClient()
         {
             return new TableBatchClient(
@@ -153,7 +149,7 @@ namespace Azure.EntityServices.Tables
               
             try
             { 
-                var tableEntity = _entityAdapter.WriteToEntityModel(entity);
+                var tableEntity = _entityAdapter.ToEntityModel(entity);
                 switch (operation)
                 {
                     case EntityOperation.Add:
@@ -234,7 +230,10 @@ namespace Azure.EntityServices.Tables
             _config = config;
 
             _pipelineObserver = transactions => NotifyChangeAsync(transactions.Select(
-                transaction => new EntityContext<T>(CreateEntityAdapterFromTable(transaction.Entity as TableEntity),
+                transaction => new EntityContext<T>(
+                    transaction.Entity.PartitionKey,
+                    transaction.Entity.RowKey,
+                    new TableEntityDataReader<T>(transaction.Entity as TableEntity, _entityAdapter),
                 transaction.ActionType.MapToEntityOperation())));
 
             _indextedTags =
@@ -292,10 +291,10 @@ namespace Azure.EntityServices.Tables
 
             _entityAdapter = new TableEntityAdapter<T>(
                 _entityKeyBuilder,
-                _config.ComputedProps,
-                _config.Tags,
-                _config.ComputedTags,
-                _config.IgnoredProps,
+                new ReadOnlyDictionary<string, Func<T, object>>(_config.ComputedProps),
+                new ReadOnlyDictionary<string,PropertyInfo>(_config.Tags),
+                new ReadOnlyCollection<string>(_config.ComputedTags),
+                new ReadOnlyCollection<string>(_config.IgnoredProps),
                 _options.SerializerOptions);
             return this;
         }
@@ -310,7 +309,7 @@ namespace Azure.EntityServices.Tables
                 {
                     return null;
                 }
-                return _entityAdapter.ReadFromEntityModel(response.Value);
+                return _entityAdapter.FromEntityModel(response.Value);
             }
             catch (RequestFailedException ex)
             {
@@ -331,7 +330,7 @@ namespace Azure.EntityServices.Tables
         {
             await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
             {
-                yield return page.Values.Select(tableEntity => _entityAdapter.ReadFromEntityModel(tableEntity));
+                yield return page.Values.Select(tableEntity => _entityAdapter.FromEntityModel(tableEntity));
             }
         }
 
@@ -356,7 +355,7 @@ namespace Azure.EntityServices.Tables
                 var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
 
                 return new EntityPage<T>(pageEnumerator.Current.Values.Select(
-                    tableEntity => _entityAdapter.ReadFromEntityModel(tableEntity)),
+                    tableEntity => _entityAdapter.FromEntityModel(tableEntity)),
                     currentCount,
                     string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
                     pageEnumerator.Current.ContinuationToken);
@@ -421,11 +420,11 @@ namespace Azure.EntityServices.Tables
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var entity = _entityAdapter.ReadFromEntityModel(tableEntity); 
+                    var entity = _entityAdapter.FromEntityModel(tableEntity); 
 
                     updateAction.Invoke(entity); 
 
-                    batchedClient.InsertOrMerge(_entityAdapter.WriteToEntityModel(entity));
+                    batchedClient.InsertOrMerge(_entityAdapter.ToEntityModel(entity));
 
                     await batchedClient.SubmitToPipelineAsync(_entityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
                     count++;
@@ -447,9 +446,8 @@ namespace Azure.EntityServices.Tables
             try
             {
                 var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
-                var entityAdapter = CreateEntityAdapterFromTable(response.Value);
-                entityAdapter.ReadFromEntityModel();
-                return entityAdapter?.Metadata ?? new Dictionary<string, object>();
+                
+                return _entityAdapter.GetProperties(response.Value);
             }
             catch (RequestFailedException ex)
             {
@@ -522,19 +520,19 @@ namespace Azure.EntityServices.Tables
                 switch (operation)
                 {
                     case EntityOperation.Add:
-                        batchedClient.Insert(_entityAdapter.WriteToEntityModel(entity));
+                        batchedClient.Insert(_entityAdapter.ToEntityModel(entity));
                         break;
 
                     case EntityOperation.AddOrMerge:
-                        batchedClient.InsertOrMerge(_entityAdapter.WriteToEntityModel(entity));
+                        batchedClient.InsertOrMerge(_entityAdapter.ToEntityModel(entity));
                         break;
 
                     case EntityOperation.AddOrReplace:
-                        batchedClient.InsertOrReplace(_entityAdapter.WriteToEntityModel(entity));
+                        batchedClient.InsertOrReplace(_entityAdapter.ToEntityModel(entity));
                         break;
 
                     case EntityOperation.Delete:
-                        batchedClient.Delete(_entityAdapter.WriteToEntityModel(entity));
+                        batchedClient.Delete(_entityAdapter.ToEntityModel(entity));
                         break;
                 }
 

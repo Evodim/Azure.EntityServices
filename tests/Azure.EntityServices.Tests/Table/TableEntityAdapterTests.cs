@@ -1,7 +1,6 @@
 ﻿using Azure.Data.Tables;
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Core;
-using Azure.EntityServices.Tables.Extensions;
 using Common.Samples;
 using Common.Samples.Models;
 using Common.Samples.Tools.Fakes;
@@ -17,13 +16,17 @@ namespace Azure.EntityServices.Table.Tests
     [TestClass]
     public class TableEntityAdapterTests
     {
+        public TableEntityAdapterTests()
+        {
+        }
+
         //define an entity model with tenanid as partition key and personId as primary key
         private readonly EntityKeyBuilder<PersonEntity> _entityKeyBuilder
-            = new(e => e.TenantId, e => e.PersonId);
+           = new(e => e.TenantId, e => e.PersonId);
 
         [TestMethod]
         public async Task Should_Adapt_Entity_Extented_Storage_Types()
-        { 
+        {
             var person = Fakers.CreateFakePerson().Generate();
             //decimal
             person.Altitude = 1.6666666666666666666666666667M;
@@ -32,20 +35,16 @@ namespace Azure.EntityServices.Table.Tests
             //enum
             person.Situation = Situation.Divorced;
 
-            var tableEntity = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder);
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             await client.CreateIfNotExistsAsync();
 
-            var result = await UpsertAndGetEntity(client, tableEntity.WriteToEntityModel());
+            var result = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
 
-            var adapterResult = new TableEntityAdapter<PersonEntity>(result, _entityKeyBuilder);
+            var entity = adapter.FromEntityModel(result);
 
-            var entity = adapterResult.ReadFromEntityModel();
-
-            entity.Altitude.Should().Be(person.Altitude);
-            entity.BankAmount.Should().Be(person.BankAmount);
-            entity.Situation.Should().Be(person.Situation);
+            entity.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -54,14 +53,14 @@ namespace Azure.EntityServices.Table.Tests
             var person = Fakers.CreateFakePerson().Generate();
             person.Enabled = true;
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder);
 
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
             await client.CreateIfNotExistsAsync();
 
-            await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            adapter = new TableEntityAdapter<PersonEntity>(new PersonEntity()
+            await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
+            var personToMerge = new PersonEntity()
             {
                 TenantId = person.TenantId,
                 PersonId = person.PersonId,
@@ -70,25 +69,13 @@ namespace Azure.EntityServices.Table.Tests
                 LocalUpdated = default,
                 Updated = default,
                 Enabled = false
-            }, _entityKeyBuilder);
+            };
 
-            var merged = await MergeThenRetrieveAsync(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(merged, _entityKeyBuilder);
-            var entity = adapterResult.ReadFromEntityModel();
+            var merged = await MergeThenRetrieveAsync(client, adapter.ToEntityModel(person));
+            var entity = adapter.FromEntityModel(merged);
 
             //Only Nullable value and reference types are preserved in merge operation
-            entity.LastName.Should().Be(person.LastName);
-            entity.Latitude.Should().Be(default);
-            entity.Longitude.Should().Be(default);
-            entity.Altitude.Should().Be(person.Altitude);
-            entity.Updated.Should().Be(default);
-            entity.Created.Should().Be(person.Created);
-            entity.LocalCreated.Should().Be(person.LocalCreated);
-            entity.LocalUpdated.Should().Be(default);
-            entity.Enabled.Should().Be(false);
-            entity.BankAmount.Should().Be(person.BankAmount);
-            entity.PersonId.Should().Be(person.PersonId.ToString());
-            entity.FirstName.Should().Be("John Do");
+            entity.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -99,15 +86,13 @@ namespace Azure.EntityServices.Table.Tests
             await client.CreateIfNotExistsAsync();
 
             var person = Fakers.CreateFakePerson().Generate();
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder);
 
-            var replaced = await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(replaced, _entityKeyBuilder);
+            var replaced = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
 
-            adapterResult.ReadFromEntityModel();
+            var entity = adapter.FromEntityModel(replaced);
 
-            adapterResult.RowKey.Should().Be(person.PersonId.ToString());
-            adapterResult.Entity.Should().BeEquivalentTo(person);
+            entity.Should().BeEquivalentTo(person);
         }
 
         [TestMethod]
@@ -119,21 +104,34 @@ namespace Azure.EntityServices.Table.Tests
 
             var person = Fakers.CreateFakePerson().Generate();
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapter.Metadata.Add("_HasChildren", true);
-            adapter.Metadata.Add("_Deleted", false);
+            var metadata = new Dictionary<string, Func<PersonEntity, object>>()
+            {
+                ["_HasChildren"] = e => true,
+                ["_Deleted"] = e => false
+            };
+            var metadataWithMissingProp = new Dictionary<string, Func<PersonEntity, object>>()
+            {
+                ["_HasChildren"] = e => false
+            };
 
-            await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapter.Metadata.Add("_HasChildren", false);
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, computedProps: metadata);
+            var adapterWithMissingProp = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, computedProps: metadataWithMissingProp);
 
-            var replaced = await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(replaced, _entityKeyBuilder);
-            adapterResult.ReadFromEntityModel();
+            var tableEntity = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
+            var entity = adapter.FromEntityModel(tableEntity);
 
-            adapterResult.Entity.Should().BeEquivalentTo(person);
-            adapterResult.Metadata.Should().Contain("_HasChildren", false);
-            adapterResult.Metadata.Should().NotContainKey("_Deleted", because: "InsertOrReplace replace all entity props and it's metadatas");
+            var replaced = await UpsertAndGetEntity(client, adapterWithMissingProp.ToEntityModel(person));
+
+            var replaceEntity = adapter.FromEntityModel(replaced);
+
+            replaceEntity.Should().BeEquivalentTo(person);
+
+            var props = adapter.GetProperties(replaced);
+
+            props.Keys.Should().Contain("_HasChildren");
+            props.Keys.Should().NotContain("_Deleted");
+
+            props["_HasChildren"].Should().Be(false);
         }
 
         [TestMethod]
@@ -145,53 +143,69 @@ namespace Azure.EntityServices.Table.Tests
 
             var person = Fakers.CreateFakePerson().Generate();
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapter.Metadata.Add("_HasChildren", true);
-            adapter.Metadata.Add("_Deleted", true);
-            adapter.WriteToEntityModel();
+            var metadata = new Dictionary<string, Func<PersonEntity, object>>()
+            {
+                ["_HasChildren"] = e => true,
+                ["_Deleted"] = e => false
+            };
+            var metadataWithMissingProp = new Dictionary<string, Func<PersonEntity, object>>()
+            {
+                ["_HasChildren"] = e => false,
+                ["_AnotherProp"] = e => 0.14545
+            };
 
-            await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, computedProps: metadata);
+            var adapterWithMissingProp = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, computedProps: metadataWithMissingProp);
 
-            adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapter.Metadata.Add("_HasChildren", false);
+            await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
 
-            var merged = await MergeThenRetrieveAsync(client, adapter.WriteToEntityModel());
-            var adapterResult = new TableEntityAdapter<PersonEntity>(merged, _entityKeyBuilder);
+            var merged = await MergeThenRetrieveAsync(client, adapterWithMissingProp.ToEntityModel(person));
 
-            adapterResult.ReadFromEntityModel();
+            var mergedEntity = adapter.FromEntityModel(merged);
 
-            adapterResult.Entity.Should().BeEquivalentTo(person);
-            adapterResult.Metadata.Should().Contain("_HasChildren", false);
-            adapterResult.Metadata.Should().ContainKey("_Deleted");
-            adapterResult.Metadata.Should().Contain("_Deleted", true);
+            mergedEntity.Should().BeEquivalentTo(person);
+
+            var props = adapter.GetProperties(merged);
+
+            props.Keys.Should().Contain("_HasChildren");
+            props.Keys.Should().Contain("_Deleted");
+            props.Keys.Should().Contain("_AnotherProp");
+
+            props["_HasChildren"].Should().Be(false);
+            props["_Deleted"].Should().Be(false);
+            props["_AnotherProp"].Should().Be(0.14545);
         }
 
         [TestMethod]
-        public async Task Should_Adapt_Entity_DynamicProps()
+        public async Task Should_Adapt_Entity_ComputedProps()
         {
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
-            var dynamicProps = new Dictionary<string, Func<PersonEntity, object>>() { ["_distance_less_than_500m"] = (e) => e.Distance < 500 };
+            var computedProps = new Dictionary<string, Func<PersonEntity, object>>() { ["_distance_less_than_500m"] = (e) => e.Distance < 500 };
+
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, computedProps: computedProps);
+
             await client.CreateIfNotExistsAsync();
 
             var person = Fakers.CreateFakePerson().Generate();
 
             person.Distance = 250;
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapter.BindDynamicProps(dynamicProps);
 
-            var added = await UpsertAndGetEntity(client, adapter.WriteToEntityModel());
-            added.Should().ContainKey("_distance_less_than_500m");
-            (added["_distance_less_than_500m"] as bool?)?.Should().BeTrue();
+            var added = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
+
+            var props = adapter.GetProperties(added);
+
+            props.Should().ContainKey("_distance_less_than_500m");
+            (props["_distance_less_than_500m"] as bool?)?.Should().BeTrue();
 
             person.Distance = 501;
-            var adapterToUpdate = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapterToUpdate.BindDynamicProps(dynamicProps);
 
-            var replaced = await UpsertAndGetEntity(client, adapterToUpdate.WriteToEntityModel());
+            var replaced = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
 
-            replaced.Should().ContainKey("_distance_less_than_500m");
-            (replaced["_distance_less_than_500m"] as bool?)?.Should().BeFalse();
+            var replacedProps = adapter.GetProperties(replaced);
+
+            replacedProps.Should().ContainKey("_distance_less_than_500m");
+            (replacedProps["_distance_less_than_500m"] as bool?)?.Should().BeFalse();
         }
 
         [TestMethod]
@@ -207,13 +221,17 @@ namespace Azure.EntityServices.Table.Tests
             var localOffsetDate = DateTimeOffset.Now;
             var utcOffsetDate = DateTimeOffset.UtcNow;
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
-            adapter.Properties.Add("LocalCreated", localDate.ToString("O", CultureInfo.InvariantCulture));
-            adapter.Properties.Add("LocalUpdated", utcDate.ToString("O", CultureInfo.InvariantCulture));
-            adapter.Properties.Add("Created", localOffsetDate.ToString("O", CultureInfo.InvariantCulture));
-            adapter.Properties.Add("Updated", utcOffsetDate.ToString("O", CultureInfo.InvariantCulture));
-            adapter.WriteToEntityModel();
-            var result = adapter.ReadFromEntityModel();
+            var metadata = new Dictionary<string, Func<PersonEntity, object>>()
+            {
+                ["LocalCreated"] = e => localDate.ToString("O", CultureInfo.InvariantCulture),
+                ["LocalUpdated"] = e => utcDate.ToString("O", CultureInfo.InvariantCulture),
+                ["Created"] = e => localOffsetDate.ToString("O", CultureInfo.InvariantCulture),
+                ["Updated"] = e => utcOffsetDate.ToString("O", CultureInfo.InvariantCulture),
+            };
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, computedProps: metadata);
+
+            var added = adapter.ToEntityModel(person);
+            var result = adapter.FromEntityModel(added);
 
             result.LocalCreated.Should().Be(localDate.ToUniversalTime(), because: "Only UTC date could be stored properly without local offset mismatch");
             result.LocalUpdated.Should().Be(utcDate);
@@ -235,15 +253,13 @@ namespace Azure.EntityServices.Table.Tests
             person.Created = null;
             person.Situation = null;
 
-            var adapter = new TableEntityAdapter<PersonEntity>(person, _entityKeyBuilder);
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder);
 
-            await client.UpsertEntityAsync(adapter.WriteToEntityModel());
-            var created = await client.GetEntityAsync<TableEntity>(adapter.PartitionKey, adapter.RowKey);
+            var added = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
 
-            var createdEntity = new TableEntityAdapter<PersonEntity>(created, _entityKeyBuilder).ReadFromEntityModel();
+            var addedEntity = adapter.FromEntityModel(added);
 
-            createdEntity.Altitude.Should().Be(person.Altitude);
-            createdEntity?.Distance.Should().Be(person.Distance);
+            addedEntity.Should().BeEquivalentTo(person);
         }
 
         private static async Task<TableEntity> MergeThenRetrieveAsync<T>(Data.Tables.TableClient client, T tableEntity)

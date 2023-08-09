@@ -1,25 +1,15 @@
-﻿using System;
+﻿using Azure.Data.Tables;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 
 namespace Azure.EntityServices.Tables.Core
-{
-    public interface IEntityAdapter<T>
+{ 
+    public interface IEntityAdapter<T,TEntityModel> 
+    where T : class, new()
     {
-        string PartitionKey { get; }
-        string RowKey { get; }
-        IDictionary<string, object> Properties { get; }
-        IDictionary<string, object> Metadata { get; }
-
-        void BindDynamicProps(IDictionary<string, Func<T, object>> props, bool toDelete = false);
-
-        void BindTags(Dictionary<string, PropertyInfo> tags, IList<string> computedTags);
-
-        T ReadFromEntityModel();
-    }
-
-    public interface IEntityAdapter<T, TEntityModel> : IEntityAdapter<T>
-    {
-        TEntityModel WriteToEntityModel();
+       IDictionary<string, object> GetProperties(TEntityModel entityModel);
+       T FromEntityModel(TEntityModel entityModel);
+       TEntityModel ToEntityModel(T entity);
     }
 }

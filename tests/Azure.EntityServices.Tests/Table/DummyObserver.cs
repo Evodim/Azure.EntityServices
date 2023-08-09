@@ -35,25 +35,25 @@ namespace Azure.EntityServices.Table.Tests
             foreach (var context in contextBatch)
             {
                 //ignore indexed tags changes
-                if (context.EntityAdapter.RowKey.StartsWith("~") ||
-                    context.EntityAdapter.PartitionKey.StartsWith("~"))
+                if (context.RowKey.StartsWith("~") ||
+                    context.PartitionKey.StartsWith("~"))
                 {
                     continue;
                 }
-                var entity = context.EntityAdapter.ReadFromEntityModel();
+                var entity = context.EntityDataReader.Read();
 
                 switch (context.EntityOperation)
 
                 {
                     case EntityOperation.Delete:
-                        Persons.Remove(context.EntityAdapter.PartitionKey + entity.PersonId, out var _);
+                        Persons.Remove(context.PartitionKey + entity.PersonId, out var _);
                         Interlocked.Increment(ref _deleted);
                         break;
 
                     case EntityOperation.Add:
                     case EntityOperation.AddOrMerge:
                     case EntityOperation.AddOrReplace:
-                        Persons.TryAdd(context.EntityAdapter.PartitionKey + entity.PersonId, entity);
+                        Persons.TryAdd(context.PartitionKey + entity.PersonId, entity);
                         Interlocked.Increment(ref _upserted);
                         break;
 

@@ -5,13 +5,21 @@ namespace Azure.EntityServices.Tables
     public class EntityContext<T>  : IEntityContext<T>
     where T : class, new()
     {
-        public EntityContext(IEntityAdapter<T> entityBinder, EntityOperation entityOperation)
-        {
-            EntityAdapter = entityBinder;
-            EntityOperation = entityOperation;
-        }
-        public IEntityAdapter<T> EntityAdapter { get; }
+        public IEntityDataReader<T> EntityDataReader { get; }
 
         public EntityOperation EntityOperation { get; }
+
+        public string PartitionKey { get; }
+
+        public string RowKey { get; }
+         
+        public EntityContext(string partionKey, string rowKey, IEntityDataReader<T> entityDataReader, EntityOperation entityOperation)
+        {
+            PartitionKey = partionKey;
+            RowKey = rowKey;
+            EntityDataReader = entityDataReader;
+            EntityOperation = entityOperation;
+        }
+     
     }
 }

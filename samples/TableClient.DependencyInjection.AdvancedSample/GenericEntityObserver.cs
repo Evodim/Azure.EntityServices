@@ -50,11 +50,11 @@ namespace TableClient.DependencyInjection.AdvancedSample
         {
             foreach (var context in contextBatch)
             { 
-                if (!context.EntityAdapter.RowKey.StartsWith("~"))
+                if (!context.RowKey.StartsWith("~"))
                   {
                     continue;
                    }
-                var entity = context.EntityAdapter.ReadFromEntityModel();
+                var entity = context.EntityDataReader.Read();
                 
                 switch (context.EntityOperation)
                 {
