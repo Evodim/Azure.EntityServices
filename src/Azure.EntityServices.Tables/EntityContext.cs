@@ -2,7 +2,7 @@
 
 namespace Azure.EntityServices.Tables
 {
-    public class EntityContext<T>  : IEntityContext<T>
+    public class EntityContext<T> : IEntityContext<T>
     where T : class, new()
     {
         public IEntityDataReader<T> EntityDataReader { get; }
@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Tables
         public string PartitionKey { get; }
 
         public string RowKey { get; }
-         
+
         public EntityContext(string partionKey, string rowKey, IEntityDataReader<T> entityDataReader, EntityOperation entityOperation)
         {
             PartitionKey = partionKey;
@@ -20,6 +20,5 @@ namespace Azure.EntityServices.Tables
             EntityDataReader = entityDataReader;
             EntityOperation = entityOperation;
         }
-     
     }
 }

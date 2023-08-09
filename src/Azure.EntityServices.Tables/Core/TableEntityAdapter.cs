@@ -2,7 +2,6 @@
 using Azure.EntityServices.Tables.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -16,13 +15,11 @@ namespace Azure.EntityServices.Tables.Core
     public sealed class TableEntityAdapter<T> : IEntityAdapter<T, TableEntity>
     where T : class, new()
     {
-        
         private readonly JsonSerializerOptions _serializerOptions;
         private readonly IReadOnlyDictionary<string, Func<T, object>> _computedProps;
         private readonly IReadOnlyDictionary<string, PropertyInfo> _tags;
         private readonly IEnumerable<string> _computedTags;
 
-        
         public static readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties(
             BindingFlags.Public |
             BindingFlags.Instance |
@@ -44,13 +41,12 @@ namespace Azure.EntityServices.Tables.Core
         {
             _filteredEntityProperties = FilterEntityProperties();
             _entityKeyBuilder = entityKeyBuilder;
-            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();                                    
-            _computedProps = computedProps ?? new Dictionary<string, Func<T,object>>();
+            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
+            _computedProps = computedProps ?? new Dictionary<string, Func<T, object>>();
             _tags = tags ?? new Dictionary<string, PropertyInfo>();
             _computedTags = computedTags ?? Enumerable.Empty<string>();
             _serializerOptions = serializerOptions;
         }
-         
 
         public TableEntity ToEntityModel(T entity)
         {
@@ -84,7 +80,7 @@ namespace Azure.EntityServices.Tables.Core
                     tableEntity.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(entity), _serializerOptions, property));
                 }
             }
-           
+
             foreach (var dataField in metadata)
             {
                 tableEntity.AddOrUpdate(dataField.Key, EntityValueAdapter.WriteValue(dataField.Value, _serializerOptions));
@@ -95,7 +91,7 @@ namespace Azure.EntityServices.Tables.Core
         public T FromEntityModel(TableEntity tableEntity)
         {
             var entity = new T();
-         
+
             if (entity is TableEntity tbe)
             {
                 foreach (var property in tableEntity.Keys)
@@ -132,7 +128,6 @@ namespace Azure.EntityServices.Tables.Core
             }
             return metadata;
         }
-        
 
         private Dictionary<string, object> GenerateDynamicProps(Dictionary<string, object> metadata, T entity, bool toDelete = false)
         {
@@ -160,7 +155,5 @@ namespace Azure.EntityServices.Tables.Core
             }
             return metadata;
         }
-         
-        
     }
 }

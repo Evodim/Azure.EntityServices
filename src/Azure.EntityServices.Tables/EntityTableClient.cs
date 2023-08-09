@@ -69,7 +69,7 @@ namespace Azure.EntityServices.Tables
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
         private EntityKeyBuilder<T> _entityKeyBuilder;
-         
+
         private TableBatchClient CreateTableBatchClient()
         {
             return new TableBatchClient(
@@ -146,9 +146,9 @@ namespace Azure.EntityServices.Tables
         private async Task UpdateEntity(T entity, EntityOperation operation, CancellationToken cancellationToken = default)
         {
             var client = CreateTableBatchClient();
-              
+
             try
-            { 
+            {
                 var tableEntity = _entityAdapter.ToEntityModel(entity);
                 switch (operation)
                 {
@@ -191,7 +191,6 @@ namespace Azure.EntityServices.Tables
 
         public EntityTableClient()
         {
-          
         }
 
         internal EntityTableClient(TableServiceClient tableService)
@@ -292,7 +291,7 @@ namespace Azure.EntityServices.Tables
             _entityAdapter = new TableEntityAdapter<T>(
                 _entityKeyBuilder,
                 new ReadOnlyDictionary<string, Func<T, object>>(_config.ComputedProps),
-                new ReadOnlyDictionary<string,PropertyInfo>(_config.Tags),
+                new ReadOnlyDictionary<string, PropertyInfo>(_config.Tags),
                 new ReadOnlyCollection<string>(_config.ComputedTags),
                 new ReadOnlyCollection<string>(_config.IgnoredProps),
                 _options.SerializerOptions);
@@ -420,9 +419,9 @@ namespace Azure.EntityServices.Tables
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var entity = _entityAdapter.FromEntityModel(tableEntity); 
+                    var entity = _entityAdapter.FromEntityModel(tableEntity);
 
-                    updateAction.Invoke(entity); 
+                    updateAction.Invoke(entity);
 
                     batchedClient.InsertOrMerge(_entityAdapter.ToEntityModel(entity));
 
@@ -446,7 +445,7 @@ namespace Azure.EntityServices.Tables
             try
             {
                 var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
-                
+
                 return _entityAdapter.GetProperties(response.Value);
             }
             catch (RequestFailedException ex)
