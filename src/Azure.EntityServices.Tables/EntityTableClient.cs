@@ -6,9 +6,7 @@ using Polly;
 using Polly.Retry;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -63,7 +61,7 @@ namespace Azure.EntityServices.Tables
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
         private IEnumerable<string> _indextedTags;
-
+        private IList<string> _indextedTagsWithKeys;
         private IEnumerable<IEntityObserver<T>> _observerInstances;
 
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
@@ -233,7 +231,7 @@ namespace Azure.EntityServices.Tables
                     transaction.Entity.PartitionKey,
                     transaction.Entity.RowKey,
                     new TableEntityDataReader<T>(transaction.Entity as TableEntity, _entityAdapter),
-                transaction.ActionType.MapToEntityOperation())));
+                    transaction.ActionType.MapToEntityOperation())));
 
             _indextedTags =
               _config.Tags.Keys
@@ -241,18 +239,19 @@ namespace Azure.EntityServices.Tables
               .Select(t => _entityKeyBuilder.CreateTagName(t))
               .Where(t => t.EndsWith(_entityKeyBuilder.IndexedTagSuffix));
 
+            _indextedTagsWithKeys = _indextedTags.ToList();
+            _indextedTagsWithKeys.Add("PartitionKey");
+            _indextedTagsWithKeys.Add("RowKey");
+
             _pipelinePreProcessor = async transaction =>
             {
                 var newEntity = transaction.Actions.FirstOrDefault()?.Entity as TableEntity;
 
-                var props = _indextedTags.ToList();
-
-                props.AddRange(new List<string>() { "PartitionKey", "RowKey" });
                 var existingEntity = default(NullableResponse<TableEntity>);
                 var entityAction = transaction.Actions.First().ActionType;
                 if (entityAction != TableTransactionActionType.Add && _options.HandleTagMutation)
                 {
-                    existingEntity = await _configuredClient.GetEntityIfExistsAsync<TableEntity>(newEntity.PartitionKey, newEntity.RowKey, props);
+                    existingEntity = await _configuredClient.GetEntityIfExistsAsync<TableEntity>(newEntity.PartitionKey, newEntity.RowKey, _indextedTagsWithKeys);
                 }
                 //duplicate entity per tags in same partition
                 foreach (var tag in _indextedTags)
