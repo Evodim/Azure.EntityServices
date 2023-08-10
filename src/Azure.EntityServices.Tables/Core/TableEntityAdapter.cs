@@ -25,11 +25,10 @@ namespace Azure.EntityServices.Tables.Core
             BindingFlags.Instance |
             BindingFlags.SetProperty);
 
-        private readonly IEnumerable<PropertyInfo> _filteredEntityProperties = EntityProperties.ToList();
+        private readonly IEnumerable<PropertyInfo> _filteredEntityProperties;
         private readonly EntityKeyBuilder<T> _entityKeyBuilder;
         private readonly IEnumerable<string> _propsToIgnore = Enumerable.Empty<string>();
-
-        private List<PropertyInfo> FilterEntityProperties() => EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
+         
 
         public TableEntityAdapter(
             EntityKeyBuilder<T> entityKeyBuilder,
@@ -39,13 +38,14 @@ namespace Azure.EntityServices.Tables.Core
             IReadOnlyCollection<string> propsToIgnore = null,
             JsonSerializerOptions serializerOptions = null)
         {
-            _filteredEntityProperties = FilterEntityProperties();
+            
             _entityKeyBuilder = entityKeyBuilder;
             _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
             _computedProps = computedProps ?? new Dictionary<string, Func<T, object>>();
             _tags = tags ?? new Dictionary<string, PropertyInfo>();
             _computedTags = computedTags ?? Enumerable.Empty<string>();
             _serializerOptions = serializerOptions;
+            _filteredEntityProperties = EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
         }
 
         public TableEntity ToEntityModel(T entity)

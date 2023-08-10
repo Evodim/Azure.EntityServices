@@ -261,6 +261,35 @@ namespace Azure.EntityServices.Table.Tests
 
             addedEntity.Should().BeEquivalentTo(person);
         }
+        
+      
+        [TestMethod]
+        public async Task Should_Adapt_Entity_With_Ignored_Props()
+        {
+            var person = Fakers.CreateFakePerson().Generate();
+
+            var propsToIgnore = new List<string>()
+            {
+               nameof(PersonEntity.FirstName),
+               nameof(PersonEntity.LastName)
+            };
+
+            var adapter = new TableEntityAdapter<PersonEntity>(_entityKeyBuilder, propsToIgnore: propsToIgnore);
+            var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
+
+            await client.CreateIfNotExistsAsync();
+
+            var result = await UpsertAndGetEntity(client, adapter.ToEntityModel(person));
+
+            var entity = adapter.FromEntityModel(result);
+
+            entity.Should().BeEquivalentTo(person, options=> options
+            .Excluding(p=>p.FirstName)
+            .Excluding(p=>p.LastName));
+
+            entity.FirstName.Should().BeNull();
+            entity.LastName.Should().BeNull();
+        }
 
         private static async Task<TableEntity> MergeThenRetrieveAsync<T>(Data.Tables.TableClient client, T tableEntity)
             where T : class, ITableEntity, new()
