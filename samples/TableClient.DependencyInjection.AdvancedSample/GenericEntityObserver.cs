@@ -17,6 +17,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
         private long added = 0;
         private long updated = 0;
         private long deleted = 0;
+
         public GenericEntityObserver()
         {
         }
@@ -25,7 +26,6 @@ namespace TableClient.DependencyInjection.AdvancedSample
 
         public Task OnCompletedAsync()
         {
-          
             Interlocked.Exchange(ref added, _addOperations.Count + added);
             _addOperations.Clear();
             Interlocked.Exchange(ref updated, _updateOperations.Count + updated);
@@ -49,13 +49,13 @@ namespace TableClient.DependencyInjection.AdvancedSample
         public Task OnNextAsync(IEnumerable<EntityContext<T>> contextBatch)
         {
             foreach (var context in contextBatch)
-            { 
+            {
                 if (!context.RowKey.StartsWith("~"))
-                  {
+                {
                     continue;
-                   }
+                }
                 var entity = context.EntityDataReader.Read();
-                
+
                 switch (context.EntityOperation)
                 {
                     case EntityOperation.Add:
