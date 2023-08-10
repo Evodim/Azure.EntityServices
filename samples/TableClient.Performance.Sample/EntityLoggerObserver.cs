@@ -49,7 +49,7 @@ namespace TableClient.PerformanceSample
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityContext<T>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityContext<T>> contextBatch)
         {
             foreach (var context in contextBatch)
             {

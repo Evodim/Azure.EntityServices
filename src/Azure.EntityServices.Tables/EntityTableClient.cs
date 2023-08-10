@@ -22,7 +22,7 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>, IObservableEntityTableClient<T>
     where T : class, new()
     {
-        protected async Task NotifyChangeAsync(IEnumerable<IEntityContext<T>> context)
+        protected async Task NotifyChangeAsync(IEnumerable<EntityContext<T>> context)
         {
             foreach (var observer in _observerInstances)
             {

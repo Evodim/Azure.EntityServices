@@ -73,7 +73,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
             return Task.CompletedTask;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {

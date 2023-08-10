@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Azure.EntityServices.Tables
 {
-    public interface IEntityObserver<T> : IAsyncObserver<IEnumerable<IEntityContext<T>>>
+    public interface IEntityObserver<T> : IAsyncObserver<IEnumerable<EntityContext<T>>>
     {
         string Name { get; }
     }

@@ -51,7 +51,7 @@ namespace Azure.EntityServices.Tables.Core
         public TableEntity ToEntityModel(T entity)
         {
             var metadata = new Dictionary<string, object>();
-            GenerateDynamicProps(metadata, entity);
+            GenerateComputedProps(metadata, entity);
             GenerateTagProps(metadata, entity);
 
             if (entity == null)
@@ -129,7 +129,7 @@ namespace Azure.EntityServices.Tables.Core
             return metadata;
         }
 
-        private Dictionary<string, object> GenerateDynamicProps(Dictionary<string, object> metadata, T entity, bool toDelete = false)
+        private Dictionary<string, object> GenerateComputedProps(Dictionary<string, object> metadata, T entity, bool toDelete = false)
         {
             foreach (var prop in _computedProps)
             {

@@ -2,23 +2,5 @@
 
 namespace Azure.EntityServices.Tables
 {
-    public class EntityContext<T> : IEntityContext<T>
-    where T : class, new()
-    {
-        public IEntityDataReader<T> EntityDataReader { get; }
-
-        public EntityOperation EntityOperation { get; }
-
-        public string PartitionKey { get; }
-
-        public string RowKey { get; }
-
-        public EntityContext(string partionKey, string rowKey, IEntityDataReader<T> entityDataReader, EntityOperation entityOperation)
-        {
-            PartitionKey = partionKey;
-            RowKey = rowKey;
-            EntityDataReader = entityDataReader;
-            EntityOperation = entityOperation;
-        }
-    }
+    public record struct EntityContext<T>(string PartitionKey, string RowKey, IEntityDataReader<T> EntityDataReader, EntityOperation EntityOperation);
 }

@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Table.Tests
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
