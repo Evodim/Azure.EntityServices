@@ -16,8 +16,8 @@ namespace Azure.EntityServices.Tables.Core
     where T : class, new()
     {
         private readonly JsonSerializerOptions _serializerOptions;
-        private readonly IReadOnlyDictionary<string, Func<T, object>> _computedProps;
-        private readonly IReadOnlyDictionary<string, PropertyInfo> _tags;
+        private readonly IDictionary<string, Func<T, object>> _computedProps;
+        private readonly IDictionary<string, PropertyInfo> _tags;
         private readonly IEnumerable<string> _computedTags;
 
         public static readonly IEnumerable<PropertyInfo> EntityProperties = typeof(T).GetProperties(
@@ -32,10 +32,10 @@ namespace Azure.EntityServices.Tables.Core
 
         public TableEntityAdapter(
             EntityKeyBuilder<T> entityKeyBuilder,
-            IReadOnlyDictionary<string, Func<T, object>> computedProps = null,
-            IReadOnlyDictionary<string, PropertyInfo> tags = null,
-            IReadOnlyCollection<string> computedTags = null,
-            IReadOnlyCollection<string> propsToIgnore = null,
+            IDictionary<string, Func<T, object>> computedProps = null,
+            IDictionary<string, PropertyInfo> tags = null,
+            ICollection<string> computedTags = null,
+            ICollection<string> propsToIgnore = null,
             JsonSerializerOptions serializerOptions = null)
         {
             

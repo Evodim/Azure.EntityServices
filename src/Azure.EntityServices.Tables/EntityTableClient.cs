@@ -289,12 +289,12 @@ namespace Azure.EntityServices.Tables
             };
 
             _entityAdapter = new TableEntityAdapter<T>(
-                _entityKeyBuilder,
-                new ReadOnlyDictionary<string, Func<T, object>>(_config.ComputedProps),
-                new ReadOnlyDictionary<string, PropertyInfo>(_config.Tags),
-                new ReadOnlyCollection<string>(_config.ComputedTags),
-                new ReadOnlyCollection<string>(_config.IgnoredProps),
-                _options.SerializerOptions);
+            _entityKeyBuilder,
+            _config.ComputedProps,
+            _config.Tags,
+            _config.ComputedTags,
+            _config.IgnoredProps,
+            _options.SerializerOptions);
             return this;
         }
 
