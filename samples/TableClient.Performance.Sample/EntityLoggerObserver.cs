@@ -25,12 +25,13 @@ namespace TableClient.PerformanceSample
 
         protected virtual void LogToConsole()
         {
+
             lock (ConsoleWriterLock)
             {
                 var current = Console.GetCursorPosition();
-                Console.CursorLeft += Console.WindowWidth - 30;
+                Console.CursorLeft += (Console.WindowWidth - 30) <30 ? 30: 0;
                 Console.WriteLine($"** EntityLoggerObserver **");
-                Console.CursorLeft += Console.WindowWidth - 30;
+                Console.CursorLeft += (Console.WindowWidth - 30) < 30 ? 30 : 0;
                 Console.WriteLine($"Add: {_added} Upsrt: {_upserted} Del: {_deleted}");
                 Console.SetCursorPosition(current.Left, current.Top);
             }
