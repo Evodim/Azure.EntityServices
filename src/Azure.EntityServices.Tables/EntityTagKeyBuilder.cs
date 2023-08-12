@@ -24,16 +24,16 @@ namespace Azure.EntityServices.Tables
 
         public string CreateTagRowKey(string key, object value, T entity) => $"{TableQueryHelper.ToTagRowKeyPrefix(key, value)}{ResolvePrimaryKey(entity)}";
 
-        public string ResolvePartitionKey(T entity) => TableQueryHelper.ToPartitionKey(_partitionKeyResolver(entity));
+        public string ResolvePartitionKey(T entity) => TableQueryHelper.ToPartitionKey(_partitionKeyResolver(entity) ?? throw new EntityTableClientException("Given partitionKey is null") { });
 
         public string ResolvePrimaryKey(T entity)
         {
-            return TableQueryHelper.ToPrimaryRowKey(_primaryKeyResolver.Invoke(entity));
+            return TableQueryHelper.ToPrimaryRowKey(_primaryKeyResolver.Invoke(entity) ?? throw new EntityTableClientException("Given primaryKey is null") { });
         }
 
         public string ResolvePrimaryKey(object value)
         {
-            return TableQueryHelper.ToPrimaryRowKey(value);
+            return TableQueryHelper.ToPrimaryRowKey(value ?? throw new EntityTableClientException("Given primaryKey is null") { });
         }
     }
 }

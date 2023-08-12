@@ -952,5 +952,33 @@ namespace Azure.EntityServices.Table.Tests
 
             isDeleted.Should().BeTrue();
         }
+
+        [TestMethod]
+        public void Should_Throw_Exception_When_Adding_Invalid_Keys()
+        {
+            var person = Fakers.CreateFakePerson().Generate(1).First();
+            person.TenantId = null;
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+            Action addAction = () => entityTable.AddAsync(person).GetAwaiter().GetResult();
+
+            addAction.Should()
+                .Throw<EntityTableClientException>()
+                .WithMessage("Given partitionKey is null");
+
+            person.TenantId = "tenant1";
+            person.PersonId = null;
+
+            addAction.Should()
+                .Throw<EntityTableClientException>()
+                .WithMessage("Given primaryKey is null");
+        }
     }
 }
