@@ -1,10 +1,10 @@
 ﻿using Azure.EntityServices.Tables;
-using System;
-using System.Threading.Tasks;
 using Common.Samples.Models;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TableClient.PerformanceSample
 {
@@ -15,24 +15,32 @@ namespace TableClient.PerformanceSample
         private long _upserted = 0;
         private long _deleted = 0;
         private static readonly object ConsoleWriterLock = new object();
+        private static bool started = false;
+
         public EntityLoggerObserver()
         {
-
+            if (!started)
+            {
+                Console.WriteLine("|----------------------------------|");
+                Console.WriteLine();
+                Console.WriteLine("|----------------------------------|");
+            }
+            started = true;
         }
+
         public ConcurrentDictionary<string, PersonEntity> Persons = new ConcurrentDictionary<string, PersonEntity>();
 
         public string Name { get; set; }
 
         protected virtual void LogToConsole()
         {
-
             lock (ConsoleWriterLock)
             {
                 var current = Console.GetCursorPosition();
-                Console.CursorLeft += (Console.WindowWidth - 30) <30 ? 30: 0;
-                Console.WriteLine($"** EntityLoggerObserver **");
-                Console.CursorLeft += (Console.WindowWidth - 30) < 30 ? 30 : 0;
-                Console.WriteLine($"Add: {_added} Upsrt: {_upserted} Del: {_deleted}");
+                var trace = $" Add: {_added:0000} Upd: {_upserted:0000} Del: {_deleted:0000} ";
+                Console.CursorTop = 1;
+                Console.CursorLeft = 1;
+                Console.Write(trace);
                 Console.SetCursorPosition(current.Left, current.Top);
             }
         }
@@ -71,6 +79,7 @@ namespace TableClient.PerformanceSample
                     case EntityOperation.Add:
                         Interlocked.Increment(ref _added);
                         break;
+
                     case EntityOperation.AddOrMerge:
                     case EntityOperation.AddOrReplace:
                     case EntityOperation.Merge:

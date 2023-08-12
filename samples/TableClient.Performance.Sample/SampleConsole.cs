@@ -62,7 +62,7 @@ namespace TableClient.PerformanceSample
             //===============================================================================================
 
             var perfCounters = new PerfCounters(nameof(EntityTableClient<PersonEntity>));
-
+          
             await RunSample(entityClient, perfCounters);
 
             Console.WriteLine("====================================");
