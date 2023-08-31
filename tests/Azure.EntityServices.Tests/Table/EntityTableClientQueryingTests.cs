@@ -558,5 +558,92 @@ namespace Azure.EntityServices.Table.Tests
                 resultPage.First().Should().BeEquivalentTo(persons.Last());
             }
         }
+
+
+        [TestMethod]
+        public async Task Should_Get_By_Indexed_Tag_With_Filter()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+
+            await entityTable.AddManyAsync(persons);
+
+            var person = persons.First();
+            //get all entities both primary and projected
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .WhereTag(p => p.Created)
+                .Equal(person.Created)
+                .And(p => p.Rank)
+                .Equal(person.Rank)
+                .AndPartitionKey()
+                .Equal(person.TenantId)))
+            {
+                resultPage.First().Should().BeEquivalentTo(person);
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Get_By_Indexed_Tag_Without_Given_Partition_Key()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(10);
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            {
+                c.
+                SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+
+            await entityTable.AddManyAsync(persons);
+
+            var person = persons.First();
+            //get all entities both primary and projected
+            await foreach (var resultPage in entityTable.GetAsync(
+                filter => filter
+                .WhereTag(p => p.Created)
+                .Equal(person.Created)
+                .AndPartitionKey()
+                .Equal(person.TenantId)
+                .And(p => p.Rank)
+                .Equal(person.Rank)))
+            {
+                resultPage.First().Should().BeEquivalentTo(person);
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_Get_Indexed_Tag_After_InsertOrUpdate()
+        {
+            var person = Fakers.CreateFakePerson().Generate();
+            var tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            {
+                c.SetPartitionKey(p => p.TenantId);
+                c.SetRowKeyProp(p => p.PersonId);
+                c.AddTag(p => p.LastName);
+            });
+
+            await tableEntity.AddOrReplaceAsync(person);
+            await foreach (var resultPage in tableEntity.GetAsync(
+                   filter => filter
+                .WhereTag(p => p.LastName)
+                .Equal(person.LastName).AndPartitionKey().Equal(person.TenantId)))
+            {
+                resultPage.Count().Should().Be(1);
+                resultPage.First().Should().BeEquivalentTo(person);
+            }
+        }
+
+
     }
 }
