@@ -76,8 +76,8 @@ namespace Common.Samples.Tools.Fakes
             .RuleFor(p => p.Updated, (f, a) => new DateTimeOffset(a.LocalUpdated))
 
             .RuleFor(p => p.Enabled, f => f.Random.Bool())
-            .RuleFor(p => p.FirstName, f => f.Person.FirstName)
-            .RuleFor(p => p.LastName, f => f.Person.LastName)
+            .RuleFor(p => p.FirstName, f => $"{f.Person.LastName}  ")
+            .RuleFor(p => p.LastName, f => $"{f.Person.LastName}  " )
             .RuleFor(p => p.Longitude, f => f.Random.Double())
             .RuleFor(p => p.Latitude, f => f.Random.Double())
             .RuleFor(p => p.Distance, f => f.Random.Decimal())
