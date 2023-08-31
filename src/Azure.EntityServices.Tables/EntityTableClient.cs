@@ -437,31 +437,7 @@ namespace Azure.EntityServices.Tables
             await NotifyCompleteAsync();
 
             return count;
-        }
-
-        public async Task<IDictionary<string, object>> GetEntityMetadatasAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default)
-        { 
-            try
-            {
-                var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => _entityKeyBuilder.CreateTagName(k));
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
-
-                return _entityAdapter.GetProperties(response.Value);
-            }
-            catch (RequestFailedException ex)
-            {
-                //return null reference when existing entity was not found
-                if (ex.ErrorCode == "ResourceNotFound")
-                {
-                    return default;
-                }
-                throw new EntityTableClientException($"An error occured during the request, partition:{partitionKey} rowkey:{rowKey}", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new EntityTableClientException($"An error occured during the request, partition:{partitionKey} rowkey:{rowKey}", ex);
-            }
-        }
+        } 
 
         public void AddObserver(string name, Func<IEntityObserver<T>> observerFactory)
         {
