@@ -11,6 +11,6 @@ namespace Azure.EntityServices.Tables.Core
            
         } 
         public string PartitionKey { get; private set; }
-        public List<TableTransactionAction> Actions { get; set; } = new List<TableTransactionAction>();
+        public List<TableTransactionAction> Actions { get; set; } = new();
     }
 }

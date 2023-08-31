@@ -58,6 +58,7 @@ namespace Azure.EntityServices.Tables
 
         private readonly TableServiceClient _tableServiceClient;
         private TableEntityAdapter<T> _entityAdapter;
+        private IReadOnlyCollection<string> _metadataKeys;
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
         private IEnumerable<string> _indextedTags;
@@ -294,6 +295,9 @@ namespace Azure.EntityServices.Tables
             _config.ComputedTags,
             _config.IgnoredProps,
             _options.SerializerOptions);
+
+            _metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => _entityKeyBuilder.CreateTagName(k)).ToList();
+
             return this;
         }
 
@@ -439,11 +443,11 @@ namespace Azure.EntityServices.Tables
 
         public async Task<IDictionary<string, object>> GetEntityMetadatasAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default)
         {
-            var metadataKeys = _config.Tags.Keys.Union(_config.ComputedTags).Select(k => _entityKeyBuilder.CreateTagName(k));
+           
 
             try
             {
-                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, metadataKeys, cancellationToken));
+                var response = await _asyncRetryPolicy.ExecuteAsync(async () => await _configuredClient.GetEntityAsync<TableEntity>(partitionKey, rowKey, _metadataKeys, cancellationToken));
 
                 return _entityAdapter.GetProperties(response.Value);
             }
