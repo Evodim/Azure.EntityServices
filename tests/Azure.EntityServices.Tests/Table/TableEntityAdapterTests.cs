@@ -211,7 +211,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public async Task Should_Adapt_Entity_With_String_Interpolation()
         {
-            var person = new PersonEntity();
+            var person = Fakers.CreateFakePerson();
 
             var client = new Data.Tables.TableClient(TestEnvironment.ConnectionString, NewTableName());
 
