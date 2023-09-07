@@ -58,7 +58,7 @@ namespace Azure.EntityServices.Tables
 
         private readonly TableServiceClient _tableServiceClient;
         private TableEntityAdapter<T> _entityAdapter;
-       
+
         private Func<IEnumerable<TableTransactionAction>, Task> _pipelineObserver;
 
         private IEnumerable<string> _indextedTags;
@@ -118,7 +118,7 @@ namespace Azure.EntityServices.Tables
             return false;
         }
 
-        private IAsyncEnumerable<Page<TableEntity>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken, bool? iterateOnly = false)
+        private IAsyncEnumerable<Page<TableEntity>> QueryTableEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken, bool? iterateOnly = false)
         {
             var query = new TagFilterExpression<T>();
             filter?.Invoke(query);
@@ -140,6 +140,56 @@ namespace Azure.EntityServices.Tables
 
                                      )
             .AsPages(nextPageToken));
+        }
+
+        private async IAsyncEnumerable<EntityPage<T>> QueryEntities(
+            Action<IQuery<T>> filter,
+            int? maxPerPage,
+            string nextPageToken,
+            [EnumeratorCancellation] CancellationToken cancellationToken,
+            bool? iterateOnly = false)
+        {
+            var iteratedCount = 0;
+            await foreach (var page in QueryTableEntities(filter, maxPerPage, nextPageToken, cancellationToken, iterateOnly))
+            {
+                yield return new EntityPage<T>(
+                    page.Values.Select(tableEntity => _entityAdapter.FromEntityModel(tableEntity)),
+                    iteratedCount += page.Values.Count,
+                    string.IsNullOrWhiteSpace(page.ContinuationToken),
+                    page.ContinuationToken);
+            }
+        }
+
+        public async Task<EntityPage<T>> GetPagedAsync(
+          Action<IQuery<T>> filter = default,
+          int? iteratedCount = null,
+          int? maxPerPage = null,
+          string nextPageToken = null,
+          CancellationToken cancellationToken = default
+          )
+        {
+            var continuationToken = nextPageToken;
+            IAsyncEnumerator<EntityPage<T>> pageEnumerator = null;
+
+            try
+            {
+                //Create a new iterator after skipping entities to return next available entities
+                pageEnumerator = QueryEntities(filter, maxPerPage, continuationToken, cancellationToken)
+                         .GetAsyncEnumerator(cancellationToken);
+
+                await pageEnumerator.MoveNextAsync();
+
+                var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.IteratedCount;
+
+                return pageEnumerator.Current with { IteratedCount = currentCount };
+            }
+            finally
+            {
+                if (pageEnumerator != null)
+                {
+                    await pageEnumerator.DisposeAsync();
+                }
+            }
         }
 
         private async Task UpdateEntity(T entity, EntityOperation operation, CancellationToken cancellationToken = default)
@@ -294,8 +344,8 @@ namespace Azure.EntityServices.Tables
             _config.Tags,
             _config.ComputedTags,
             _config.IgnoredProps,
-            _options.SerializerOptions); 
-           
+            _options.SerializerOptions);
+
             return this;
         }
 
@@ -330,42 +380,7 @@ namespace Azure.EntityServices.Tables
         {
             await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
             {
-                yield return page.Values.Select(tableEntity => _entityAdapter.FromEntityModel(tableEntity));
-            }
-        }
-
-        public async Task<EntityPage<T>> GetPagedAsync(
-            Action<IQuery<T>> filter = default,
-            int? iteratedCount = null,
-            int? maxPerPage = null,
-            string nextPageToken = null,
-            CancellationToken cancellationToken = default
-            )
-        {
-            var continuationToken = nextPageToken;
-            IAsyncEnumerator<Page<TableEntity>> pageEnumerator = null;
-
-            try
-            {
-                //Create a new iterator after skipping entities to return next available entities
-                pageEnumerator = QueryEntities(filter, maxPerPage, continuationToken, cancellationToken)
-                         .GetAsyncEnumerator(cancellationToken);
-                await pageEnumerator.MoveNextAsync();
-
-                var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.Values.Count;
-
-                return new EntityPage<T>(pageEnumerator.Current.Values.Select(
-                    tableEntity => _entityAdapter.FromEntityModel(tableEntity)),
-                    currentCount,
-                    string.IsNullOrEmpty(pageEnumerator.Current.ContinuationToken),
-                    pageEnumerator.Current.ContinuationToken);
-            }
-            finally
-            {
-                if (pageEnumerator != null)
-                {
-                    await pageEnumerator.DisposeAsync();
-                }
+                yield return page.Entities;
             }
         }
 
@@ -414,13 +429,11 @@ namespace Azure.EntityServices.Tables
             long count = 0;
             var batchedClient = CreateTableBatchClient();
 
-            await foreach (var page in QueryEntities(filter, null, null, cancellationToken))
+            await foreach (var entityPage in QueryEntities(filter, null, null, cancellationToken))
             {
-                foreach (var tableEntity in page.Values)
+                foreach (var entity in entityPage.Entities)
                 {
                     if (cancellationToken.IsCancellationRequested) break;
-
-                    var entity = _entityAdapter.FromEntityModel(tableEntity);
 
                     updateAction.Invoke(entity);
 
@@ -437,7 +450,7 @@ namespace Azure.EntityServices.Tables
             await NotifyCompleteAsync();
 
             return count;
-        } 
+        }
 
         public void AddObserver(string name, Func<IEntityObserver<T>> observerFactory)
         {
