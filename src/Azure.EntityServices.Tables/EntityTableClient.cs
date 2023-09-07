@@ -20,6 +20,15 @@ namespace Azure.EntityServices.Tables
     public class EntityTableClient<T> : IEntityTableClient<T>, IObservableEntityTableClient<T>
     where T : class, new()
     {
+        internal EntityTableClient(TableServiceClient tableService)
+        {
+            _tableServiceClient = tableService;
+        }
+
+        public EntityTableClient()
+        {
+        }
+
         protected async Task NotifyChangeAsync(IEnumerable<EntityContext<T>> context)
         {
             foreach (var observer in _observerInstances)
@@ -160,38 +169,6 @@ namespace Azure.EntityServices.Tables
             }
         }
 
-        public async Task<EntityPage<T>> GetPagedAsync(
-          Action<IQuery<T>> filter = default,
-          int? iteratedCount = null,
-          int? maxPerPage = null,
-          string nextPageToken = null,
-          CancellationToken cancellationToken = default
-          )
-        {
-            var continuationToken = nextPageToken;
-            IAsyncEnumerator<EntityPage<T>> pageEnumerator = null;
-
-            try
-            {
-                //Create a new iterator after skipping entities to return next available entities
-                pageEnumerator = QueryEntities(filter, maxPerPage, continuationToken, cancellationToken)
-                         .GetAsyncEnumerator(cancellationToken);
-
-                await pageEnumerator.MoveNextAsync();
-
-                var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.IteratedCount;
-
-                return pageEnumerator.Current with { IteratedCount = currentCount };
-            }
-            finally
-            {
-                if (pageEnumerator != null)
-                {
-                    await pageEnumerator.DisposeAsync();
-                }
-            }
-        }
-
         private async Task UpdateEntity(T entity, EntityOperation operation, CancellationToken cancellationToken = default)
         {
             var client = CreateTableBatchClient();
@@ -236,15 +213,6 @@ namespace Azure.EntityServices.Tables
                 await NotifyExceptionAsync(ex);
                 throw new EntityTableClientException($"An error occured during the request, partition:{_entityKeyBuilder.ResolvePartitionKey(entity)} rowkey:{_entityKeyBuilder.ResolvePrimaryKey(entity)}", ex);
             }
-        }
-
-        public EntityTableClient()
-        {
-        }
-
-        internal EntityTableClient(TableServiceClient tableService)
-        {
-            _tableServiceClient = tableService;
         }
 
         public EntityTableClient<T> Configure(EntityTableClientOptions options, EntityTableClientConfig<T> config)
@@ -347,6 +315,38 @@ namespace Azure.EntityServices.Tables
             _options.SerializerOptions);
 
             return this;
+        }
+
+        public async Task<EntityPage<T>> GetPagedAsync(
+          Action<IQuery<T>> filter = default,
+          int? iteratedCount = null,
+          int? maxPerPage = null,
+          string nextPageToken = null,
+          CancellationToken cancellationToken = default
+          )
+        {
+            var continuationToken = nextPageToken;
+            IAsyncEnumerator<EntityPage<T>> pageEnumerator = null;
+
+            try
+            {
+                //Create a new iterator after skipping entities to return next available entities
+                pageEnumerator = QueryEntities(filter, maxPerPage, continuationToken, cancellationToken)
+                         .GetAsyncEnumerator(cancellationToken);
+
+                await pageEnumerator.MoveNextAsync();
+
+                var currentCount = (iteratedCount ?? 0) + pageEnumerator.Current.IteratedCount;
+
+                return pageEnumerator.Current with { IteratedCount = currentCount };
+            }
+            finally
+            {
+                if (pageEnumerator != null)
+                {
+                    await pageEnumerator.DisposeAsync();
+                }
+            }
         }
 
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
