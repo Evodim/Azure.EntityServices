@@ -471,6 +471,43 @@ namespace Azure.EntityServices.Table.Tests
         }
 
         [TestMethod]
+        public async Task Should_Update_Paged_Many_Indexed_Entities()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(130 + 1000);
+
+            //force entities to have same partition (tenantId)
+            var partitionName = Guid.NewGuid().ToString();
+            persons.ForEach(p => p.TenantId = partitionName);
+
+            IEntityTableClient<PersonEntity> tableEntity = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), config =>
+            {
+                config
+                .SetPartitionKey(p => p.TenantId)
+                .SetRowKeyProp(p => p.PersonId)
+                .AddTag(p => p.LastName)
+                .AddTag(p => p.Created);
+            });
+
+            await tableEntity.AddManyAsync(persons);
+
+            await tableEntity.UpdateManyAsync(person =>
+            {
+                person.LastName += "_updated";
+            });
+
+            //get all entities both primary and projected
+            var result = await tableEntity.GetAsync(
+            filter => filter
+            .IgnoreTags()
+            .AndPartitionKey()
+            .Equal(persons.First().TenantId)).ToListAsync();
+
+            result.Should().HaveCount(130 + 1000);
+            result.All(person => person.LastName.EndsWith("_updated")).Should().BeTrue();
+            
+        }
+
+        [TestMethod]
         public async Task Should_Update_Many_Indexed_Entities_With_No_Existing_Entities()
         {
             var persons = Fakers.CreateFakePerson().Generate(130);
@@ -495,6 +532,7 @@ namespace Azure.EntityServices.Table.Tests
             });
             updated.Should().Be(0);
         }
+
 
         [TestMethod]
         public async Task Should_Store_Default_DateTime_Values()
