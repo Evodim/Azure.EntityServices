@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Tables.Core
     /// Entity adapter used to map pure entity and his metadata to Azure tableEntity
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public sealed class TableEntityAdapter<T> : IEntityAdapter<T, TableEntity>
+    public sealed class AzureTableEntityAdapter<T> : IEntityAdapter<T>
     where T : class, new()
     {
         private readonly JsonSerializerOptions _serializerOptions;
@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Tables.Core
         private readonly IEnumerable<string> _propsToIgnore = Enumerable.Empty<string>();
          
 
-        public TableEntityAdapter(
+        public AzureTableEntityAdapter(
             EntityKeyBuilder<T> entityKeyBuilder,
             IDictionary<string, Func<T, object>> computedProps = null,
             IDictionary<string, PropertyInfo> tags = null,
@@ -48,7 +48,8 @@ namespace Azure.EntityServices.Tables.Core
             _filteredEntityProperties = EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
         }
 
-        public TableEntity ToEntityModel(T entity)
+        public TEntityModel ToEntityModel<TEntityModel>(T entity)
+             where TEntityModel : class, new()
         {
             var metadata = new Dictionary<string, object>();
             GenerateComputedProps(metadata, entity);
@@ -58,7 +59,10 @@ namespace Azure.EntityServices.Tables.Core
             {
                 throw new ArgumentNullException(nameof(entity));
             }
-            var tableEntity = new TableEntity(_entityKeyBuilder.ResolvePartitionKey(entity), _entityKeyBuilder.ResolvePrimaryKey(entity));
+            var tableEntity = new TableEntity(
+                _entityKeyBuilder.ResolvePartitionKey(entity),
+                _entityKeyBuilder.ResolvePrimaryKey(entity));
+
             if (entity is TableEntity tbe)
             {
                 foreach (var property in tbe.Where(e => !_propsToIgnore.Contains(e.Key)))
@@ -85,10 +89,91 @@ namespace Azure.EntityServices.Tables.Core
             {
                 tableEntity.AddOrUpdate(dataField.Key, EntityValueAdapter.WriteValue(dataField.Value, _serializerOptions));
             }
-            return tableEntity;
+            return tableEntity as TEntityModel;
         }
 
-        public T FromEntityModel(TableEntity tableEntity)
+
+        public TEntityModel ToEntityModel<TEntityModel>(EntityModel entityModel)
+        where TEntityModel : class, new()
+        {
+          
+             
+            var tableEntity = new TableEntity(entityModel.PartitionKey, entityModel.RowKey);
+
+            if (typeof(T) == typeof(TableEntity))
+            {
+
+                foreach (var property in entityModel.NativeProperties.Where(e => !_propsToIgnore.Contains(e.Key)))
+                {
+                    if (property.Key == "PartitionKey" ||
+                        property.Key == "RowKey" ||
+                        property.Key == "Etag" ||
+                        property.Key == "TimeStamp")
+                    {
+                        continue;
+                    }
+                    tableEntity.AddOrUpdate(property.Key, property.Value);
+                }
+            }
+            else
+            {
+                foreach (var prop in entityModel.NativeProperties)
+                {
+                    tableEntity.AddOrUpdate(prop);
+                }
+            }
+            return tableEntity as TEntityModel;
+        }
+
+        public EntityOperation ToEntityOperationAction(EntityOperationType entityOperation, T entity)
+        {
+
+              var metadata = new Dictionary<string, object>();
+            GenerateComputedProps(metadata, entity);
+            GenerateTagProps(metadata, entity);
+
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+            var nativeProperties = new Dictionary<string, object>();
+            if (entity is TableEntity tbe)
+            {
+                foreach (var property in tbe.Where(e => !_propsToIgnore.Contains(e.Key)))
+                {
+                    if (property.Key == "PartitionKey" ||
+                        property.Key == "RowKey" ||
+                        property.Key == "Etag" ||
+                        property.Key == "TimeStamp")
+                    {
+                        continue;
+                    }
+                    nativeProperties.AddOrUpdate(property.Key, property.Value);
+                }
+            }
+            else
+            {
+                foreach (var property in _filteredEntityProperties)
+                {
+                    nativeProperties.AddOrUpdate(property.Name, EntityValueAdapter.WriteValue(property.GetValue(entity), _serializerOptions, property));
+                }
+            }
+
+            foreach (var dataField in metadata)
+            {
+                nativeProperties.AddOrUpdate(dataField.Key, EntityValueAdapter.WriteValue(dataField.Value, _serializerOptions));
+            }
+          
+            return new EntityOperation(
+                _entityKeyBuilder.ResolvePartitionKey(entity),
+                _entityKeyBuilder.ResolvePrimaryKey(entity),
+                entityOperation,
+                nativeProperties 
+                );
+        }
+
+
+        public T FromEntityModel(IDictionary<string,object> tableEntity)
         {
             var entity = new T();
 
@@ -111,7 +196,7 @@ namespace Azure.EntityServices.Tables.Core
             return entity;
         }
 
-        public IDictionary<string, object> GetProperties(TableEntity tableEntity)
+        public IDictionary<string, object> GetMetadata(IDictionary<string,object> tableEntity)
         {
             var metadata = new Dictionary<string, object>();
 

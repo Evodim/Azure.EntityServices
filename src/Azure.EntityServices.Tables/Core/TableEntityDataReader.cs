@@ -6,23 +6,23 @@ namespace Azure.EntityServices.Tables.Core
     public class TableEntityDataReader<T> : IEntityDataReader<T>
         where T : class, new()
     {
-        private readonly IEntityAdapter<T, TableEntity> _entityAdapter;
-        private readonly TableEntity _tableEntity;
+        private readonly IEntityAdapter<T> _entityAdapter;
+        private readonly IDictionary<string, object> _nativeProperties;
 
-        public TableEntityDataReader(TableEntity tableEntity, IEntityAdapter<T, TableEntity> entityAdapter)
+        public TableEntityDataReader(IDictionary<string,object> nativeProperties, IEntityAdapter<T> entityAdapter)
         {
             _entityAdapter = entityAdapter;
-            _tableEntity = tableEntity;
+            _nativeProperties = nativeProperties;
         }
 
         public T Read()
         {
-            return _entityAdapter.FromEntityModel(_tableEntity);
+            return _entityAdapter.FromEntityModel(_nativeProperties);
         }
 
-        public IDictionary<string, object> ReadProperties()
+        public IDictionary<string, object> ReadMetadata()
         {
-            return _entityAdapter.GetProperties(_tableEntity);
+            return _entityAdapter.GetMetadata(_nativeProperties);
         }
     }
 }

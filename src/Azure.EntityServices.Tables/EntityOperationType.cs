@@ -1,6 +1,6 @@
 ﻿namespace Azure.EntityServices.Tables
 {
-    public enum EntityOperation
+    public enum EntityOperationType
     {
         Add, 
         Merge,

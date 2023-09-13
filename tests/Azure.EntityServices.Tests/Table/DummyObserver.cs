@@ -30,7 +30,7 @@ namespace Azure.EntityServices.Table.Tests
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<EntityContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityOperationContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
@@ -45,20 +45,20 @@ namespace Azure.EntityServices.Table.Tests
                 switch (context.EntityOperation)
 
                 {
-                    case EntityOperation.Delete:
+                    case EntityOperationType.Delete:
                         Persons.Remove(context.PartitionKey + entity.PersonId, out var _);
                         Interlocked.Increment(ref _deleted);
                         break;
 
-                    case EntityOperation.Add:
-                    case EntityOperation.AddOrMerge:
-                    case EntityOperation.AddOrReplace:
+                    case EntityOperationType.Add:
+                    case EntityOperationType.AddOrMerge:
+                    case EntityOperationType.AddOrReplace:
                         Persons.TryAdd(context.PartitionKey + entity.PersonId, entity);
                         Interlocked.Increment(ref _upserted);
                         break;
 
-                    case EntityOperation.Merge:
-                    case EntityOperation.Replace:
+                    case EntityOperationType.Merge:
+                    case EntityOperationType.Replace:
 
                     default: break;
                 }

@@ -4,6 +4,7 @@ namespace Azure.EntityServices.Tables.Extensions
 {
     internal static class DicionnaryExtensions
     {
+
         public static IDictionary<T, U> AddOrUpdate<T, U>(this IDictionary<T, U> dico, KeyValuePair<T,U> keyValue)
         {
             if (dico.ContainsKey(keyValue.Key))

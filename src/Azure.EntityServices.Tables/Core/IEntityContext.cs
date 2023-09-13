@@ -7,6 +7,6 @@ namespace Azure.EntityServices.Tables
         string PartitionKey { get; }
         string RowKey { get; }
         IEntityDataReader<T> EntityDataReader { get; }
-        EntityOperation EntityOperation { get; }
+        EntityOperationType EntityOperation { get; }
     }
 }
