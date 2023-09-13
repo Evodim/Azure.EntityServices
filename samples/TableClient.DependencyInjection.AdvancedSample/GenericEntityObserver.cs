@@ -10,9 +10,9 @@ namespace TableClient.DependencyInjection.AdvancedSample
     public class GenericEntityObserver<T> : IEntityObserver<T>
         where T : class, new()
     {
-        private ConcurrentQueue<T> _addOperations = new ConcurrentQueue<T>();
-        private ConcurrentQueue<T> _updateOperations = new ConcurrentQueue<T>();
-        private ConcurrentQueue<T> _deleteOperations = new ConcurrentQueue<T>();
+        private readonly ConcurrentQueue<T> _addOperations = new();
+        private readonly ConcurrentQueue<T> _updateOperations = new();
+        private readonly ConcurrentQueue<T> _deleteOperations = new();
 
         private long added = 0;
         private long updated = 0;
@@ -32,11 +32,11 @@ namespace TableClient.DependencyInjection.AdvancedSample
             _updateOperations.Clear();
             Interlocked.Exchange(ref deleted, _deleteOperations.Count + deleted);
             _deleteOperations.Clear();
-            var position = Console.GetCursorPosition();
+            var (Left, Top) = Console.GetCursorPosition();
 
             Console.SetCursorPosition(0, 2);
             Console.WriteLine($"GenericEntityObserver Add:{added:G6} Upt: {updated:G6} Del: {deleted:G6}");
-            Console.SetCursorPosition(position.Left, position.Top);
+            Console.SetCursorPosition(Left, Top);
 
             return Task.CompletedTask;
         }
@@ -46,7 +46,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
             return Task.CompletedTask;
         }
 
-        public Task OnNextAsync(IEnumerable<EntityContext<T>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityOperationContext<T>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
@@ -58,18 +58,18 @@ namespace TableClient.DependencyInjection.AdvancedSample
 
                 switch (context.EntityOperation)
                 {
-                    case EntityOperation.Add:
+                    case EntityOperationType.Add:
                         _addOperations.Enqueue(entity);
                         break;
 
-                    case EntityOperation.AddOrReplace:
-                    case EntityOperation.AddOrMerge:
-                    case EntityOperation.Merge:
-                    case EntityOperation.Replace:
+                    case EntityOperationType.AddOrReplace:
+                    case EntityOperationType.AddOrMerge:
+                    case EntityOperationType.Merge:
+                    case EntityOperationType.Replace:
                         _updateOperations.Enqueue(entity);
                         break;
 
-                    case EntityOperation.Delete:
+                    case EntityOperationType.Delete:
                         _deleteOperations.Enqueue(entity);
                         break;
                 }

@@ -1,5 +1,4 @@
-﻿using Azure.Data.Tables;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Azure.EntityServices.Tables.Core
 {
@@ -8,9 +7,9 @@ namespace Azure.EntityServices.Tables.Core
         public EntityTransactionGroup(string partitionKey)
         {
             PartitionKey = partitionKey;
-           
-        } 
+
+        }
         public string PartitionKey { get; private set; }
-        public List<TableTransactionAction> Actions { get; set; } = new();
+        public List<EntityOperation> Actions { get; } = new();
     }
 }

@@ -5,17 +5,30 @@ namespace Azure.EntityServices.Tables.Extensions
 {
     internal static class TableTransactionActionTypeExtensions
     {
-        public static EntityOperation MapToEntityOperation(this TableTransactionActionType tableTransactionActionType)
+        public static EntityOperationType MapToEntityOperation(this TableTransactionActionType tableTransactionActionType)
         { 
             return tableTransactionActionType switch
             {
-                TableTransactionActionType.Add => EntityOperation.Add,
-                TableTransactionActionType.UpdateMerge => EntityOperation.Merge,
-                TableTransactionActionType.UpdateReplace => EntityOperation.Replace,
-                TableTransactionActionType.Delete => EntityOperation.Delete,
-                TableTransactionActionType.UpsertMerge => EntityOperation.AddOrMerge,
-                TableTransactionActionType.UpsertReplace => EntityOperation.AddOrReplace,
+                TableTransactionActionType.Add => EntityOperationType.Add,
+                TableTransactionActionType.UpdateMerge => EntityOperationType.Merge,
+                TableTransactionActionType.UpdateReplace => EntityOperationType.Replace,
+                TableTransactionActionType.Delete => EntityOperationType.Delete,
+                TableTransactionActionType.UpsertMerge => EntityOperationType.AddOrMerge,
+                TableTransactionActionType.UpsertReplace => EntityOperationType.AddOrReplace,
                 _ => throw new NotSupportedException($"TableTransactionActionType {tableTransactionActionType} not supported by Azure EntityServices")
+            };
+        }
+        public static TableTransactionActionType MapToTableTransactionActionType(this EntityOperationType entityOperation)
+        {
+            return entityOperation switch
+            {
+                EntityOperationType.Add => TableTransactionActionType.Add,
+                EntityOperationType.Merge => TableTransactionActionType.UpdateMerge,
+                EntityOperationType.Replace => TableTransactionActionType.UpdateReplace,
+                EntityOperationType.Delete => TableTransactionActionType.Delete,
+                EntityOperationType.AddOrMerge => TableTransactionActionType.UpsertMerge,
+                EntityOperationType.AddOrReplace => TableTransactionActionType.UpsertReplace,
+                _ => throw new NotSupportedException($"EntityOperation {entityOperation} not supported by Azure EntityServices")
             };
         }
     }

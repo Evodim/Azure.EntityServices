@@ -5,7 +5,7 @@ namespace Azure.EntityServices.Tables.Core
 
     public interface IEntityDataReader<out T>
     {
-        IDictionary<string, object> ReadProperties();
+        IDictionary<string, object> ReadMetadata();
 
         T Read();
     }

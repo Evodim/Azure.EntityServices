@@ -18,9 +18,9 @@ namespace TableClient.DependencyInjection.AdvancedSample
  /// </remarks>
     public class SampleProjectionObserver : IEntityObserver<PersonEntity>
     {
-        private readonly ConcurrentQueue<PersonEntity> _addOperations = new ConcurrentQueue<PersonEntity>();
-        private readonly ConcurrentQueue<PersonEntity> _updateOperations = new ConcurrentQueue<PersonEntity>();
-        private readonly ConcurrentQueue<PersonEntity> _deleteOperations = new ConcurrentQueue<PersonEntity>();
+        private readonly ConcurrentQueue<PersonEntity> _addOperations = new();
+        private readonly ConcurrentQueue<PersonEntity> _updateOperations = new();
+        private readonly ConcurrentQueue<PersonEntity> _deleteOperations = new();
         private readonly IEntityTableClient<PersonEntity> _entityClient;
 
         private long added = 0;
@@ -45,20 +45,20 @@ namespace TableClient.DependencyInjection.AdvancedSample
             Interlocked.Exchange(ref deleted, _deleteOperations.Count + deleted);
             Console.Write($"{nameof(SampleProjectionObserver)} ToAdd:    {added}     ToUpdate:    {updated}    ToDelete:  {deleted}        ");
 
-            if (_addOperations.Count > 0)
+            if (!_addOperations.IsEmpty)
             {
                 await _entityClient.AddOrReplaceManyAsync(_addOperations.ToList());
                 Console.WriteLine($"{_addOperations.Count} added");
                 _addOperations.Clear();
             }
-            if (_updateOperations.Count > 0)
+            if (!_updateOperations.IsEmpty)
             {
                 await _entityClient.AddOrReplaceManyAsync(_updateOperations.ToList());
                 Console.WriteLine($"{_updateOperations.Count} updated");
                 _updateOperations.Clear();
             }
 
-            if (_deleteOperations.Count > 0)
+            if (!_deleteOperations.IsEmpty)
             {
                 await _entityClient.DeleteManyAsync(_deleteOperations.ToList());
                 Console.WriteLine($"{_deleteOperations.Count} deleted");
@@ -73,7 +73,7 @@ namespace TableClient.DependencyInjection.AdvancedSample
             return Task.CompletedTask;
         }
 
-        public Task OnNextAsync(IEnumerable<EntityContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityOperationContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
@@ -81,18 +81,18 @@ namespace TableClient.DependencyInjection.AdvancedSample
 
                 switch (context.EntityOperation)
                 {
-                    case EntityOperation.Add:
+                    case EntityOperationType.Add:
                         _addOperations.Enqueue(entity);
                         break;
 
-                    case EntityOperation.AddOrReplace:
-                    case EntityOperation.AddOrMerge:
-                    case EntityOperation.Merge:
-                    case EntityOperation.Replace:
+                    case EntityOperationType.AddOrReplace:
+                    case EntityOperationType.AddOrMerge:
+                    case EntityOperationType.Merge:
+                    case EntityOperationType.Replace:
                         _updateOperations.Enqueue(entity);
                         break;
 
-                    case EntityOperation.Delete:
+                    case EntityOperationType.Delete:
                         _deleteOperations.Enqueue(entity);
                         break;
                 }

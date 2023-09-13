@@ -58,7 +58,7 @@ namespace TableClient.PerformanceSample
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<EntityContext<T>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityOperationContext<T>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
@@ -72,18 +72,18 @@ namespace TableClient.PerformanceSample
                 switch (context.EntityOperation)
 
                 {
-                    case EntityOperation.Delete:
+                    case EntityOperationType.Delete:
                         Interlocked.Increment(ref _deleted);
                         break;
 
-                    case EntityOperation.Add:
+                    case EntityOperationType.Add:
                         Interlocked.Increment(ref _added);
                         break;
 
-                    case EntityOperation.AddOrMerge:
-                    case EntityOperation.AddOrReplace:
-                    case EntityOperation.Merge:
-                    case EntityOperation.Replace:
+                    case EntityOperationType.AddOrMerge:
+                    case EntityOperationType.AddOrReplace:
+                    case EntityOperationType.Merge:
+                    case EntityOperationType.Replace:
                         Interlocked.Increment(ref _upserted);
                         break;
 
