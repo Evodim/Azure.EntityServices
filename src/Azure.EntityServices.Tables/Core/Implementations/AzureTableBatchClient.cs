@@ -1,4 +1,5 @@
 ﻿using Azure.Data.Tables;
+using Azure.EntityServices.Tables.Core.Abstractions;
 using Azure.EntityServices.Tables.Extensions;
 using Polly;
 using Polly.Retry;
@@ -8,15 +9,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tables.Core
+namespace Azure.EntityServices.Tables.Core.Implementations
 {
     public delegate Task OnTransactionSubmitted(IEnumerable<EntityOperation> transaction);
 
-    public class AzureTableBatchClient<T>
-        where T : class, new()
+    public class AzureTableBatchClient<T> : INativeTableBatchClient<T> where T : class, new()
     {
         private readonly AsyncRetryPolicy _retryPolicy;
-        private readonly TableBatchClientOptions _options; 
+        private readonly TableBatchClientOptions _options;
         private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
         private readonly TableServiceClient _tableClientService;
         private readonly Queue<EntityOperation> _pendingOperations;
@@ -34,7 +34,7 @@ namespace Azure.EntityServices.Tables.Core
             TableBatchClientOptions options,
             Func<EntityTransactionGroup, Task<EntityTransactionGroup>> preProcessor,
             IEntityAdapter<T> entityAdapter,
-            OnTransactionSubmitted onTransactionSubmittedHandler = null      
+            OnTransactionSubmitted onTransactionSubmittedHandler = null
             )
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
@@ -54,7 +54,7 @@ namespace Azure.EntityServices.Tables.Core
         public decimal OutstandingOperations => _pendingOperations.Count;
 
         public void Insert(T entity)
-          
+
         {
             _pendingOperations.Enqueue(
                _entityAdapter.ToEntityOperationAction(EntityOperationType.Add, entity)
@@ -62,7 +62,7 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public void Delete(T entity)
-           
+
         {
             _pendingOperations.Enqueue(
             _entityAdapter.ToEntityOperationAction(EntityOperationType.Delete, entity)
@@ -70,7 +70,7 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public void InsertOrMerge(T entity)
-           
+
         {
             _pendingOperations.Enqueue(
              _entityAdapter.ToEntityOperationAction(EntityOperationType.AddOrMerge, entity)
@@ -78,7 +78,7 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public void InsertOrReplace(T entity)
-            
+
         {
             _pendingOperations.Enqueue(
              _entityAdapter.ToEntityOperationAction(EntityOperationType.AddOrReplace, entity)
@@ -86,7 +86,7 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public void Merge(T entity)
-          
+
         {
             _pendingOperations.Enqueue(
                _entityAdapter.ToEntityOperationAction(EntityOperationType.Merge, entity)
@@ -94,7 +94,7 @@ namespace Azure.EntityServices.Tables.Core
         }
 
         public void Replace(T entity)
-            
+
         {
             _pendingOperations.Enqueue(
               _entityAdapter.ToEntityOperationAction(EntityOperationType.Replace, entity)
@@ -121,12 +121,14 @@ namespace Azure.EntityServices.Tables.Core
                            System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count);
 #endif
 
-                           await _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations.Select(a =>
+                           await _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(operations.Select(op =>
 
                               new TableTransactionAction(
-                                  a.EntityOperationType.MapToTableTransactionActionType(),_entityAdapter.ToEntityModel<TableEntity>(new EntityModel(a.PartitionKey,a.RowKey,a.NativeProperties)))), cancellationToken));
+                                  op.EntityOperationType.MapToTableTransactionActionType(),
+                                  op.ToTableEntityModel<T>()))
+                                  , cancellationToken));
 
-                          
+
                            if (_onTransactionSubmitted != null)
                            {
                                await _onTransactionSubmitted.Invoke(operations);
@@ -152,7 +154,7 @@ namespace Azure.EntityServices.Tables.Core
 
         public Task CommitTransactionAsync()
         {
-            return (_pipeline == null) ? Task.CompletedTask : _pipeline.CompleteAsync();
+            return _pipeline == null ? Task.CompletedTask : _pipeline.CompleteAsync();
         }
 
         public async Task SubmitToStorageAsync(CancellationToken cancellationToken = default)
@@ -164,11 +166,10 @@ namespace Azure.EntityServices.Tables.Core
                 var actions = new EntityTransactionGroup(_pendingOperations.First().PartitionKey);
                 actions.Actions.Add(_pendingOperations.Dequeue());
                 var actionsWithTags = await _preProcessor(actions);
-                await _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(actionsWithTags.Actions.Select(a =>
+                await _retryPolicy.ExecuteAsync(() => client.SubmitTransactionAsync(actionsWithTags.Actions.Select(op =>
                 {
-                    return new TableTransactionAction(a.EntityOperationType.MapToTableTransactionActionType(),
-                        _entityAdapter.ToEntityModel<TableEntity>(new EntityModel(a.PartitionKey, a.RowKey, a.NativeProperties))
-                        
+                    return new TableTransactionAction(op.EntityOperationType.MapToTableTransactionActionType(),
+                       op.ToTableEntityModel<T>()
                         );
                 })
                 , cancellationToken));

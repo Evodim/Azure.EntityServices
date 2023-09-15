@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tables.Core
+namespace Azure.EntityServices.Tables.Core.Abstractions
 {
     internal interface IEntityTransactionGroupPipeline
     {

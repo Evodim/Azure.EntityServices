@@ -16,7 +16,7 @@ namespace Azure.EntityServices.Tables
             optionsDelegate.Invoke(options);
             configurator.Invoke(configuration);
 
-            return entityClient.Configure(options, configuration);
+            return entityClient.Configure(options, configuration) as EntityTableClient<T>;
         }
 
         public static EntityTableClient<T> Configure<T>(this EntityTableClient<T> entityClient, EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator)
@@ -29,7 +29,7 @@ namespace Azure.EntityServices.Tables
 
             configurator.Invoke(configuration);
 
-            return entityClient.Configure(options, configuration);
+            return entityClient.Configure(options, configuration) as EntityTableClient<T>;
         }
 
         public static EntityTableClient<T> Configure<T>(this EntityTableClient<T> entityClient, EntityTableClientOptions options, EntityTableClientConfig<T> configuration)
@@ -38,7 +38,7 @@ namespace Azure.EntityServices.Tables
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            return entityClient.Configure(options, configuration);
+            return entityClient.Configure(options, configuration) as EntityTableClient<T>;
         }
     }
 }

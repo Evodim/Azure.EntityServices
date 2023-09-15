@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tables
+namespace Azure.EntityServices.Tables.Core.Abstractions
 {
     public interface INativeTableClient<T> where T : class, new()
     {

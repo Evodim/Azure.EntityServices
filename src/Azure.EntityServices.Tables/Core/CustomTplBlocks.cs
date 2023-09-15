@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Azure.EntityServices.Tables.Core.Abstractions;
 
 namespace Azure.EntityServices.Tables.Core
 {
@@ -80,7 +81,7 @@ namespace Azure.EntityServices.Tables.Core
             groupPerPartitionsBlock.LinkTo(transactionGroupBlock, new DataflowLinkOptions() { PropagateCompletion = true });
             transactionGroupBlock.LinkTo(processorBlock, new DataflowLinkOptions() { PropagateCompletion = true });
 
-            return new Pipeline(preProcessorBlock, processorBlock);
+            return new EntityTransactionGroupPipeline(preProcessorBlock, processorBlock);
         }
 
         /// <summary>

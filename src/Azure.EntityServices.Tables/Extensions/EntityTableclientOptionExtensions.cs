@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 
-namespace Azure.EntityServices.Tables
+namespace Azure.EntityServices.Tables.Extensions
 {
     public static class EntityTableclientOptionExtensions
     {

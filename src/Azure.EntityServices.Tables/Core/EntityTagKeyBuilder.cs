@@ -1,10 +1,9 @@
-﻿using Azure.EntityServices.Tables.Core;
-using System;
+﻿using System;
 using System.Reflection;
 
-namespace Azure.EntityServices.Tables
+namespace Azure.EntityServices.Tables.Core
 {
-    
+
     public sealed class EntityKeyBuilder<T>
     {
         private readonly Func<T, object> _primaryKeyResolver;

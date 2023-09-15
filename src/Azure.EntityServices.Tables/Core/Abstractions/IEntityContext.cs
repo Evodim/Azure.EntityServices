@@ -1,8 +1,6 @@
-﻿using Azure.EntityServices.Tables.Core;
-
-namespace Azure.EntityServices.Tables
+﻿namespace Azure.EntityServices.Tables.Core.Abstractions
 {
-    public interface IEntityContext<T> 
+    public interface IEntityContext<T>
     {
         string PartitionKey { get; }
         string RowKey { get; }

@@ -1,4 +1,5 @@
 ﻿using Azure.Data.Tables;
+using Azure.EntityServices.Tables.Core.Abstractions;
 using Azure.EntityServices.Tables.Extensions;
 using System;
 using System.Collections.Generic;
@@ -6,8 +7,9 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 
-namespace Azure.EntityServices.Tables.Core
+namespace Azure.EntityServices.Tables.Core.Implementations
 {
+
     /// <summary>
     /// Entity adapter used to map pure entity and his metadata to Azure tableEntity
     /// </summary>
@@ -26,25 +28,27 @@ namespace Azure.EntityServices.Tables.Core
             BindingFlags.SetProperty);
 
         private readonly IEnumerable<PropertyInfo> _filteredEntityProperties;
+        private readonly EntityTableClientConfig<T> _entityConfig;
         private readonly EntityKeyBuilder<T> _entityKeyBuilder;
         private readonly IEnumerable<string> _propsToIgnore = Enumerable.Empty<string>();
-         
+
 
         public AzureTableEntityAdapter(
             EntityKeyBuilder<T> entityKeyBuilder,
-            IDictionary<string, Func<T, object>> computedProps = null,
-            IDictionary<string, PropertyInfo> tags = null,
-            ICollection<string> computedTags = null,
-            ICollection<string> propsToIgnore = null,
-            JsonSerializerOptions serializerOptions = null)
+            EntityTableClientConfig<T> entityConfig,
+            EntityTableClientOptions options = null
+            )
         {
-            
+
+
+            _entityConfig = entityConfig;
+
             _entityKeyBuilder = entityKeyBuilder;
-            _propsToIgnore = propsToIgnore ?? Enumerable.Empty<string>();
-            _computedProps = computedProps ?? new Dictionary<string, Func<T, object>>();
-            _tags = tags ?? new Dictionary<string, PropertyInfo>();
-            _computedTags = computedTags ?? Enumerable.Empty<string>();
-            _serializerOptions = serializerOptions;
+            _propsToIgnore = _entityConfig.IgnoredProps ?? Enumerable.Empty<string>();
+            _computedProps = _entityConfig.ComputedProps ?? new Dictionary<string, Func<T, object>>();
+            _tags = _entityConfig.Tags ?? new Dictionary<string, PropertyInfo>();
+            _computedTags = _entityConfig.ComputedTags ?? Enumerable.Empty<string>();
+            _serializerOptions = options?.SerializerOptions;
             _filteredEntityProperties = EntityProperties.Where(p => !_propsToIgnore.Contains(p.Name)).ToList();
         }
 
@@ -92,43 +96,10 @@ namespace Azure.EntityServices.Tables.Core
             return tableEntity as TEntityModel;
         }
 
-
-        public TEntityModel ToEntityModel<TEntityModel>(EntityModel entityModel)
-        where TEntityModel : class, new()
-        {
-          
-             
-            var tableEntity = new TableEntity(entityModel.PartitionKey, entityModel.RowKey);
-
-            if (typeof(T) == typeof(TableEntity))
-            {
-
-                foreach (var property in entityModel.NativeProperties.Where(e => !_propsToIgnore.Contains(e.Key)))
-                {
-                    if (property.Key == "PartitionKey" ||
-                        property.Key == "RowKey" ||
-                        property.Key == "Etag" ||
-                        property.Key == "TimeStamp")
-                    {
-                        continue;
-                    }
-                    tableEntity.AddOrUpdate(property.Key, property.Value);
-                }
-            }
-            else
-            {
-                foreach (var prop in entityModel.NativeProperties)
-                {
-                    tableEntity.AddOrUpdate(prop);
-                }
-            }
-            return tableEntity as TEntityModel;
-        }
-
         public EntityOperation ToEntityOperationAction(EntityOperationType entityOperation, T entity)
         {
 
-              var metadata = new Dictionary<string, object>();
+            var metadata = new Dictionary<string, object>();
             GenerateComputedProps(metadata, entity);
             GenerateTagProps(metadata, entity);
 
@@ -163,17 +134,17 @@ namespace Azure.EntityServices.Tables.Core
             {
                 nativeProperties.AddOrUpdate(dataField.Key, EntityValueAdapter.WriteValue(dataField.Value, _serializerOptions));
             }
-          
+
             return new EntityOperation(
                 _entityKeyBuilder.ResolvePartitionKey(entity),
                 _entityKeyBuilder.ResolvePrimaryKey(entity),
                 entityOperation,
-                nativeProperties 
+                nativeProperties
                 );
         }
 
 
-        public T FromEntityModel(IDictionary<string,object> tableEntity)
+        public T FromEntityModel(IDictionary<string, object> tableEntity)
         {
             var entity = new T();
 
@@ -196,7 +167,7 @@ namespace Azure.EntityServices.Tables.Core
             return entity;
         }
 
-        public IDictionary<string, object> GetMetadata(IDictionary<string,object> tableEntity)
+        public IDictionary<string, object> GetMetadata(IDictionary<string, object> tableEntity)
         {
             var metadata = new Dictionary<string, object>();
 

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Azure.EntityServices.Tables.Core
+namespace Azure.EntityServices.Tables.Core.Abstractions
 {
 
     public interface IEntityDataReader<out T>

@@ -1,6 +1,7 @@
 ﻿using Azure.Data.Tables;
 using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core;
+using Azure.EntityServices.Tables.Core.Abstractions;
 using Polly;
 using Polly.Retry;
 using System;
@@ -10,7 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tables
+namespace Azure.EntityServices.Tables.Core.Implementations
 {
     public class AzureTableClient<T> : INativeTableClient<T> where T : class, new()
     {
@@ -64,7 +65,7 @@ namespace Azure.EntityServices.Tables
         public async Task<bool> CreateTableIfNotExists(CancellationToken cancellationToken = default)
         {
             var response = await _tableClient.CreateIfNotExistsAsync(cancellationToken);
-            return (response != null);
+            return response != null;
         }
 
         public async Task<bool> DropTableIfExists(CancellationToken cancellationToken = default)

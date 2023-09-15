@@ -1,4 +1,5 @@
 ﻿using Azure.Data.Tables;
+using Azure.EntityServices.Tables.Core.Abstractions;
 using System.Collections.Generic;
 
 namespace Azure.EntityServices.Tables.Core

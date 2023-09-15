@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Azure.EntityServices.Tables.Core.Abstractions;
 
-namespace Azure.EntityServices.Tables
+namespace Azure.EntityServices.Tables.Core
 {
     public class EntityObserverNotifier<T> : IEntityObserverNotifier<T> where T : class, new()
     {

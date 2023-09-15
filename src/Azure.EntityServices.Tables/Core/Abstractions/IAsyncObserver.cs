@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tables.Core
+namespace Azure.EntityServices.Tables.Core.Abstractions
 {
     public interface IAsyncObserver<in T>
     {
