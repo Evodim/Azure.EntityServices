@@ -107,7 +107,9 @@ namespace Azure.EntityServices.Table.Tests
         {
             var persons = Fakers.CreateFakePerson().Generate(10);
 
-            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString).Configure(options => _defaultOptions(options), c =>
+            var entityTable =
+                EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
             {
                 c.
                 SetPartitionKey(p => p.TenantId)
@@ -559,7 +561,6 @@ namespace Azure.EntityServices.Table.Tests
             }
         }
 
-
         [TestMethod]
         public async Task Should_Get_By_Indexed_Tag_With_Filter()
         {
@@ -643,7 +644,5 @@ namespace Azure.EntityServices.Table.Tests
                 resultPage.First().Should().BeEquivalentTo(person);
             }
         }
-
-
     }
 }
