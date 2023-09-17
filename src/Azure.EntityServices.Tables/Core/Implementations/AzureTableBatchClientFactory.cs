@@ -1,12 +1,12 @@
 ﻿using Azure.Data.Tables;
-using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Core.Abstractions;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Implementations
 {
-    public class AzureTableBatchClientFactory<T> : INativeTableBatchClientFactory<T>
+    public class AzureTableBatchClientFactory<T> : ITableBatchClientFactory<T>
         where T : class, new()
     {
         private readonly TableServiceClient _tableServiceClient;
@@ -16,12 +16,12 @@ namespace Azure.EntityServices.Tables.Core.Implementations
             _tableServiceClient = tableServiceClient;
         }
 
-        public INativeTableBatchClient<T> Create(
+        public ITableBatchClient<T> Create(
             EntityTableClientOptions options,
             Func<EntityTransactionGroup,
             Task<EntityTransactionGroup>> preProcessor,
             IEntityAdapter<T> entityAdapter,
-            OnTransactionSubmitted onTransactionSubmittedHandler = null)
+            Func<IEnumerable<EntityOperation>, Task> onTransactionSubmittedHandler = null)
         {
             return new AzureTableBatchClient<T>(
                _tableServiceClient,

@@ -1,6 +1,5 @@
 ﻿using Azure.Data.Tables;
 using Azure.EntityServices.Core.Abstractions;
-using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Core.Abstractions;
 using Azure.EntityServices.Tables.Core.Implementations;
 
@@ -14,30 +13,27 @@ namespace Azure.EntityServices.Tables
     where T : class, new()
     {
         private readonly TableServiceClient _tableServiceClient;
-       
-        
+
         internal EntityTableClient(TableServiceClient tableService)
         {
             _tableServiceClient = tableService;
-        } 
+        }
 
         public override void ConfigureServices(
             INativeTableClient<T> nativeTableClient,
             IEntityAdapter<T> entityAdapter,
-            INativeTableBatchClientFactory<T> nativeTableBatchClientFactory)
+            ITableBatchClientFactory<T> nativeTableBatchClientFactory)
         {
-         
-         nativeTableBatchClientFactory = new AzureTableBatchClientFactory<T>(_tableServiceClient);
+            nativeTableBatchClientFactory = new AzureTableBatchClientFactory<T>(_tableServiceClient);
 
-         entityAdapter = new AzureTableEntityAdapter<T>(
-          EntityKeyBuilder,
-          Config,
-          Options);
+            entityAdapter = new AzureTableEntityAdapter<T>(
+             EntityKeyBuilder,
+             Config,
+             Options);
 
-          nativeTableClient = new AzureTableClient<T>(Options, entityAdapter, _tableServiceClient);
+            nativeTableClient = new AzureTableClient<T>(Options, entityAdapter, _tableServiceClient);
 
-          base.ConfigureServices(nativeTableClient, entityAdapter, nativeTableBatchClientFactory);
+            base.ConfigureServices(nativeTableClient, entityAdapter, nativeTableBatchClientFactory);
         }
-
     }
 }

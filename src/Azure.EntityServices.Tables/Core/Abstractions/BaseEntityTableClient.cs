@@ -2,7 +2,6 @@
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Core.Abstractions;
-using Azure.EntityServices.Tables.Core.Implementations;
 using Azure.EntityServices.Tables.Extensions;
 using System;
 using System.Collections.Generic;
@@ -21,13 +20,13 @@ namespace Azure.EntityServices.Core.Abstractions
     where T : class, new()
     {
         private INativeTableClient<T> _nativeTableClient;
-        private INativeTableBatchClientFactory<T> _nativeTableBatchClientFactory;
+        private ITableBatchClientFactory<T> _nativeTableBatchClientFactory;
         private IEntityAdapter<T> _entityAdapter;
         private IEnumerable<string> _indextedTags;
         private IList<string> _indextedTagsWithKeys;
         private IEnumerable<IEntityObserver<T>> _observerInstances;
         private IEntityObserverNotifier<T> _entityObserverNotifier;
-        private OnTransactionSubmitted _submittedObserver;
+        private Func<IEnumerable<EntityOperation>, Task> _submittedObserver;
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
         protected EntityKeyBuilder<T> EntityKeyBuilder;
@@ -42,36 +41,8 @@ namespace Azure.EntityServices.Core.Abstractions
 
             try
             {
-                switch (operation)
-                {
-                    case EntityOperationType.Add:
-                        batchClient.Insert(entity);
-                        break;
-
-                    case EntityOperationType.AddOrMerge:
-                        batchClient.InsertOrMerge(entity);
-                        break;
-
-                    case EntityOperationType.AddOrReplace:
-                        batchClient.InsertOrReplace(entity);
-                        break;
-
-                    case EntityOperationType.Replace:
-                        batchClient.Replace(entity);
-                        break;
-
-                    case EntityOperationType.Merge:
-                        batchClient.Merge(entity);
-                        break;
-
-                    case EntityOperationType.Delete:
-                        batchClient.Delete(entity);
-                        break;
-
-                    default:
-                        throw new NotImplementedException($"{operation} operation not supported");
-                }
-                await batchClient.SubmitToStorageAsync(cancellationToken);
+                batchClient.AddOperation(operation, entity);
+                await batchClient.SubmitAsync(cancellationToken);
                 await _entityObserverNotifier.NotifyCompleteAsync();
             }
             catch (Exception ex)
@@ -85,9 +56,8 @@ namespace Azure.EntityServices.Core.Abstractions
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = config ?? throw new ArgumentNullException(nameof(config));
-           
 
-            Options = options; 
+            Options = options;
             Config = config;
             Config.RowKeyResolver ??= (e) => Config.RowKeyProp.GetValue(e);
             Config.PartitionKeyResolver ??= (e) => $"_{Config.RowKeyResolver(e).ToInvariantString().ToShortHash()}";
@@ -102,7 +72,6 @@ namespace Azure.EntityServices.Core.Abstractions
             }
             //PrimaryKey required
             _ = Config.RowKeyResolver ?? throw new InvalidOperationException($"at least one of RowKeyResolver or PrimaryKeyResolver was required and must be set");
-
 
             ConfigureServices(_nativeTableClient, _entityAdapter, _nativeTableBatchClientFactory);
 
@@ -173,12 +142,12 @@ namespace Azure.EntityServices.Core.Abstractions
             };
 
             return this;
-        } 
-      
+        }
+
         public virtual void ConfigureServices(
             INativeTableClient<T> nativeTableClient,
             IEntityAdapter<T> entityAdapter,
-            INativeTableBatchClientFactory<T> nativeTableBatchClientFactory)
+            ITableBatchClientFactory<T> nativeTableBatchClientFactory)
         {
             _ = nativeTableClient ?? throw new ArgumentNullException(nameof(nativeTableClient));
             _ = entityAdapter ?? throw new ArgumentNullException(nameof(entityAdapter));
@@ -299,27 +268,26 @@ namespace Azure.EntityServices.Core.Abstractions
         public async Task<long> UpdateManyAsync(Action<T> updateAction, Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default)
         {
             long count = 0;
-            var batchedClient = _nativeTableBatchClientFactory.Create(Options, _pipelinePreProcessor, _entityAdapter, _submittedObserver);
+            var batchedClient = _nativeTableBatchClientFactory.Create(
+                Options,
+                _pipelinePreProcessor,
+                _entityAdapter,
+                _submittedObserver);
 
             await foreach (var entityPage in _nativeTableClient.QueryEntities(filter, null, null, cancellationToken))
             {
-                foreach (var entity in entityPage.Entities)
-                {
-                    if (cancellationToken.IsCancellationRequested) break;
+                await AddOrMergeManyAsync(entityPage.Entities.ToList()
+                    .Select(e =>
+                    {
+                        updateAction.Invoke(e);
+                        return e;
+                    }), cancellationToken);
 
-                    updateAction.Invoke(entity);
-
-                    batchedClient.InsertOrMerge(entity);
-
-                    await batchedClient.SubmitToPipelineAsync(EntityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
-                    count++;
-                }
+                count += entityPage.IteratedCount;
 #if DEBUG
                 System.Diagnostics.Debug.WriteLine("Entities updated {0}", count);
 #endif
             }
-            await batchedClient.CommitTransactionAsync();
-            await _entityObserverNotifier.NotifyCompleteAsync();
 
             return count;
         }
@@ -369,36 +337,18 @@ namespace Azure.EntityServices.Core.Abstractions
             return true;
         }
 
-        protected async Task ApplyBatchOperations(EntityOperationType operation, IEnumerable<T> entities, CancellationToken cancellationToken)
+        protected async Task ApplyBatchOperations(EntityOperationType operationType, IEnumerable<T> entities, CancellationToken cancellationToken)
         {
             var batchedClient = _nativeTableBatchClientFactory.Create(Options, _pipelinePreProcessor, _entityAdapter, _submittedObserver);
 
             foreach (var entity in entities)
             {
                 if (cancellationToken.IsCancellationRequested) break;
+                batchedClient.AddOperation(operationType, entity);
 
-                switch (operation)
-                {
-                    case EntityOperationType.Add:
-                        batchedClient.Insert(entity);
-                        break;
-
-                    case EntityOperationType.AddOrMerge:
-                        batchedClient.InsertOrMerge(entity);
-                        break;
-
-                    case EntityOperationType.AddOrReplace:
-                        batchedClient.InsertOrReplace(entity);
-                        break;
-
-                    case EntityOperationType.Delete:
-                        batchedClient.Delete(entity);
-                        break;
-                }
-
-                await batchedClient.SubmitToPipelineAsync(EntityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
+                await batchedClient.SendToPipelineAsync(EntityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
             }
-            await batchedClient.CommitTransactionAsync();
+            await batchedClient.CompletePipelineAsync();
             await _entityObserverNotifier.NotifyCompleteAsync();
         }
     }
