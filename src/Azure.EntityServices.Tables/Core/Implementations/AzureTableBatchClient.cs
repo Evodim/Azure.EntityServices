@@ -6,6 +6,7 @@ using Polly.Retry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Implementations
@@ -35,14 +36,52 @@ namespace Azure.EntityServices.Tables.Core.Implementations
             _client = _tableClientService.GetTableClient(options.TableName);
         }
 
-        protected override Task SendBulkOperations(IEnumerable<EntityOperation> entityOperations)
+        private Task SendUniqueOperation(EntityOperation entityOperation, CancellationToken cancellationToken = default)
         {
-            return _retryPolicy.ExecuteAsync(() => _client.SubmitTransactionAsync(entityOperations.Select(op =>
+            var nativeEntity = entityOperation.ToTableEntityModel<T>();
+            return _retryPolicy.ExecuteAsync(async () =>
             {
-                return new TableTransactionAction(op.EntityOperationType.MapToTableTransactionActionType(),
-                   op.ToTableEntityModel<T>()
-                    );
-            })));
+                switch (entityOperation.EntityOperationType)
+                {
+                    case EntityOperationType.Add:
+                        await _client.AddEntityAsync(nativeEntity, cancellationToken);
+                        break;
+
+                    case EntityOperationType.Replace:
+                        await _client.UpdateEntityAsync(nativeEntity, ETag.All, mode: TableUpdateMode.Replace, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.Merge:
+                        await _client.UpdateEntityAsync(nativeEntity, ETag.All, mode: TableUpdateMode.Merge, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.AddOrReplace:
+                        await _client.UpsertEntityAsync(nativeEntity, mode: TableUpdateMode.Replace, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.AddOrMerge:
+                        await _client.UpsertEntityAsync(nativeEntity, mode: TableUpdateMode.Merge, cancellationToken: cancellationToken);
+                        break;
+
+                    default: throw new NotSupportedException(nameof(entityOperation.EntityOperationType));
+                }
+            });
+        }
+
+        protected override Task SubmitTransaction(IEnumerable<EntityOperation> entityOperations, CancellationToken cancellationToken = default)
+        {
+            if (entityOperations.Count() == 1)
+            {
+                return _retryPolicy.ExecuteAsync(() =>
+                SendUniqueOperation(entityOperations.First(), cancellationToken));
+            }
+
+            return _retryPolicy.ExecuteAsync(() =>
+            _client.SubmitTransactionAsync(entityOperations.Select(
+                op =>
+                new TableTransactionAction(op.EntityOperationType.MapToTableTransactionActionType(),
+                                           op.ToTableEntityModel<T>())
+            ), cancellationToken));
         }
     }
 }

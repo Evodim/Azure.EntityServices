@@ -9,10 +9,10 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
 
         void AddOperation(EntityOperationType entityOperationType, T entity);
 
-        Task CompletePipelineAsync(); 
+        Task CompletePipelineAsync();
 
-        Task SendToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default);
+        Task SendOperations(string partitionKey, CancellationToken cancellationToken = default);
 
-        Task SubmitAsync(CancellationToken cancellationToken = default);
+        Task SendOperation(CancellationToken cancellationToken = default);
     }
 }
