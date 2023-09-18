@@ -19,7 +19,7 @@ namespace Azure.EntityServices.Core.Abstractions
     public abstract class BaseEntityTableClient<T> : IEntityTableClient<T>, IObservableEntityTableClient<T>
     where T : class, new()
     {
-        private INativeTableClient<T> _nativeTableClient;
+        private ITableClient<T> _nativeTableClient;
         private ITableBatchClientFactory<T> _nativeTableBatchClientFactory;
         private IEntityAdapter<T> _entityAdapter;
         private IEnumerable<string> _indextedTags;
@@ -42,7 +42,8 @@ namespace Azure.EntityServices.Core.Abstractions
             try
             {
                 batchClient.AddOperation(operation, entity);
-                await batchClient.SubmitAsync(cancellationToken);
+                await batchClient.SendOperation(cancellationToken);
+
                 await _entityObserverNotifier.NotifyCompleteAsync();
             }
             catch (Exception ex)
@@ -145,7 +146,7 @@ namespace Azure.EntityServices.Core.Abstractions
         }
 
         public virtual void ConfigureServices(
-            INativeTableClient<T> nativeTableClient,
+            ITableClient<T> nativeTableClient,
             IEntityAdapter<T> entityAdapter,
             ITableBatchClientFactory<T> nativeTableBatchClientFactory)
         {
@@ -346,7 +347,7 @@ namespace Azure.EntityServices.Core.Abstractions
                 if (cancellationToken.IsCancellationRequested) break;
                 batchedClient.AddOperation(operationType, entity);
 
-                await batchedClient.SendToPipelineAsync(EntityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
+                await batchedClient.SendOperations(EntityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
             }
             await batchedClient.CompletePipelineAsync();
             await _entityObserverNotifier.NotifyCompleteAsync();

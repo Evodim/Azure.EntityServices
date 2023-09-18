@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Abstractions
 {
-    public interface INativeTableClient<T> where T : class, new()
+    public interface ITableClient<T> where T : class, new()
     {
         Task<bool> CreateTableIfNotExists(CancellationToken cancellationToken = default);
         Task<bool> DropTableIfExists(CancellationToken cancellationToken = default);

@@ -20,7 +20,7 @@ namespace Azure.EntityServices.Tables
         }
 
         public override void ConfigureServices(
-            INativeTableClient<T> nativeTableClient,
+            ITableClient<T> nativeTableClient,
             IEntityAdapter<T> entityAdapter,
             ITableBatchClientFactory<T> nativeTableBatchClientFactory)
         {

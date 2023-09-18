@@ -12,7 +12,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
         private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
         private readonly Queue<EntityOperation> _pendingOperations;
         private IEntityTransactionGroupPipeline _pipeline;
-        private readonly Func<IEnumerable<EntityOperation>, Task> _onTransactionSubmitted;
+        private readonly Func<IEnumerable<EntityOperation>, Task> _onSubmitted;
         private readonly IEntityAdapter<T> _entityAdapter;
 
 #if DEBUG
@@ -32,7 +32,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
 
             _options = options;
             _preProcessor = preProcessor;
-            _onTransactionSubmitted = onTransactionSubmittedHandler;
+            _onSubmitted = onTransactionSubmittedHandler;
             _entityAdapter = entityAdapter;
 
             _pipeline ??= CustomTplBlocks.CreatePipeline(_preProcessor, async transactionGroups =>
@@ -54,11 +54,11 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
                     System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count);
 #endif
 
-                    await SendBulkOperations(operations);
+                    await SubmitTransaction(operations);
 
-                    if (_onTransactionSubmitted != null)
+                    if (_onSubmitted != null)
                     {
-                        await _onTransactionSubmitted.Invoke(operations);
+                        await _onSubmitted.Invoke(operations);
                     }
 #if DEBUG
                 }
@@ -83,7 +83,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
              );
         }
 
-        public async Task SendToPipelineAsync(string partitionKey, CancellationToken cancellationToken = default)
+        public async Task SendOperations(string partitionKey, CancellationToken cancellationToken = default)
         {
             var entityTransactionGroup = new EntityTransactionGroup(partitionKey);
             entityTransactionGroup.Actions.AddRange(_pendingOperations);
@@ -96,7 +96,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
             return _pipeline == null ? Task.CompletedTask : _pipeline.CompleteAsync();
         }
 
-        public async Task SubmitAsync(CancellationToken cancellationToken = default)
+        public async Task SendOperation(CancellationToken cancellationToken = default)
         {
             if (_pendingOperations.Count != 0)
             {
@@ -104,16 +104,16 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
                 actions.Actions.Add(_pendingOperations.Dequeue());
                 var actionsWithTags = await _preProcessor(actions);
 
-                await SendBulkOperations(actionsWithTags.Actions);
+                await SubmitTransaction(actionsWithTags.Actions);
                 _pendingOperations.Clear();
 
-                if (_onTransactionSubmitted != null)
+                if (_onSubmitted != null)
                 {
-                    await _onTransactionSubmitted.Invoke(actionsWithTags.Actions);
+                    await _onSubmitted.Invoke(actionsWithTags.Actions);
                 }
             }
         }
 
-        protected abstract Task SendBulkOperations(IEnumerable<EntityOperation> entityOperations);
+        protected abstract Task SubmitTransaction(IEnumerable<EntityOperation> entityOperations, CancellationToken cancellationToken = default);
     }
 }

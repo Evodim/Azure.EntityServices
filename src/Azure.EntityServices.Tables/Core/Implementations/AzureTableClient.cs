@@ -1,6 +1,5 @@
 ﻿using Azure.Data.Tables;
 using Azure.EntityServices.Queries;
-using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Core.Abstractions;
 using Polly;
 using Polly.Retry;
@@ -13,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Implementations
 {
-    public class AzureTableClient<T> : INativeTableClient<T> where T : class, new()
+    public class AzureTableClient<T> : ITableClient<T> where T : class, new()
     {
         private readonly EntityTableClientOptions _options;
         private readonly TableServiceClient _tableServiceClient;
