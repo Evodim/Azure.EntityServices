@@ -1,11 +1,12 @@
 ﻿using Azure.EntityServices.Queries;
+using Azure.EntityServices.Tables.Core.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Azure.EntityServices.Tables.Core.Abstractions
+namespace Azure.EntityServices.Tables.Core
 {
     public class TableClientFacade<T> : ITableClientFacade<T> where T : class, new()
     {

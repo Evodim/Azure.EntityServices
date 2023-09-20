@@ -19,9 +19,12 @@ namespace Azure.EntityServices.Core.Abstractions
     public abstract class BaseEntityTableClient<T> : IEntityTableClient<T>, IObservableEntityTableClient<T>
     where T : class, new()
     {
-        private ITableClientFactory<T> _tableClientFactory;
-        private ITableClientFacade<T> _tableClientFacade;
+        private readonly IEntityAdapterFactory _entityAdapterFactory;
+        private readonly ITableClientFactory _tableClientFactory;
+
         private IEntityAdapter<T> _entityAdapter;
+
+        private ITableClientFacade<T> _tableClientFacade;        
         private IEnumerable<string> _indextedTags;
         private IList<string> _indextedTagsWithKeys;
         private IEnumerable<IEntityObserver<T>> _observerInstances;
@@ -29,12 +32,16 @@ namespace Azure.EntityServices.Core.Abstractions
         private Func<IEnumerable<EntityOperation>, Task> _submittedObserver;
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
-        protected virtual EntityKeyBuilder<T> EntityKeyBuilder { get; private set; }
-
+        private EntityKeyBuilder<T> _entityKeyBuilder;
         protected EntityTableClientConfig<T> Config;
 
         protected EntityTableClientOptions Options;
 
+        protected BaseEntityTableClient(IEntityAdapterFactory entityAdapterFactory, ITableClientFactory tableClientFactory)
+        {
+            _entityAdapterFactory = entityAdapterFactory;
+            _tableClientFactory = tableClientFactory;
+        }
         private async Task UpdateEntity(T entity, EntityOperationType operation, CancellationToken cancellationToken = default)
         {
             var batchClient = _tableClientFactory.Create(
@@ -54,7 +61,7 @@ namespace Azure.EntityServices.Core.Abstractions
             catch (Exception ex)
             {
                 await _entityObserverNotifier.NotifyExceptionAsync(ex);
-                throw new EntityTableClientException($"An error occured during the request, partition:{EntityKeyBuilder.ResolvePartitionKey(entity)} rowkey:{EntityKeyBuilder.ResolvePrimaryKey(entity)}", ex);
+                throw new EntityTableClientException($"An error occured during the request, partition:{_entityKeyBuilder.ResolvePartitionKey(entity)} rowkey:{_entityKeyBuilder.ResolvePrimaryKey(entity)}", ex);
             }
         }
 
@@ -67,7 +74,7 @@ namespace Azure.EntityServices.Core.Abstractions
             Config = config;
             Config.RowKeyResolver ??= (e) => Config.RowKeyProp.GetValue(e);
             Config.PartitionKeyResolver ??= (e) => $"_{Config.RowKeyResolver(e).ToInvariantString().ToShortHash()}";
-            EntityKeyBuilder = new EntityKeyBuilder<T>(Config.PartitionKeyResolver, Config.RowKeyResolver);
+            _entityKeyBuilder = new EntityKeyBuilder<T>(Config.PartitionKeyResolver, Config.RowKeyResolver);
             _observerInstances = Config.Observers.Select(o => o.Value.Invoke()).ToList();
             _entityObserverNotifier = new EntityObserverNotifier<T>(_observerInstances);
 
@@ -79,7 +86,7 @@ namespace Azure.EntityServices.Core.Abstractions
             //PrimaryKey required
             _ = Config.RowKeyResolver ?? throw new InvalidOperationException($"at least one of RowKeyResolver or PrimaryKeyResolver was required and must be set");
 
-            ConfigureServices(_entityAdapter, _tableClientFactory);
+            ConfigureServiceFactories(_entityAdapterFactory, _tableClientFactory);
 
             _submittedObserver = transactions => _entityObserverNotifier.NotifyChangeAsync(transactions.Select(
                 transaction => new EntityOperationContext<T>(
@@ -91,8 +98,8 @@ namespace Azure.EntityServices.Core.Abstractions
             _indextedTags =
               Config.Tags.Keys
               .Union(Config.ComputedTags)
-              .Select(t => EntityKeyBuilder.CreateTagName(t))
-              .Where(t => t.EndsWith(EntityKeyBuilder.IndexedTagSuffix));
+              .Select(t => _entityKeyBuilder.CreateTagName(t))
+              .Where(t => t.EndsWith(_entityKeyBuilder.IndexedTagSuffix));
 
             _indextedTagsWithKeys = _indextedTags.ToList();
             _indextedTagsWithKeys.Add("PartitionKey");
@@ -150,15 +157,14 @@ namespace Azure.EntityServices.Core.Abstractions
             return this;
         }
 
-        public virtual void ConfigureServices(
-            IEntityAdapter<T> entityAdapter,
-            ITableClientFactory<T> tableClientFactory)
+        public virtual void ConfigureServiceFactories(
+            IEntityAdapterFactory entityAdapterFactory,
+            ITableClientFactory tableClientFactory)
         {
-            _ = entityAdapter ?? throw new ArgumentNullException(nameof(entityAdapter));
+            _ = entityAdapterFactory ?? throw new ArgumentNullException(nameof(entityAdapterFactory));
             _ = tableClientFactory ?? throw new ArgumentNullException(nameof(tableClientFactory));
 
-            _entityAdapter = entityAdapter;
-            _tableClientFactory = tableClientFactory;
+            _entityAdapter = entityAdapterFactory.Create(_entityKeyBuilder, Config, Options);
             _tableClientFacade = tableClientFactory.Create(Config, Options, _pipelinePreProcessor, _entityAdapter, _submittedObserver);
         }
 
@@ -196,7 +202,7 @@ namespace Azure.EntityServices.Core.Abstractions
 
         public async Task<T> GetByIdAsync(string partition, object id, CancellationToken cancellationToken = default)
         {
-            var rowKey = EntityKeyBuilder.ResolvePrimaryKey(id);
+            var rowKey = _entityKeyBuilder.ResolvePrimaryKey(id);
             try
             {
                 var response = await _tableClientFacade.GetEntityProperties(partition.EscapeDisallowedKeyValue(), rowKey, null, cancellationToken);
@@ -324,8 +330,8 @@ namespace Azure.EntityServices.Core.Abstractions
 
         public Task<bool> DeleteAsync(T entity, CancellationToken cancellationToken = default)
         {
-            var partitionKey = EntityKeyBuilder.ResolvePartitionKey(entity);
-            var rowKey = EntityKeyBuilder.ResolvePrimaryKey(entity);
+            var partitionKey = _entityKeyBuilder.ResolvePartitionKey(entity);
+            var rowKey = _entityKeyBuilder.ResolvePrimaryKey(entity);
 
             return DeleteByIdAsync(partitionKey, rowKey, cancellationToken);
         }
@@ -356,7 +362,7 @@ namespace Azure.EntityServices.Core.Abstractions
                 if (cancellationToken.IsCancellationRequested) break;
                 batchedClient.AddOperation(operationType, entity);
 
-                await batchedClient.SendOperations(EntityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
+                await batchedClient.SendOperations(_entityKeyBuilder.ResolvePartitionKey(entity), cancellationToken);
             }
             await batchedClient.CompletePipelineAsync();
             await _entityObserverNotifier.NotifyCompleteAsync();

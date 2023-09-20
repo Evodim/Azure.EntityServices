@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Implementations
 {
-    public class AzureTableClientFactory<T> : ITableClientFactory<T>
-        where T : class, new()
+    public class AzureTableClientFactory : ITableClientFactory
+      
     {
         private readonly TableServiceClient _tableServiceClient;
 
@@ -16,12 +16,13 @@ namespace Azure.EntityServices.Tables.Core.Implementations
             _tableServiceClient = tableServiceClient;
         }
 
-        public ITableClientFacade<T> Create(
+        public virtual ITableClientFacade<T> Create<T>(
             EntityTableClientConfig<T> config,
             EntityTableClientOptions options,
             Func<EntityTransactionGroup,Task<EntityTransactionGroup>> preProcessor,
             IEntityAdapter<T> entityAdapter,
             Func<IEnumerable<EntityOperation>, Task> onTransactionSubmittedHandler = null)
+              where T : class, new()
         {
             
             return new TableClientFacade<T>(
