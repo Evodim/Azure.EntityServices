@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Azure.EntityServices.Queries;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,20 +7,22 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Abstractions
 {
-    public abstract class BaseTableBatchClient<T> : ITableBatchClient<T> where T : class, new()
+    public class TableClientFacade<T> : ITableClientFacade<T> where T : class, new()
     {
         private readonly TableBatchClientOptions _options;
-        private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
+        private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor; 
         private readonly Queue<EntityOperation> _pendingOperations;
-        private IEntityTransactionGroupPipeline _pipeline;
+        private readonly IEntityTransactionGroupPipeline _pipeline;
         private readonly Func<IEnumerable<EntityOperation>, Task> _onSubmitted;
         private readonly IEntityAdapter<T> _entityAdapter;
+        private readonly INativeTableClient<T> _nativeTableClient;
 
 #if DEBUG
         private int _taskCount = 0;
 #endif
 
-        public BaseTableBatchClient(
+        public TableClientFacade(
+            INativeTableClient<T> tableClient,
             TableBatchClientOptions options,
             Func<EntityTransactionGroup, Task<EntityTransactionGroup>> preProcessor,
             IEntityAdapter<T> entityAdapter,
@@ -28,8 +31,8 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
 
+            _nativeTableClient = tableClient;
             _pendingOperations = new Queue<EntityOperation>();
-
             _options = options;
             _preProcessor = preProcessor;
             _onSubmitted = onTransactionSubmittedHandler;
@@ -54,7 +57,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
                     System.Diagnostics.Debug.WriteLine("Operations to submit to the pipeline: {0}", operations.Count);
 #endif
 
-                    await SubmitTransaction(operations);
+                    await _nativeTableClient.SubmitTransaction(operations);
 
                     if (_onSubmitted != null)
                     {
@@ -74,8 +77,8 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
                );
         }
 
-        public decimal OutstandingOperations => _pendingOperations.Count;
-
+        public decimal OutstandingOperations => _pendingOperations.Count; 
+       
         public void AddOperation(EntityOperationType entityOperationType, T entity)
         {
             _pendingOperations.Enqueue(
@@ -104,7 +107,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
                 actions.Actions.Add(_pendingOperations.Dequeue());
                 var actionsWithTags = await _preProcessor(actions);
 
-                await SubmitTransaction(actionsWithTags.Actions);
+                await _nativeTableClient.SubmitTransaction(actionsWithTags.Actions);
                 _pendingOperations.Clear();
 
                 if (_onSubmitted != null)
@@ -114,6 +117,24 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
             }
         }
 
-        protected abstract Task SubmitTransaction(IEnumerable<EntityOperation> entityOperations, CancellationToken cancellationToken = default);
+        public Task<bool> CreateTableIfNotExists(CancellationToken cancellationToken = default)
+        {
+            return _nativeTableClient.CreateTableIfNotExists(cancellationToken);
+        }
+
+        public Task<bool> DropTableIfExists(CancellationToken cancellationToken = default)
+        {
+           return _nativeTableClient.DropTableIfExists(cancellationToken);
+        }
+
+        public Task<IDictionary<string, object>> GetEntityProperties(string partitionKey, string rowKey, IEnumerable<string> properties = null, CancellationToken cancellationToken = default)
+        {
+           return _nativeTableClient.GetEntityProperties(partitionKey, rowKey, properties, cancellationToken);
+        }
+
+        public IAsyncEnumerable<EntityPage<T>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, bool? iterateOnly = false, CancellationToken cancellationToken = default)
+        {
+          return _nativeTableClient.QueryEntities( filter, maxPerPage, nextPageToken, iterateOnly, cancellationToken);
+        }
     }
 }

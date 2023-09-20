@@ -19,21 +19,14 @@ namespace Azure.EntityServices.Tables
             _tableServiceClient = tableService;
         }
 
-        public override void ConfigureServices(
-            ITableClient<T> nativeTableClient,
+        public override void ConfigureServices( 
             IEntityAdapter<T> entityAdapter,
-            ITableBatchClientFactory<T> nativeTableBatchClientFactory)
+            ITableClientFactory<T> tableClientFactory)
         {
-            nativeTableBatchClientFactory = new AzureTableBatchClientFactory<T>(_tableServiceClient);
-
-            entityAdapter = new AzureTableEntityAdapter<T>(
-             EntityKeyBuilder,
-             Config,
-             Options);
-
-            nativeTableClient = new AzureTableClient<T>(Options, entityAdapter, _tableServiceClient);
-
-            base.ConfigureServices(nativeTableClient, entityAdapter, nativeTableBatchClientFactory);
+           
+            base.ConfigureServices( 
+                new AzureTableEntityAdapter<T>(EntityKeyBuilder, Config, Options), 
+                new AzureTableClientFactory<T>(_tableServiceClient));
         }
     }
 }

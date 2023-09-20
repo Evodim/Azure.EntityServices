@@ -1,6 +1,7 @@
 ﻿using Azure.Data.Tables;
 using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core.Abstractions;
+using Azure.EntityServices.Tables.Extensions;
 using Polly;
 using Polly.Retry;
 using System;
@@ -12,22 +13,19 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Implementations
 {
-    public class AzureTableClient<T> : ITableClient<T> where T : class, new()
+    public class AzureNativeTableClient<T> : INativeTableClient<T> where T : class, new()
     {
-        private readonly EntityTableClientOptions _options;
-        private readonly TableServiceClient _tableServiceClient;
         private readonly IEntityAdapter<T> _entityAdapter;
         private readonly RetryPolicy _retryPolicy;
         private readonly AsyncRetryPolicy _asyncRetryPolicy;
         private readonly TableClient _tableClient;
 
-        public AzureTableClient(
+        public AzureNativeTableClient(
             EntityTableClientOptions options,
             IEntityAdapter<T> entityAdapter,
             TableServiceClient tableServiceClient)
         {
-            _options = options;
-            _tableServiceClient = tableServiceClient;
+          
             _entityAdapter = entityAdapter;
 
             _retryPolicy = Policy.Handle<RequestFailedException>(ex => ex.HandleAzureStorageException(options.TableName, tableServiceClient, options.CreateTableIfNotExists))
@@ -39,7 +37,7 @@ namespace Azure.EntityServices.Tables.Core.Implementations
             _tableClient = tableServiceClient.GetTableClient(options.TableName);
         }
 
-        private IAsyncEnumerable<Page<TableEntity>> QueryTableEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, CancellationToken cancellationToken, bool? iterateOnly = false)
+        private IAsyncEnumerable<Page<TableEntity>> QueryTableEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, bool? iterateOnly = false, CancellationToken cancellationToken = default)
         {
             var query = new TagFilterExpression<T>();
             filter?.Invoke(query);
@@ -52,7 +50,7 @@ namespace Azure.EntityServices.Tables.Core.Implementations
                       .And(filter);
             }
 
-            var strQuery = new TableStorageQueryBuilder<T>(query).Build();
+            var strQuery = new AzureTableStorageQueryBuilder<T>(query).Build();
 
             return _retryPolicy.Execute(() => _tableClient
                                                          .QueryAsync<TableEntity>(filter: string.IsNullOrWhiteSpace(strQuery) ? null : strQuery, select: iterateOnly == true ? new string[] { "PartitionKey", "RowKey" } : null,
@@ -77,11 +75,12 @@ namespace Azure.EntityServices.Tables.Core.Implementations
             Action<IQuery<T>> filter,
             int? maxPerPage,
             string nextPageToken,
-            [EnumeratorCancellation] CancellationToken cancellationToken,
-            bool? iterateOnly = false)
+            bool? iterateOnly = false,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default
+            )
         {
             var iteratedCount = 0;
-            await foreach (var page in QueryTableEntities(filter, maxPerPage, nextPageToken, cancellationToken, iterateOnly))
+            await foreach (var page in QueryTableEntities(filter, maxPerPage, nextPageToken, iterateOnly, cancellationToken))
             {
                 yield return new EntityPage<T>(
                     page.Values.Select(tableEntity => _entityAdapter.FromEntityModel(tableEntity)),
@@ -99,6 +98,53 @@ namespace Azure.EntityServices.Tables.Core.Implementations
                 return nativeEntity.Value;
             }
             return null;
+        }
+
+        public Task SubmitOneOperation(EntityOperation entityOperation, CancellationToken cancellationToken = default)
+        {
+            var nativeEntity = entityOperation.ToTableEntityModel<T>();
+            return _asyncRetryPolicy.ExecuteAsync(async () =>
+            {
+                switch (entityOperation.EntityOperationType)
+                {
+                    case EntityOperationType.Add:
+                        await _tableClient.AddEntityAsync(nativeEntity, cancellationToken);
+                        break;
+
+                    case EntityOperationType.Replace:
+                        await _tableClient.UpdateEntityAsync(nativeEntity, ETag.All, mode: TableUpdateMode.Replace, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.Merge:
+                        await _tableClient.UpdateEntityAsync(nativeEntity, ETag.All, mode: TableUpdateMode.Merge, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.AddOrReplace:
+                        await _tableClient.UpsertEntityAsync(nativeEntity, mode: TableUpdateMode.Replace, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.AddOrMerge:
+                        await _tableClient.UpsertEntityAsync(nativeEntity, mode: TableUpdateMode.Merge, cancellationToken: cancellationToken);
+                        break;
+
+                    default: throw new NotSupportedException(nameof(entityOperation.EntityOperationType));
+                }
+            });
+        }
+
+        public Task SubmitTransaction(IEnumerable<EntityOperation> entityOperations, CancellationToken cancellationToken = default)
+        {
+            if (entityOperations.Count() == 1)
+            {
+                return SubmitOneOperation(entityOperations.First(), cancellationToken);
+            }
+
+            return _asyncRetryPolicy.ExecuteAsync(() =>
+            _tableClient.SubmitTransactionAsync(entityOperations.Select(
+                op =>
+                new TableTransactionAction(op.EntityOperationType.MapToTableTransactionActionType(),
+                                           op.ToTableEntityModel<T>())
+            ), cancellationToken));
         }
     }
 }

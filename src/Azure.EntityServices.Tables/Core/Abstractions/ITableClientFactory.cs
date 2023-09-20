@@ -5,9 +5,10 @@ using System.Collections.Generic;
 
 namespace Azure.EntityServices.Tables.Core.Abstractions
 {
-    public interface ITableBatchClientFactory<T> where T : class, new()
+    public interface ITableClientFactory<T> where T : class, new()
     {
-        ITableBatchClient<T> Create(
+        ITableClientFacade<T> Create(
+            EntityTableClientConfig<T> config,
             EntityTableClientOptions options,
             Func<EntityTransactionGroup, Task<EntityTransactionGroup>> preProcessor,
             IEntityAdapter<T> entityAdapter,

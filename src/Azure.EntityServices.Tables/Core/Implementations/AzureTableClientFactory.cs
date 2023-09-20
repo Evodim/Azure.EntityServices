@@ -6,25 +6,27 @@ using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Implementations
 {
-    public class AzureTableBatchClientFactory<T> : ITableBatchClientFactory<T>
+    public class AzureTableClientFactory<T> : ITableClientFactory<T>
         where T : class, new()
     {
         private readonly TableServiceClient _tableServiceClient;
 
-        public AzureTableBatchClientFactory(TableServiceClient tableServiceClient)
+        public AzureTableClientFactory(TableServiceClient tableServiceClient)
         {
             _tableServiceClient = tableServiceClient;
         }
 
-        public ITableBatchClient<T> Create(
+        public ITableClientFacade<T> Create(
+            EntityTableClientConfig<T> config,
             EntityTableClientOptions options,
-            Func<EntityTransactionGroup,
-            Task<EntityTransactionGroup>> preProcessor,
+            Func<EntityTransactionGroup,Task<EntityTransactionGroup>> preProcessor,
             IEntityAdapter<T> entityAdapter,
             Func<IEnumerable<EntityOperation>, Task> onTransactionSubmittedHandler = null)
         {
-            return new AzureTableBatchClient<T>(
-               _tableServiceClient,
+            
+            return new TableClientFacade<T>(
+               new AzureNativeTableClient<T>(options, entityAdapter, _tableServiceClient),       
+               
                new TableBatchClientOptions()
                {
                    TableName = options.TableName,
@@ -36,7 +38,6 @@ namespace Azure.EntityServices.Tables.Core.Implementations
                   preProcessor,
                   entityAdapter,
                   onTransactionSubmittedHandler
-
                )
             { };
         }

@@ -1,10 +1,20 @@
 ﻿using Azure.Data.Tables;
+using System.Linq;
 
 namespace Azure.EntityServices.Tables
 {
     internal static class RequestFailedExtensions
     {
-        internal static bool HandleAzureStorageException(this RequestFailedException requestFailedException, string tableName, TableServiceClient tableService, bool createTableIfNotExists)
+        internal static string[] HandledErrorCodes = new string[] {
+            "TableBeingDeleted",
+            "OperationTimedOut",
+            "TooManyRequests" };
+
+        internal static bool HandleAzureStorageException(
+            this RequestFailedException requestFailedException,
+            string tableName,
+            TableServiceClient tableService,
+            bool createTableIfNotExists)
         {
             try
             {
@@ -14,20 +24,14 @@ namespace Azure.EntityServices.Tables
                     return true;
                 }
 
-                if (requestFailedException?.ErrorCode == "TableBeingDeleted" ||
-                    requestFailedException?.ErrorCode == "OperationTimedOut" ||
-                    requestFailedException?.ErrorCode == "TooManyRequests"
-                    )
+                if (HandledErrorCodes.Contains(requestFailedException?.ErrorCode))
                 {
                     return true;
                 }
             }
             catch (RequestFailedException ex)
             {
-                if (ex?.ErrorCode == "TableBeingDeleted" ||
-                   ex?.ErrorCode == "OperationTimedOut" ||
-                   ex?.ErrorCode == "TooManyRequests"
-                   )
+                if (HandledErrorCodes.Contains(ex?.ErrorCode))
                 {
                     return true;
                 }

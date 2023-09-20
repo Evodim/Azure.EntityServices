@@ -1,12 +1,12 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Queries.Core;
 
-namespace Azure.EntityServices.Tables.Core
+namespace Azure.EntityServices.Tables.Core.Implementations
 {
     //Azure table storage implementation of QueryExpressionBuilder
-    public class TableStorageQueryBuilder<T> : BaseQueryExpressionBuilder<T>
+    public class AzureTableStorageQueryBuilder<T> : BaseQueryExpressionBuilder<T>
     {
-        public TableStorageQueryBuilder(IFilterExpression<T> expression) : base(expression, new TableStorageInstructions())
+        public AzureTableStorageQueryBuilder(IFilterExpression<T> expression) : base(expression, new TableStorageInstructions())
         {
         }
 

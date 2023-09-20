@@ -18,9 +18,9 @@ namespace Azure.EntityServices.Core.Abstractions
     /// <typeparam name="T"></typeparam>
     public abstract class BaseEntityTableClient<T> : IEntityTableClient<T>, IObservableEntityTableClient<T>
     where T : class, new()
-    {
-        private ITableClient<T> _nativeTableClient;
-        private ITableBatchClientFactory<T> _nativeTableBatchClientFactory;
+    { 
+        private ITableClientFactory<T> _tableClientFactory;
+        private ITableClientFacade<T> _tableClientFacade;
         private IEntityAdapter<T> _entityAdapter;
         private IEnumerable<string> _indextedTags;
         private IList<string> _indextedTagsWithKeys;
@@ -29,7 +29,7 @@ namespace Azure.EntityServices.Core.Abstractions
         private Func<IEnumerable<EntityOperation>, Task> _submittedObserver;
         private Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _pipelinePreProcessor;
 
-        protected EntityKeyBuilder<T> EntityKeyBuilder;
+        protected virtual EntityKeyBuilder<T> EntityKeyBuilder { get; private set; }
 
         protected EntityTableClientConfig<T> Config;
 
@@ -37,7 +37,12 @@ namespace Azure.EntityServices.Core.Abstractions
 
         private async Task UpdateEntity(T entity, EntityOperationType operation, CancellationToken cancellationToken = default)
         {
-            var batchClient = _nativeTableBatchClientFactory.Create(Options, _pipelinePreProcessor, _entityAdapter, _submittedObserver);
+            var batchClient = _tableClientFactory.Create(
+                Config,
+                Options,
+                _pipelinePreProcessor,
+                _entityAdapter,
+                _submittedObserver);
 
             try
             {
@@ -74,7 +79,7 @@ namespace Azure.EntityServices.Core.Abstractions
             //PrimaryKey required
             _ = Config.RowKeyResolver ?? throw new InvalidOperationException($"at least one of RowKeyResolver or PrimaryKeyResolver was required and must be set");
 
-            ConfigureServices(_nativeTableClient, _entityAdapter, _nativeTableBatchClientFactory);
+            ConfigureServices( _entityAdapter, _tableClientFactory);
 
             _submittedObserver = transactions => _entityObserverNotifier.NotifyChangeAsync(transactions.Select(
                 transaction => new EntityOperationContext<T>(
@@ -101,7 +106,7 @@ namespace Azure.EntityServices.Core.Abstractions
                 var mainEntityAction = transaction.Actions.First();
                 if (mainEntityAction.EntityOperationType != EntityOperationType.Add && Options.HandleTagMutation)
                 {
-                    existingEntity = await _nativeTableClient.GetEntityProperties(transaction.PartitionKey, newEntity.RowKey, _indextedTagsWithKeys);
+                    existingEntity = await _tableClientFacade.GetEntityProperties(transaction.PartitionKey, newEntity.RowKey, _indextedTagsWithKeys);
                 }
                 //duplicate entity per tags in same partition
                 foreach (var tag in _indextedTags)
@@ -145,18 +150,16 @@ namespace Azure.EntityServices.Core.Abstractions
             return this;
         }
 
-        public virtual void ConfigureServices(
-            ITableClient<T> nativeTableClient,
+        public virtual void ConfigureServices( 
             IEntityAdapter<T> entityAdapter,
-            ITableBatchClientFactory<T> nativeTableBatchClientFactory)
-        {
-            _ = nativeTableClient ?? throw new ArgumentNullException(nameof(nativeTableClient));
+            ITableClientFactory<T> tableClientFactory)
+        { 
             _ = entityAdapter ?? throw new ArgumentNullException(nameof(entityAdapter));
-            _ = nativeTableBatchClientFactory ?? throw new ArgumentNullException(nameof(nativeTableBatchClientFactory));
+            _ = tableClientFactory ?? throw new ArgumentNullException(nameof(tableClientFactory));
 
-            _nativeTableClient = nativeTableClient;
             _entityAdapter = entityAdapter;
-            _nativeTableBatchClientFactory = nativeTableBatchClientFactory;
+            _tableClientFactory = tableClientFactory;
+            _tableClientFacade = tableClientFactory.Create(Config, Options, _pipelinePreProcessor, _entityAdapter, _submittedObserver);
         }
 
         public async Task<EntityPage<T>> GetPagedAsync(
@@ -173,7 +176,7 @@ namespace Azure.EntityServices.Core.Abstractions
             try
             {
                 //Create a new iterator after skipping entities to return next available entities
-                pageEnumerator = _nativeTableClient.QueryEntities(filter, maxPerPage, continuationToken, cancellationToken)
+                pageEnumerator = _tableClientFacade.QueryEntities(filter, maxPerPage, continuationToken, cancellationToken: cancellationToken)
                          .GetAsyncEnumerator(cancellationToken);
 
                 await pageEnumerator.MoveNextAsync();
@@ -196,7 +199,7 @@ namespace Azure.EntityServices.Core.Abstractions
             var rowKey = EntityKeyBuilder.ResolvePrimaryKey(id);
             try
             {
-                var response = await _nativeTableClient.GetEntityProperties(partition.EscapeDisallowedKeyValue(), rowKey, null, cancellationToken);
+                var response = await _tableClientFacade.GetEntityProperties(partition.EscapeDisallowedKeyValue(), rowKey, null, cancellationToken);
                 if (response == null)
                 {
                     return null;
@@ -220,7 +223,7 @@ namespace Azure.EntityServices.Core.Abstractions
         public async IAsyncEnumerable<IEnumerable<T>> GetAsync(Action<IQuery<T>> filter = default,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            await foreach (var page in _nativeTableClient.QueryEntities(filter, null, null, cancellationToken))
+            await foreach (var page in _tableClientFacade.QueryEntities(filter, null, null, cancellationToken: cancellationToken))
             {
                 yield return page.Entities;
             }
@@ -269,13 +272,14 @@ namespace Azure.EntityServices.Core.Abstractions
         public async Task<long> UpdateManyAsync(Action<T> updateAction, Action<IQuery<T>> filter = default, CancellationToken cancellationToken = default)
         {
             long count = 0;
-            var batchedClient = _nativeTableBatchClientFactory.Create(
+            var batchedClient = _tableClientFactory.Create(
+                Config,
                 Options,
                 _pipelinePreProcessor,
                 _entityAdapter,
                 _submittedObserver);
 
-            await foreach (var entityPage in _nativeTableClient.QueryEntities(filter, null, null, cancellationToken))
+            await foreach (var entityPage in _tableClientFacade.QueryEntities(filter, null, null, cancellationToken: cancellationToken))
             {
                 await AddOrMergeManyAsync(entityPage.Entities.ToList()
                     .Select(e =>
@@ -305,12 +309,12 @@ namespace Azure.EntityServices.Core.Abstractions
 
         public Task DropTableAsync(CancellationToken cancellationToken = default)
         {
-            return _nativeTableClient.DropTableIfExists(cancellationToken);
+            return _tableClientFacade.DropTableIfExists(cancellationToken);
         }
 
         public Task CreateTableAsync(CancellationToken cancellationToken = default)
         {
-            return _nativeTableClient.CreateTableIfNotExists(cancellationToken);
+            return _tableClientFacade.CreateTableIfNotExists(cancellationToken);
         }
 
         public Task DeleteManyAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
@@ -340,7 +344,12 @@ namespace Azure.EntityServices.Core.Abstractions
 
         protected async Task ApplyBatchOperations(EntityOperationType operationType, IEnumerable<T> entities, CancellationToken cancellationToken)
         {
-            var batchedClient = _nativeTableBatchClientFactory.Create(Options, _pipelinePreProcessor, _entityAdapter, _submittedObserver);
+            var batchedClient = _tableClientFactory.Create
+                (Config,
+                Options,
+                _pipelinePreProcessor,
+                _entityAdapter,
+                _submittedObserver);
 
             foreach (var entity in entities)
             {
