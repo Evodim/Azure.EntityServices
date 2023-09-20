@@ -1,12 +1,9 @@
 ﻿using Azure.Data.Tables;
 using Azure.EntityServices.Core.Abstractions;
-using Azure.EntityServices.Tables.Core.Abstractions;
 using Azure.EntityServices.Tables.Core.Implementations;
-using System.Threading;
 
 namespace Azure.EntityServices.Tables
 {
-
     /// <summary>
     /// Client to manage entities in azure Tables
     /// </summary>
@@ -15,11 +12,11 @@ namespace Azure.EntityServices.Tables
     where T : class, new()
     {
         public EntityTableClient(TableServiceClient tableService)
-        :base(
-                 new  AzureTableEntityAdapterFactory(),
-                 new  AzureTableClientFactory(tableService)
+        : base(
+                 new AzureTableEntityAdapterFactory(),
+                 new AzureTableClientFactory(tableService)
                  )
-        { 
+        {
         }
     }
 }
