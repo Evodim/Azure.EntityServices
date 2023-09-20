@@ -25,7 +25,6 @@ namespace Azure.EntityServices.Tables.Core.Implementations
             IEntityAdapter<T> entityAdapter,
             TableServiceClient tableServiceClient)
         {
-          
             _entityAdapter = entityAdapter;
 
             _retryPolicy = Policy.Handle<RequestFailedException>(ex => ex.HandleAzureStorageException(options.TableName, tableServiceClient, options.CreateTableIfNotExists))

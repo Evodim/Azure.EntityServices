@@ -18,7 +18,7 @@ namespace Azure.EntityServices.Core.Abstractions
     /// <typeparam name="T"></typeparam>
     public abstract class BaseEntityTableClient<T> : IEntityTableClient<T>, IObservableEntityTableClient<T>
     where T : class, new()
-    { 
+    {
         private ITableClientFactory<T> _tableClientFactory;
         private ITableClientFacade<T> _tableClientFacade;
         private IEntityAdapter<T> _entityAdapter;
@@ -79,7 +79,7 @@ namespace Azure.EntityServices.Core.Abstractions
             //PrimaryKey required
             _ = Config.RowKeyResolver ?? throw new InvalidOperationException($"at least one of RowKeyResolver or PrimaryKeyResolver was required and must be set");
 
-            ConfigureServices( _entityAdapter, _tableClientFactory);
+            ConfigureServices(_entityAdapter, _tableClientFactory);
 
             _submittedObserver = transactions => _entityObserverNotifier.NotifyChangeAsync(transactions.Select(
                 transaction => new EntityOperationContext<T>(
@@ -150,10 +150,10 @@ namespace Azure.EntityServices.Core.Abstractions
             return this;
         }
 
-        public virtual void ConfigureServices( 
+        public virtual void ConfigureServices(
             IEntityAdapter<T> entityAdapter,
             ITableClientFactory<T> tableClientFactory)
-        { 
+        {
             _ = entityAdapter ?? throw new ArgumentNullException(nameof(entityAdapter));
             _ = tableClientFactory ?? throw new ArgumentNullException(nameof(tableClientFactory));
 

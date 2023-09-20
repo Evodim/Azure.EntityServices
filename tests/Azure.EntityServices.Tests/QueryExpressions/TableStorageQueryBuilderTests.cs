@@ -1,6 +1,5 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Core;
 using Azure.EntityServices.Tables.Core.Implementations;
 using Common.Samples.Models;
 using FluentAssertions;
@@ -294,14 +293,15 @@ namespace Azure.EntityServices.Table.Tests
                 .Should()
                 .Be("(tenant1 ne 'tag1' and tenant1 ne 'tag2' and tenant1 ne 'tag3') and prop2 eq 'newValue'");
         }
+
         [TestMethod]
         public void Should_Use_NotIn_Filter_At_End_Of_ExpressionFilter()
         {
             var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
-           .Where("tenant1").NotIn("tag1", "tag2", "tag3"); 
-            var queryStr = builder.Build(); 
+           .Where("tenant1").NotIn("tag1", "tag2", "tag3");
+            var queryStr = builder.Build();
             queryStr.Trim()
                 .Should()
                 .Be("(tenant1 ne 'tag1' and tenant1 ne 'tag2' and tenant1 ne 'tag3')");

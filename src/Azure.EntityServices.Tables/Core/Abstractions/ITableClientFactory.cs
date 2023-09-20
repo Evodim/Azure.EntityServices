@@ -1,7 +1,6 @@
-﻿using System.Threading.Tasks;
-using System;
-using Azure.EntityServices.Tables.Core.Implementations;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Azure.EntityServices.Tables.Core.Abstractions
 {

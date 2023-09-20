@@ -10,7 +10,7 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
     public class TableClientFacade<T> : ITableClientFacade<T> where T : class, new()
     {
         private readonly TableBatchClientOptions _options;
-        private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor; 
+        private readonly Func<EntityTransactionGroup, Task<EntityTransactionGroup>> _preProcessor;
         private readonly Queue<EntityOperation> _pendingOperations;
         private readonly IEntityTransactionGroupPipeline _pipeline;
         private readonly Func<IEnumerable<EntityOperation>, Task> _onSubmitted;
@@ -77,8 +77,8 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
                );
         }
 
-        public decimal OutstandingOperations => _pendingOperations.Count; 
-       
+        public decimal OutstandingOperations => _pendingOperations.Count;
+
         public void AddOperation(EntityOperationType entityOperationType, T entity)
         {
             _pendingOperations.Enqueue(
@@ -124,17 +124,17 @@ namespace Azure.EntityServices.Tables.Core.Abstractions
 
         public Task<bool> DropTableIfExists(CancellationToken cancellationToken = default)
         {
-           return _nativeTableClient.DropTableIfExists(cancellationToken);
+            return _nativeTableClient.DropTableIfExists(cancellationToken);
         }
 
         public Task<IDictionary<string, object>> GetEntityProperties(string partitionKey, string rowKey, IEnumerable<string> properties = null, CancellationToken cancellationToken = default)
         {
-           return _nativeTableClient.GetEntityProperties(partitionKey, rowKey, properties, cancellationToken);
+            return _nativeTableClient.GetEntityProperties(partitionKey, rowKey, properties, cancellationToken);
         }
 
         public IAsyncEnumerable<EntityPage<T>> QueryEntities(Action<IQuery<T>> filter, int? maxPerPage, string nextPageToken, bool? iterateOnly = false, CancellationToken cancellationToken = default)
         {
-          return _nativeTableClient.QueryEntities( filter, maxPerPage, nextPageToken, iterateOnly, cancellationToken);
+            return _nativeTableClient.QueryEntities(filter, maxPerPage, nextPageToken, iterateOnly, cancellationToken);
         }
     }
 }
