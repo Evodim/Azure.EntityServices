@@ -30,35 +30,35 @@ namespace Azure.EntityServices.Table.Tests
             throw ex;
         }
 
-        public Task OnNextAsync(IEnumerable<IEntityContext<PersonEntity>> contextBatch)
+        public Task OnNextAsync(IEnumerable<EntityOperationContext<PersonEntity>> contextBatch)
         {
             foreach (var context in contextBatch)
             {
                 //ignore indexed tags changes
-                if (context.EntityAdapter.RowKey.StartsWith("~") ||
-                    context.EntityAdapter.PartitionKey.StartsWith("~"))
+                if (context.RowKey.StartsWith("~") ||
+                    context.PartitionKey.StartsWith("~"))
                 {
                     continue;
                 }
-                var entity = context.EntityAdapter.ReadFromEntityModel();
+                var entity = context.EntityDataReader.Read();
 
                 switch (context.EntityOperation)
 
                 {
-                    case EntityOperation.Delete:
-                        Persons.Remove(context.EntityAdapter.PartitionKey + entity.PersonId, out var _);
+                    case EntityOperationType.Delete:
+                        Persons.Remove(context.PartitionKey + entity.PersonId, out var _);
                         Interlocked.Increment(ref _deleted);
                         break;
 
-                    case EntityOperation.Add:
-                    case EntityOperation.AddOrMerge:
-                    case EntityOperation.AddOrReplace:
-                        Persons.TryAdd(context.EntityAdapter.PartitionKey + entity.PersonId, entity);
+                    case EntityOperationType.Add:
+                    case EntityOperationType.AddOrMerge:
+                    case EntityOperationType.AddOrReplace:
+                        Persons.TryAdd(context.PartitionKey + entity.PersonId, entity);
                         Interlocked.Increment(ref _upserted);
                         break;
 
-                    case EntityOperation.Merge:
-                    case EntityOperation.Replace:
+                    case EntityOperationType.Merge:
+                    case EntityOperationType.Replace:
 
                     default: break;
                 }

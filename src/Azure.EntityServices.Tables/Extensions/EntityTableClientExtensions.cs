@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Azure.EntityServices.Core.Abstractions;
+using System;
 
 namespace Azure.EntityServices.Tables
 {
     public static class EntityTableClientExtensions
     {
-        public static EntityTableClient<T> Configure<T>(this EntityTableClient<T> entityClient,Action<EntityTableClientOptions> optionsDelegate, Action<EntityTableClientConfig<T>> configurator)
+        public static BaseEntityTableClient<T> Configure<T>(this BaseEntityTableClient<T> entityClient, Action<EntityTableClientOptions> optionsDelegate, Action<EntityTableClientConfig<T>> configurator)
          where T : class, new()
         {
             _ = optionsDelegate ?? throw new ArgumentNullException(nameof(optionsDelegate));
@@ -16,10 +17,10 @@ namespace Azure.EntityServices.Tables
             optionsDelegate.Invoke(options);
             configurator.Invoke(configuration);
 
-            return entityClient.Configure(options, configuration);
+            return entityClient.Configure(options, configuration) as BaseEntityTableClient<T>;
         }
 
-        public static EntityTableClient<T> Configure<T>(this EntityTableClient<T> entityClient, EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator)
+        public static BaseEntityTableClient<T> Configure<T>(this BaseEntityTableClient<T> entityClient, EntityTableClientOptions options, Action<EntityTableClientConfig<T>> configurator)
         where T : class, new()
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
@@ -29,16 +30,16 @@ namespace Azure.EntityServices.Tables
 
             configurator.Invoke(configuration);
 
-            return entityClient.Configure(options, configuration);
+            return entityClient.Configure(options, configuration) as BaseEntityTableClient<T>;
         }
 
-        public static EntityTableClient<T> Configure<T>(this EntityTableClient<T> entityClient, EntityTableClientOptions options, EntityTableClientConfig<T> configuration)
+        public static BaseEntityTableClient<T> Configure<T>(this BaseEntityTableClient<T> entityClient, EntityTableClientOptions options, EntityTableClientConfig<T> configuration)
         where T : class, new()
         {
             _ = options ?? throw new ArgumentNullException(nameof(options));
             _ = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
-            return entityClient.Configure(options, configuration);
+            return entityClient.Configure(options, configuration) as BaseEntityTableClient<T>;
         }
     }
 }

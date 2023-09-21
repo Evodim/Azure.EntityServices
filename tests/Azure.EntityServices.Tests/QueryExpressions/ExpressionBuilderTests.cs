@@ -1,6 +1,6 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Core;
+using Azure.EntityServices.Tables.Core.Implementations;
 using Common.Samples.Models;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -105,7 +105,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Build_TableStorage_Query_Expression_With_Grouped_Filter_Inside_Not_Operator()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
 
             builder.Query
            .Where("PartitionKey").Equal("Tenant-1")

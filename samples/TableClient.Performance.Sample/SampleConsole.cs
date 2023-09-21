@@ -1,13 +1,13 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
+using Common.Samples;
+using Common.Samples.Diagnostics;
+using Common.Samples.Models;
+using Common.Samples.Tools;
+using Common.Samples.Tools.Fakes;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Common.Samples.Models;
-using Common.Samples.Diagnostics;
-using Common.Samples.Tools;
-using Common.Samples;
-using Common.Samples.Tools.Fakes;
 
 namespace TableClient.PerformanceSample
 {
@@ -27,6 +27,12 @@ namespace TableClient.PerformanceSample
             }
 
             //set here your entity behavior dynamic fields, tags, observers
+            //features used here :
+            // - Computed props: store additionnal dynamic properties computed on each entity write
+            // - Ignore property to be stored in table
+            // - Tag: additionnal indexes by using rowkey managed replication
+            // - Observer : observe any entity change and apply any action
+
             , config =>
             {
                 config
@@ -46,22 +52,31 @@ namespace TableClient.PerformanceSample
                 .AddComputedProp("_CreatedNext6Month", entity => entity.Created > DateTimeOffset.UtcNow.AddMonths(-6))
                 .AddComputedProp("_FirstLastName3Chars", entity => entity.LastName?.ToLower()[..3])
 
-                //computed props could also be tagged 
+                //computed props could also be tagged
                 .AddTag("_FirstLastName3Chars")
 
                 //add an entity oberver to track entity changes and apply any action (projection, logging, etc.)
                 .AddObserver("EntityLoggerObserver", () => new EntityLoggerObserver<PersonEntity>());
             });
+
             //===============================================================================================
 
+            var perfCounters = new PerfCounters(nameof(EntityTableClient<PersonEntity>));
+          
+            await RunSample(entityClient, perfCounters);
+
+            Console.WriteLine("====================================");
+            perfCounters.WriteToConsole();
+        }
+
+        public static async Task RunSample(IEntityTableClient<PersonEntity> entityClient, IPerfCounters counters)
+        {
             var fakePersons = Fakers.CreateFakePerson(new string[] { "tenant1", "tenant2", "tenant3", "tenant4", "tenant5" });
             var onePerson = fakePersons.Generate(1).FirstOrDefault();
 
             Console.Write($"Generate faked {ENTITY_COUNT} entities...");
             var entities = fakePersons.Generate(ENTITY_COUNT);
             Console.WriteLine("OK");
-
-            var counters = new PerfCounters(nameof(EntityTableClient<PersonEntity>));
 
             using (var mesure = counters.Mesure($"Add many entities {ENTITY_COUNT} items"))
             {
@@ -161,8 +176,6 @@ namespace TableClient.PerformanceSample
                 }
                 Console.WriteLine();
             }
-            Console.WriteLine("====================================");
-            counters.WriteToConsole();
         }
     }
 }

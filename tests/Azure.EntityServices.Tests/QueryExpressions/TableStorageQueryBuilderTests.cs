@@ -1,6 +1,6 @@
 ﻿using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
-using Azure.EntityServices.Tables.Core;
+using Azure.EntityServices.Tables.Core.Implementations;
 using Common.Samples.Models;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,7 +14,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Build_TableStorage_Query_Expression()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             builder.Query
            .Where("PartitionKey").Equal("Tenant-1")
@@ -35,7 +35,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Build_Table_Storage_Advanced_Query_Expression()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             builder.Query
            .Where("PartitionKey").Equal("Tenant-1")
@@ -52,7 +52,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Tag_Equal_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag("Created").Equal("2022-10-22")
@@ -68,7 +68,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_Tag_GreaterThanOrEqual_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag("Created").GreaterThanOrEqual("2022-10-22")
@@ -84,7 +84,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_Tag_LessThanOrEqual_Extension()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag("Created").LessThanOrEqual("2022-10-22")
@@ -100,7 +100,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_filter_with_null_values()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag("Created").Equal(null)
@@ -119,7 +119,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_filter_with_default_values()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WhereTag("Created").Equal(default)
@@ -139,7 +139,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Build_Table_Filter_Expression_With_Invariant_Floating_Point_Value_Filter()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new FilterExpression<PersonEntity>());
             builder
             .Query
                 .WherePartitionKey().Equal("tenantId")
@@ -155,7 +155,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_Multi_PartitionKey_filter()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>("Created"));
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WherePartitionKey().Equal("partition1")
@@ -172,7 +172,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_WithTag_Extension_To_Get_All_Tag_Values_Without_Filter_Operator()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .WithTag("Created")
@@ -187,7 +187,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_IncludeTags_To_Get_All_Entities_Included_All_Tags()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .IncludeTags()
@@ -203,7 +203,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_In_Filter_With_Tag_Prop()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .Where("PartitionKey").In("value1", "value2", "value3");
@@ -217,7 +217,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_In_Filter_Inside_ExpressionFilter_Prop2()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .Where("prop1s").Equal("value")
@@ -234,7 +234,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_In_Filter_At_Start_Of_ExpressionFilter_Prop2()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .Where("tenant1").In("tag1", "tag2", "tag3")
@@ -250,7 +250,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_NotIn_Filter_With_Tag_Prop()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .Where("PartitionKey").NotIn("value1", "value2", "value3");
@@ -264,7 +264,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_NotIn_Filter_Inside_ExpressionFilter()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .Where("prop1s").Equal("value")
@@ -281,7 +281,7 @@ namespace Azure.EntityServices.Table.Tests
         [TestMethod]
         public void Should_Use_NotIn_Filter_At_Start_Of_ExpressionFilter()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
            .Where("tenant1").NotIn("tag1", "tag2", "tag3")
@@ -293,14 +293,15 @@ namespace Azure.EntityServices.Table.Tests
                 .Should()
                 .Be("(tenant1 ne 'tag1' and tenant1 ne 'tag2' and tenant1 ne 'tag3') and prop2 eq 'newValue'");
         }
+
         [TestMethod]
         public void Should_Use_NotIn_Filter_At_End_Of_ExpressionFilter()
         {
-            var builder = new TableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
+            var builder = new AzureTableStorageQueryBuilder<PersonEntity>(new TagFilterExpression<PersonEntity>());
 
             (builder.Query as TagFilterExpression<PersonEntity>)
-           .Where("tenant1").NotIn("tag1", "tag2", "tag3"); 
-            var queryStr = builder.Build(); 
+           .Where("tenant1").NotIn("tag1", "tag2", "tag3");
+            var queryStr = builder.Build();
             queryStr.Trim()
                 .Should()
                 .Be("(tenant1 ne 'tag1' and tenant1 ne 'tag2' and tenant1 ne 'tag3')");

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Azure.EntityServices.Tables
+namespace Azure.EntityServices.Tables.Extensions
 {
     public static class JSonSerializerOptionsExtensions
     {

@@ -13,7 +13,6 @@ namespace Azure.EntityServices.Tests.Table
             {
                 options.CreateTableIfNotExists = true;
                 options.TableName = $"{tableName}{Guid.NewGuid():N}";
-                options.HandleTagMutation = true;
             };
 }
 }

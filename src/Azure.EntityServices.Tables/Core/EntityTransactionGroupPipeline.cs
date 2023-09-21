@@ -1,15 +1,16 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using Azure.EntityServices.Tables.Core.Abstractions;
 
 namespace Azure.EntityServices.Tables.Core
 {
-    public class Pipeline : IEntityTransactionGroupPipeline
+    public class EntityTransactionGroupPipeline : IEntityTransactionGroupPipeline
     {
         private readonly IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup> _pipeline;
         private readonly ITargetBlock<EntityTransactionGroup[]> _target;
 
-        public Pipeline(IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup> pipeline, ITargetBlock<EntityTransactionGroup[]> target)
+        public EntityTransactionGroupPipeline(IPropagatorBlock<EntityTransactionGroup, EntityTransactionGroup> pipeline, ITargetBlock<EntityTransactionGroup[]> target)
         {
             _pipeline = pipeline;
             _target = target;

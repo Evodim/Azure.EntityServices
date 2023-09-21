@@ -1,13 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Azure.EntityServices.Tables.Core.Abstractions;
+using System.Collections.Generic;
 
 namespace Azure.EntityServices.Tables
 {
-    internal class EntityOperationContext<T> : IEntityOperationContext<T>
-    {
-        public EntityOperation TableOperation { get; set; }
-        public string PartitionKey { get; set; }
-        public string RowKey { get; set; }
-        public T Entity { get; set; }
-        public IDictionary<string, object> Metadata { get; set; } = new Dictionary<string, object>();
-    }
+    public record struct EntityModel(string PartitionKey, string RowKey, IDictionary<string, object> NativeProperties);
+    public record struct EntityOperation(string PartitionKey,string RowKey,EntityOperationType EntityOperationType, IDictionary<string,object> NativeProperties);
+    public record struct EntityOperationContext<T>(string PartitionKey, string RowKey, IEntityDataReader<T> EntityDataReader, EntityOperationType EntityOperation);
 }

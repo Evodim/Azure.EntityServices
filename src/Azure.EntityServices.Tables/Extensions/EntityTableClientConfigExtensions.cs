@@ -42,7 +42,7 @@ namespace Azure.EntityServices.Tables
 
         public static EntityTableClientConfig<T> AddComputedProp<T>(this EntityTableClientConfig<T> config, string propName, Func<T, object> propValue)
         {
-            config.DynamicProps.Add(propName, propValue);
+            config.ComputedProps.Add(propName, propValue);
             return config;
         }
 

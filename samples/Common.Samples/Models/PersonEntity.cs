@@ -54,7 +54,7 @@ namespace Common.Samples.Models
         public bool? Enabled { get; set; }
         public Address Address { get; set; }
         public List<Address> OtherAddresses { get; set; }
-        public Guid PersonId { get; set; }
+        public Guid? PersonId { get; set; }
         public string FirstName { get; set; }
         public int? Rank { get; set; }
         public string LastName { get; set; }
