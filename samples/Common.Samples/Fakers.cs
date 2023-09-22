@@ -100,6 +100,6 @@ namespace Common.Samples.Tools.Fakes
             .RuleFor(a => a.City, f => f.Address.City())
             .RuleFor(a => a.AdressType, f => f.PickRandom<AdressType>());
             return fake;
-        }
+        } 
     }
 }

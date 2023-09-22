@@ -165,7 +165,7 @@ namespace Azure.EntityServices.Blobs
             var props = await _blobService.GetBlobProperiesAsync(entityRef);
             return BindEntityFromProperties(props);
         }
-
+      
         public Task DropContainerAsync()
         {
             return _blobService.DeleteContainerAsync();

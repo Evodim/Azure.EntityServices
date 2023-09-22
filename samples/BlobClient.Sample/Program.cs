@@ -6,7 +6,7 @@ namespace BlobClient.BasicSample
     {
         private static async Task Main()
         {
-            await BlobSample.Run();
+            await BulkBlobSample.Run();
             System.Console.ReadLine();
         }
     }
