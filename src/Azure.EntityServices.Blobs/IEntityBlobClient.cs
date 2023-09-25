@@ -7,7 +7,7 @@ namespace Azure.EntityServices.Blobs
 {
     public interface IEntityBlobClient<T>
     {
-        Task<T> AddOrReplaceAsync(T entity); 
+        Task<T> AddOrReplaceAsync(T entity, bool ignoreContent = false); 
 
         Task<T> GetAsync(string entityRef);
 
@@ -27,7 +27,7 @@ namespace Azure.EntityServices.Blobs
 
         Task DeleteAsync(string entityRef);
 
-        Task DropContainerAsync();
+        Task DropContainerAsync(); 
 
     }
 }

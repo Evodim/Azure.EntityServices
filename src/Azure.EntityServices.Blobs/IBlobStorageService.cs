@@ -29,5 +29,7 @@ namespace Azure.EntityServices.Blobs
         Task<IDictionary<string, string>> GetBlobProperiesAsync(string blobRef);
 
         Task<IDictionary<string, string>> GetBlobTagsAsync(string blobRef);
+
+        Task UpdatePropsAsync(string blobRef, IDictionary<string, string> tags, IDictionary<string, string> props);
     }
 }

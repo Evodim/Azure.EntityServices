@@ -146,14 +146,26 @@ namespace Azure.EntityServices.Blobs
                 await blob.UploadAsync(streamContent, overwrite: true);
             });
 
+            await UpdatePropsAsync(blobRef, tags, props);
+        }
+        public Task UpdatePropsAsync(string blobRef, IDictionary<string, string> tags, IDictionary<string, string> props)
+        {
+            var blobName = CleanupBasePath(blobRef);
+            var blobClient = _configuredClient.GetBlobClient(blobName);
+
+            return UpdateMetadataAsync(blobClient, tags, props); 
+
+        }
+        private async Task UpdateMetadataAsync(BlobClient blobClient, IDictionary<string, string> tags, IDictionary<string, string> props)
+        { 
             if (tags != null && tags.Any())
             {
-                await blob.SetTagsAsync(tags);
+                await blobClient.SetTagsAsync(tags);
             }
             if (props != null && props.Any())
             {
-                await blob.SetMetadataAsync(props);
-                await SetHeaders(blob, props);
+                await blobClient.SetMetadataAsync(props);
+                await SetHeaders(blobClient, props);
             }
         }
 

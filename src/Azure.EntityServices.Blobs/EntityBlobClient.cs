@@ -57,13 +57,20 @@ namespace Azure.EntityServices.Blobs
             return _blobService.GetBlobProperiesAsync(entityRef);
         }
 
-        public Task<T> AddOrReplaceAsync(T entity)
+        public Task<T> AddOrReplaceAsync(T entity,bool ignoreContent = false)
         {
-            return AddOrReplaceAsync(ResolveEntityPath(entity), entity);
+            return AddOrReplaceAsync(ResolveEntityPath(entity), entity, ignoreContent);
         }
 
-        private async Task<T> AddOrReplaceAsync(string entityPath, T entity)
+        private async Task<T> AddOrReplaceAsync(string entityPath, T entity, bool ignoreContent)
         {
+            var blobRef = $"{entityPath}/{ResolveEntityName(entity)}";
+            if (ignoreContent)
+            {
+                await _blobService.UpdatePropsAsync(blobRef, BuildAllTags(entity), BuildAllProps(entity));
+                return entity;
+            }
+
             var value = _config.ContentProp?.GetValue(entity);
             var binaryContent = value switch
             {
@@ -73,10 +80,17 @@ namespace Azure.EntityServices.Blobs
                 BinaryData v => v,
                 _ => BinaryData.FromObjectAsJson(value)
             };
-            await _blobService.UploadAsync($"{entityPath}/{ResolveEntityName(entity)}", binaryContent.ToStream(),
-            BuildAllTags(entity), BuildAllProps(entity));
+            
+            await _blobService.UploadAsync(
+                blobRef,
+                binaryContent.ToStream(),
+                BuildAllTags(entity),
+                BuildAllProps(entity));
+
             return entity;
         }
+
+       
 
         public async IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListPropsAsync(string entityPath)
         {
@@ -324,6 +338,6 @@ namespace Azure.EntityServices.Blobs
             {
                 throw new InvalidOperationException($"Unable to bind entity property {property.Name} with type  {property.PropertyType.Name}", ex);
             }
-        }
+        } 
     }
 }
