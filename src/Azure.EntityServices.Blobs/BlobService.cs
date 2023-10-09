@@ -38,9 +38,9 @@ namespace Azure.EntityServices.Blobs
 
             if (string.IsNullOrWhiteSpace(_options?.ContainerName))
             {
-                throw new ArgumentNullException(nameof(_options.ContainerName)); 
+                throw new ArgumentNullException(nameof(_options.ContainerName));
             }
-           
+
             _client ??= _blobServiceClient.GetBlobContainerClient(_options.ContainerName);
             _retryPolicy = Policy.Handle<RequestFailedException>(ex => HandleExceptions(_options.ContainerName, _blobServiceClient, ex))
                              .WaitAndRetryAsync(3, i => TimeSpan.FromSeconds(1));
@@ -99,7 +99,7 @@ namespace Azure.EntityServices.Blobs
 
         public async IAsyncEnumerable<IReadOnlyList<IDictionary<string, string>>> ListAsync(string blobPath)
         {
-            await foreach (var itemPage in _configuredClient.GetBlobsAsync(BlobTraits.Metadata, prefix: blobPath)
+            await foreach (var itemPage in _configuredClient.GetBlobsAsync(BlobTraits.Metadata | BlobTraits.Tags, prefix: blobPath)
                     .AsPages(pageSizeHint: _options.MaxResultPerPage))
 
             {
@@ -126,6 +126,7 @@ namespace Azure.EntityServices.Blobs
         }
 
         public Task UploadAsync(string blobRef, Stream streamContent)
+
         {
             return UploadAsync(blobRef, streamContent, null, null);
         }
@@ -138,35 +139,15 @@ namespace Azure.EntityServices.Blobs
         public async Task UploadAsync(string blobRef, Stream streamContent, IDictionary<string, string> tags, IDictionary<string, string> props)
         {
             var blobName = CleanupBasePath(blobRef);
-            var blob = _configuredClient.GetBlobClient(blobName);
+            var blobClient = _configuredClient.GetBlobClient(blobName);
 
             await _retryPolicy.ExecuteAsync(async () =>
             {
                 streamContent.ResetPosition();
-                await blob.UploadAsync(streamContent, overwrite: true);
+                await blobClient.UploadAsync(streamContent, overwrite: true);
             });
 
-            await UpdatePropsAsync(blobRef, tags, props);
-        }
-        public Task UpdatePropsAsync(string blobRef, IDictionary<string, string> tags, IDictionary<string, string> props)
-        {
-            var blobName = CleanupBasePath(blobRef);
-            var blobClient = _configuredClient.GetBlobClient(blobName);
-
-            return UpdateMetadataAsync(blobClient, tags, props); 
-
-        }
-        private async Task UpdateMetadataAsync(BlobClient blobClient, IDictionary<string, string> tags, IDictionary<string, string> props)
-        { 
-            if (tags != null && tags.Any())
-            {
-                await blobClient.SetTagsAsync(tags);
-            }
-            if (props != null && props.Any())
-            {
-                await blobClient.SetMetadataAsync(props);
-                await SetHeaders(blobClient, props);
-            }
+            await UpdateMetadataAsync(blobClient, tags, props);
         }
 
         public async Task UploadAsync(string blobRef, string textContent, IDictionary<string, string> tags, IDictionary<string, string> props)
@@ -177,6 +158,23 @@ namespace Azure.EntityServices.Blobs
             using var stream = CreateStreamFromText(textContent);
 
             await UploadAsync(blobRef, stream, tags, props);
+        }
+
+        public async Task UpdatePropsAsync(string blobRef, IDictionary<string, string> tags, IDictionary<string, string> props)
+        {
+            var blobName = CleanupBasePath(blobRef);
+            var blobClient = _configuredClient.GetBlobClient(blobName);
+
+            var exists = await blobClient.ExistsAsync();
+            if (!exists)
+            {
+                await UploadAsync(blobRef, new MemoryStream(), tags, props);
+            }
+            else
+
+            {
+                await UpdateMetadataAsync(blobClient, tags, props);
+            }
         }
 
         public async Task MoveAsync(string sourceBlobRef, string destBlobRef)
@@ -197,6 +195,19 @@ namespace Azure.EntityServices.Blobs
         public Task DeleteContainerAsync()
         {
             return _blobServiceClient.DeleteBlobContainerAsync(_options.ContainerName);
+        }
+
+        private async Task UpdateMetadataAsync(BlobClient blobClient, IDictionary<string, string> tags, IDictionary<string, string> props)
+        {
+            if (tags != null && tags.Any())
+            {
+                await blobClient.SetTagsAsync(tags);
+            }
+            if (props != null && props.Any())
+            { 
+                await blobClient.SetMetadataAsync(props);
+                await SetHeaders(blobClient, props);
+            }
         }
 
         private static Stream CreateStreamFromText(string content)
