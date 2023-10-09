@@ -6,6 +6,7 @@ namespace BlobClient.BasicSample
     {
         public string CountryCode { get; set; }
         public List<RoadItem> Roads { get; set; }
+        public long RoadCount { get; internal set; }
     }
 
     public readonly record struct Properties(double[] geo_point_2d, string icc);

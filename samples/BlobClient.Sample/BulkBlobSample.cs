@@ -31,8 +31,8 @@ namespace BlobClient.BasicSample
                   
              config
                 .SetBlobPath(p=>"")
-                .SetBlobContentProp(entity => entity.Roads)
-                .SetBlobName(entity => $"{entity.CountryCode.ToUpperInvariant()}-roads.json"));
+                .SetBlobContentProp(entity => entity.Roads) 
+                .SetBlobName(entity => $"{entity.CountryCode?.ToUpperInvariant()}-roads.json"));
 
             
             var entities = 
@@ -46,37 +46,45 @@ namespace BlobClient.BasicSample
             });
              
           
-            using (var mesure = counters.Mesure($"added"))
-            {
-                var count = 0;
-                foreach (var entity in entities)
-                {
+            //using (var mesure = counters.Mesure($"Added"))
+            //{
+            //    var count = 0;
+            //    foreach (var entity in entities)
+            //    {
                     
-                  await client.AddOrReplaceAsync(entity);
-                   count++;
-                }
-                Console.WriteLine($"added : {count}");
-            }
-            using (var mesure = counters.Mesure($"readed"))
+            //      await client.AddOrReplaceAsync(entity);
+            //       count++;
+            //    }
+            //    Console.WriteLine($"added : {count}");
+            //}
+            using (var mesure = counters.Mesure($"Readed"))
             {
                 var count = 0;
-             
-                await foreach (var readed in client.ListAsync(""))
+                await foreach (var readed in client.ListPropsAsync(""))
                 {
-                   
-                    foreach (var entity in readed)
-                    {  
+                    var entity = new CountryRoadsEntity()
+                    {
+                        CountryCode = readed["Countrycode"] ,
+                        RoadCount = 0
+                    };
 
-                        //var content = await client.GetContentAsync(entity);
-                        //using (var stream = content.ToStream())
-                        //{
-                        //    var itemCount = 0;
-                        //    JsonArrayReader.ForEachRecord<RoadItem>(stream, a =>
-                        //    {
-                        //        itemCount++;
-                        //    });
-                        //    Console.WriteLine(itemCount );
-                        //}
+                }
+
+                    await foreach (var readed in client.ListAsync(""))
+                { 
+                    foreach (var entity in readed)
+                    { 
+                        var content = await client.GetContentAsync(entity);
+                        using (var stream = content.ToStream())
+                        {
+                            long roadCount = 0;
+                            stream.DeserializeItems<RoadItem>(r =>
+                            {
+                                roadCount++;
+                            });
+                            entity.RoadCount = roadCount;
+                            await client.AddOrReplaceAsync(entity);
+                        }
                         count++;
                     }
                 }
@@ -93,11 +101,11 @@ namespace BlobClient.BasicSample
                     foreach (var entity in readed)
                     {
 
-                       await client.AddOrReplaceAsync(entity, ignoreContent: true);
+                        await client.AddOrReplaceAsync(entity);
                         count++;
                     }
                 }
-                Console.WriteLine($"Readed : {count}");
+                Console.WriteLine($"Updated : {count}");
             }
 
             Console.WriteLine("====================================");

@@ -57,17 +57,19 @@ namespace Azure.EntityServices.Blobs
             return _blobService.GetBlobProperiesAsync(entityRef);
         }
 
-        public Task<T> AddOrReplaceAsync(T entity,bool ignoreContent = false)
+        public Task<T> AddOrReplaceAsync(T entity, bool includeContent = false)
         {
-            return AddOrReplaceAsync(ResolveEntityPath(entity), entity, ignoreContent);
+            return AddOrReplaceAsync(ResolveEntityPath(entity), entity, includeContent);
         }
 
-        private async Task<T> AddOrReplaceAsync(string entityPath, T entity, bool ignoreContent)
+        private async Task<T> AddOrReplaceAsync(string entityPath, T entity, bool includeContent)
         {
             var blobRef = $"{entityPath}/{ResolveEntityName(entity)}";
-            if (ignoreContent)
-            {
-                await _blobService.UpdatePropsAsync(blobRef, BuildAllTags(entity), BuildAllProps(entity));
+            if (!includeContent)
+            { 
+                await _blobService.UpdatePropsAsync(blobRef, 
+                    BuildAllTags(entity),
+                    BuildAllProps(entity));
                 return entity;
             }
 

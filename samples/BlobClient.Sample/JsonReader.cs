@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace BlobClient.BasicSample
 {
     public static class JsonArrayReader
     {
-        public static long LoadToPipeline<T>(this Stream jsonStream, ITargetBlock<T> output)
+        public static long DeserializeItems<T>(this Stream jsonStream, ITargetBlock<T> output)
            where T : new()
         {
             long readed = 0;
@@ -46,9 +42,7 @@ namespace BlobClient.BasicSample
             return readed;
         }
 
-
-
-        public static void ForEachRecord<T>(this Stream jsonStream, Action<T> record)
+        public static void DeserializeItems<T>(this Stream jsonStream, Action<T> itemAction)
             where T : new()
         {
             using (var jsonStreamReader = new Utf8JsonStreamReader(jsonStream, 32 * 1024))
@@ -64,7 +58,7 @@ namespace BlobClient.BasicSample
                 while (jsonStreamReader.TokenType != JsonTokenType.EndArray)
                 {
                     // deserialize object
-                    record.Invoke(jsonStreamReader.Deserialise<T>());
+                    itemAction.Invoke(jsonStreamReader.Deserialise<T>());
 
                     // JsonSerializer.Deserialize ends on last token of the object parsed,
                     // move to the first token of next object
@@ -72,5 +66,6 @@ namespace BlobClient.BasicSample
                 }
             }
         }
+         
     }
 }
