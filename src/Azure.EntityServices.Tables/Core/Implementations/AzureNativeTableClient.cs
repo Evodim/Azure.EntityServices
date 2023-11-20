@@ -127,7 +127,7 @@ namespace Azure.EntityServices.Tables.Core.Implementations
                         break;
 
                     case EntityOperationType.Delete:
-                        await _tableClient.DeleteAsync();
+                        await _tableClient.DeleteEntityAsync(nativeEntity.PartitionKey, nativeEntity.RowKey, cancellationToken: cancellationToken);
                         break;
 
                     default: throw new NotSupportedException(nameof(entityOperation.EntityOperationType));
