@@ -1,4 +1,4 @@
-﻿using Azure.Data.Tables;
+using Azure.Data.Tables;
 using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables.Core.Abstractions;
 using Azure.EntityServices.Tables.Extensions;
@@ -124,6 +124,10 @@ namespace Azure.EntityServices.Tables.Core.Implementations
 
                     case EntityOperationType.AddOrMerge:
                         await _tableClient.UpsertEntityAsync(nativeEntity, mode: TableUpdateMode.Merge, cancellationToken: cancellationToken);
+                        break;
+
+                    case EntityOperationType.Delete:
+                        await _tableClient.DeleteAsync();
                         break;
 
                     default: throw new NotSupportedException(nameof(entityOperation.EntityOperationType));
