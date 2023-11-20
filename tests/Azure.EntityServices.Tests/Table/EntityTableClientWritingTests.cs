@@ -1,4 +1,4 @@
-﻿using Azure.Data.Tables;
+using Azure.Data.Tables;
 using Azure.EntityServices.Queries;
 using Azure.EntityServices.Tables;
 using Azure.EntityServices.Tables.Extensions;
@@ -504,7 +504,6 @@ namespace Azure.EntityServices.Table.Tests
 
             result.Should().HaveCount(130 + 1000);
             result.All(person => person.LastName.EndsWith("_updated")).Should().BeTrue();
-            
         }
 
         [TestMethod]
@@ -532,7 +531,6 @@ namespace Azure.EntityServices.Table.Tests
             });
             updated.Should().Be(0);
         }
-
 
         [TestMethod]
         public async Task Should_Store_Default_DateTime_Values()
@@ -795,8 +793,31 @@ namespace Azure.EntityServices.Table.Tests
                 {
                     c.
                      SetPartitionKey(p => p.TenantId)
+                    .SetRowKeyProp(p => p.PersonId);
+                });
+            await entityTable.AddAsync(person);
+
+            var isDeleted = await entityTable.DeleteAsync(person);
+
+            var deleted = await entityTable.GetByIdAsync(person.TenantId, person.PersonId);
+
+            isDeleted.Should().BeTrue();
+            deleted.Should().BeNull();
+        }
+
+        [TestMethod]
+        public async Task Should_Delete_Entity_WithTags()
+        {
+            var persons = Fakers.CreateFakePerson().Generate(1);
+            var person = persons.First();
+
+            var entityTable = EntityTableClient.Create<PersonEntity>(TestEnvironment.ConnectionString)
+                .Configure(options => _defaultOptions(options), c =>
+                {
+                    c.
+                     SetPartitionKey(p => p.TenantId)
                     .SetRowKeyProp(p => p.PersonId)
-                    .AddTag(p => p.LastName)
+                     .AddTag(p => p.LastName)
                     .AddTag(p => p.Created);
                 });
             await entityTable.AddAsync(person);
