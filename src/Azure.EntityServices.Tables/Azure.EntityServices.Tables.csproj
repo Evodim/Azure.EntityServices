@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup> 
-		<TargetFramework>netstandard2.1</TargetFramework>
+	<PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 	<PropertyGroup>
@@ -35,14 +35,14 @@
 		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Azure.Data.Tables" Version="12.7.1" />		
-		<PackageReference Include="MinVer" Version="4.3.0">
+		<PackageReference Include="Azure.Data.Tables" Version="12.8.3" />		
+		<PackageReference Include="MinVer" Version="5.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Polly" Version="7.2.2" />
+		<PackageReference Include="Polly" Version="8.3.1" />
 		
-		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
+		<PackageReference Include="System.Threading.Tasks.Dataflow" Version="8.0.0" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\Azure.EntityServices.Queries\Azure.EntityServices.Queries.csproj" />

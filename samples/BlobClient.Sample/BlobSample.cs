@@ -13,7 +13,7 @@ namespace BlobClient.BasicSample
     {
         private const int ENTITY_COUNT = 50;
 
-        public static async Task Run()
+        public static async Task RunAsync()
         {
             var options = new EntityBlobClientOptions($"{nameof(DocumentEntity)}Container".ToLower());
 
