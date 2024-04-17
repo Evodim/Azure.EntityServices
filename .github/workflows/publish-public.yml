@@ -30,13 +30,8 @@ jobs:
           dotnet tool install -g minver-cli -v q
           APP_VERSION=`minver`
           echo "Adding version to GITHUB_ENV: APP_VERSION=$APP_VERSION"
-          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV    
-
-      # Setup .NET Core SDK
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV     
+     
       # Install Azure sorage emulator
       - name: Setup Node.js environment
         uses: actions/setup-node@v2.5.1
