@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk"> 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
     <UserSecretsId>a8d98bdc-3fa5-43dd-879a-eb3b0060fcbf</UserSecretsId> 
   </PropertyGroup>
 	<PropertyGroup>
@@ -30,11 +30,11 @@
 	  </None>
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="MinVer" Version="4.3.0">
+		<PackageReference Include="MinVer" Version="5.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.5.0" />
+		<PackageReference Include="Microsoft.Extensions.Azure" Version="1.7.3" />
 		<ProjectReference Include="..\Azure.EntityServices.Tables\Azure.EntityServices.Tables.csproj" />
 	</ItemGroup>
 </Project>

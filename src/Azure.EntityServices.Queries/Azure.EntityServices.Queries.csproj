@@ -5,8 +5,8 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 		<NoWarn>1701;1702;1705;1591</NoWarn>		
 	</PropertyGroup>
-  <PropertyGroup> 
-    <TargetFramework>netstandard2.1</TargetFramework>  
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
   </PropertyGroup>
 	<PropertyGroup>
 		<PackageIconUrl>https://evocdn.azureedge.net/images/128/entityservices-queries.png</PackageIconUrl>
@@ -32,7 +32,7 @@
 		<None Include="..\..\LICENSE" Pack="true" PackagePath="" />
 	</ItemGroup>
   <ItemGroup>
-    <PackageReference Include="MinVer" Version="4.3.0">
+    <PackageReference Include="MinVer" Version="5.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
