@@ -14,7 +14,7 @@ on:
 env:
   GITHUB_PACKAGES_URL: https://nuget.pkg.github.com/evodim/index.json  
   BUILD_CONFIGURATION: 'Release'    # set this mto the appropriate build configuration
-  DOTNET_VERSION: '6.x' 
+  DOTNET_VERSION: '8.x' 
   MinVerMinimumMajorMinor: '1.1'
   MinVerTagPrefix: 'v'
   MinVerDefaultPreReleaseIdentifiers : 'alpha-${{ github.run_number }}'  

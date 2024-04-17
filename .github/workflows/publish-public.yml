@@ -10,7 +10,7 @@ on:
 env:
   AZURE_ARTIFACTS_FEED_URL: https://api.nuget.org/v3/index.json   
   BUILD_CONFIGURATION: 'Release'    # set this to the appropriate build configuration
-  DOTNET_VERSION: '6.x' 
+  DOTNET_VERSION: '8.x' 
   TEST_STORAGE_CONNECTION_STRING: ${{ secrets.TEST_STORAGE_CONNECTION_STRING }} 
   MinVerMinimumMajorMinor: '1.1'
   MinVerTagPrefix: 'v'
